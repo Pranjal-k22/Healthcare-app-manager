@@ -1,0 +1,16 @@
+{
+  "name": "healthcare-appointment-manager",
+  "version": "1.0.0",
+  "description": "Healthcare Appointment & Follow-up Manager - Phase 1 Foundation & Auth",
+  "private": true,
+  "scripts": {
+    "dev:server": "npm run dev --prefix server",
+    "dev:client": "npm run dev --prefix client",
+    "seed:admin": "npm run seed:admin --prefix server",
+    "seed:doctors": "npm run seed:doctors --prefix server",
+    "install:all": "npm install && npm install --prefix server && npm install --prefix client"
+  },
+  "keywords": ["healthcare", "appointment", "mern", "auth", "jwt", "rbac"],
+  "author": "",
+  "license": "ISC"
+}
