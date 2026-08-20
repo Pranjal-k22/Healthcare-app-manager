@@ -1,4 +1,11 @@
 export type AppointmentStatus = 'BOOKED' | 'COMPLETED' | 'CANCELLED';
+export type AiStatus = 'PENDING' | 'READY' | 'FAILED';
+
+export interface PreVisitSummary {
+  urgency: 'Low' | 'Medium' | 'High';
+  chiefComplaint: string;
+  suggestedQuestions: string[];
+}
 
 export interface AvailableSlot {
   startTime: string; // HH:mm
@@ -21,6 +28,9 @@ export interface Appointment {
   status: AppointmentStatus;
   reason?: string;
   patientNotes?: string;
+  symptoms?: string;
+  preVisitSummary?: PreVisitSummary | null;
+  aiStatus?: AiStatus;
   createdAt: string;
   updatedAt: string;
 }
@@ -32,6 +42,7 @@ export interface CreateAppointmentRequest {
   startTime: string;
   reason?: string;
   patientNotes?: string;
+  symptoms?: string;
 }
 
 export interface RescheduleAppointmentRequest {
@@ -39,3 +50,4 @@ export interface RescheduleAppointmentRequest {
   appointmentDate?: string;
   startTime: string;
 }
+

@@ -20,9 +20,11 @@ import {
   CheckCircle2,
   Clock,
   FileSpreadsheet,
+  HelpCircle,
   Mail,
   Save,
   ShieldCheck,
+  Sparkles,
   User,
 } from 'lucide-react';
 
@@ -287,10 +289,10 @@ export const DoctorConsultation: React.FC = () => {
         <div style={{ marginTop: '1.5rem', paddingTop: '1.25rem', borderTop: '1px solid var(--border-color)', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
           <div>
             <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
-              Chief Complaint / Reason
+              Reported Symptoms & Chief Complaint
             </span>
             <p style={{ marginTop: '0.25rem', fontSize: '0.9rem', color: 'var(--text-primary)' }}>
-              {appointment.reason || 'No specific symptoms entered.'}
+              {appointment.symptoms || appointment.reason || 'No specific symptoms entered.'}
             </p>
           </div>
 
@@ -306,6 +308,141 @@ export const DoctorConsultation: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Pre-Visit AI Clinical Intake Summary */}
+      {appointment.aiStatus === 'READY' && appointment.preVisitSummary ? (
+        <div
+          className="glass-card info-card"
+          style={{
+            marginBottom: '1.5rem',
+            border: '1px solid rgba(14, 165, 233, 0.3)',
+            background: 'linear-gradient(135deg, rgba(14, 165, 233, 0.06) 0%, rgba(15, 23, 42, 0.7) 100%)',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1.25rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+              <div className="doctor-avatar" style={{ width: '38px', height: '38px', background: 'rgba(14, 165, 233, 0.18)' }}>
+                <Sparkles size={20} color="var(--primary)" />
+              </div>
+              <div>
+                <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                  Pre-Visit AI Clinical Summary
+                </h3>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                  Synthesized from patient intake symptoms
+                </span>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+                Urgency Level:
+              </span>
+              <span
+                style={{
+                  fontSize: '0.8rem',
+                  fontWeight: 700,
+                  padding: '0.25rem 0.75rem',
+                  borderRadius: '999px',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.04em',
+                  background:
+                    appointment.preVisitSummary.urgency === 'High'
+                      ? 'rgba(239, 68, 68, 0.15)'
+                      : appointment.preVisitSummary.urgency === 'Medium'
+                      ? 'rgba(245, 158, 11, 0.15)'
+                      : 'rgba(16, 185, 129, 0.15)',
+                  color:
+                    appointment.preVisitSummary.urgency === 'High'
+                      ? '#ef4444'
+                      : appointment.preVisitSummary.urgency === 'Medium'
+                      ? '#f59e0b'
+                      : '#10b981',
+                  border: `1px solid ${
+                    appointment.preVisitSummary.urgency === 'High'
+                      ? 'rgba(239, 68, 68, 0.3)'
+                      : appointment.preVisitSummary.urgency === 'Medium'
+                      ? 'rgba(245, 158, 11, 0.3)'
+                      : 'rgba(16, 185, 129, 0.3)'
+                  }`,
+                }}
+              >
+                {appointment.preVisitSummary.urgency}
+              </span>
+            </div>
+          </div>
+
+          <div style={{ marginBottom: '1.25rem' }}>
+            <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+              Synthesized Chief Complaint
+            </span>
+            <p style={{ marginTop: '0.25rem', fontSize: '0.95rem', fontWeight: 600, color: '#38bdf8' }}>
+              {appointment.preVisitSummary.chiefComplaint}
+            </p>
+          </div>
+
+          <div>
+            <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+              <HelpCircle size={14} color="var(--primary)" />
+              Suggested Exploration Questions for Doctor
+            </span>
+            <div style={{ marginTop: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              {appointment.preVisitSummary.suggestedQuestions.map((q, idx) => (
+                <div
+                  key={idx}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '0.65rem',
+                    padding: '0.6rem 0.85rem',
+                    background: 'rgba(15, 23, 42, 0.5)',
+                    borderRadius: 'var(--radius-sm)',
+                    border: '1px solid var(--border-color)',
+                  }}
+                >
+                  <span
+                    style={{
+                      width: '20px',
+                      height: '20px',
+                      borderRadius: '50%',
+                      background: 'rgba(14, 165, 233, 0.15)',
+                      color: 'var(--primary)',
+                      fontSize: '0.75rem',
+                      fontWeight: 700,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                    }}
+                  >
+                    {idx + 1}
+                  </span>
+                  <span style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', lineHeight: 1.45 }}>
+                    {q}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : appointment.aiStatus === 'FAILED' ? (
+        <div
+          className="glass-card info-card"
+          style={{
+            marginBottom: '1.5rem',
+            padding: '0.85rem 1.25rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.65rem',
+            color: 'var(--text-muted)',
+            fontSize: '0.85rem',
+            background: 'rgba(15, 23, 42, 0.4)',
+          }}
+        >
+          <Sparkles size={16} color="var(--text-muted)" />
+          <span>Pre-visit AI clinical summary unavailable.</span>
+        </div>
+      ) : null}
 
       {/* Clinical Notes & Diagnosis Section */}
       <div className="glass-card info-card" style={{ marginBottom: '1.5rem' }}>

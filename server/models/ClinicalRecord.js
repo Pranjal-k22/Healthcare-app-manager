@@ -45,6 +45,15 @@ const clinicalRecordSchema = new mongoose.Schema(
       match: [/^\d{4}-\d{2}-\d{2}$/, 'Follow-up date must be in YYYY-MM-DD format'],
       default: null,
     },
+    postVisitSummary: {
+      type: String,
+      default: null,
+    },
+    aiStatus: {
+      type: String,
+      enum: ['PENDING', 'READY', 'FAILED'],
+      default: 'PENDING',
+    },
   },
   {
     timestamps: true,

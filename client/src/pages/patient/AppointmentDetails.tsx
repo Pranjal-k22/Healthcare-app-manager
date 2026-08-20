@@ -14,6 +14,7 @@ import {
   Clock,
   FileText,
   Mail,
+  Sparkles,
   Stethoscope,
 } from 'lucide-react';
 
@@ -150,16 +151,74 @@ export const AppointmentDetails: React.FC = () => {
           </div>
         </div>
 
-        {/* Reason for Visit */}
+        {/* Reported Symptoms & Reason for Visit */}
         <div style={{ marginTop: '1.25rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
           <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
-            Reported Reason for Visit
+            Reported Symptoms & Intake Reason
           </span>
           <p style={{ marginTop: '0.25rem', fontSize: '0.9rem', color: 'var(--text-primary)' }}>
-            {appointment.reason || 'No specific symptoms entered.'}
+            {appointment.symptoms || appointment.reason || 'No specific symptoms entered.'}
           </p>
         </div>
       </div>
+
+      {/* Post-Visit AI Patient Summary */}
+      {clinicalRecord?.aiStatus === 'READY' && clinicalRecord.postVisitSummary ? (
+        <div
+          className="glass-card info-card"
+          style={{
+            marginBottom: '1.5rem',
+            border: '1px solid rgba(16, 185, 129, 0.3)',
+            background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.06) 0%, rgba(15, 23, 42, 0.7) 100%)',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '1rem' }}>
+            <div className="doctor-avatar" style={{ width: '38px', height: '38px', background: 'rgba(16, 185, 129, 0.18)' }}>
+              <Sparkles size={20} color="#10b981" />
+            </div>
+            <div>
+              <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                Post-Visit Patient Summary
+              </h3>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                AI-synthesized care guidance & medication schedule
+              </span>
+            </div>
+          </div>
+
+          <div
+            style={{
+              padding: '1rem 1.15rem',
+              background: 'rgba(15, 23, 42, 0.5)',
+              borderRadius: 'var(--radius-sm)',
+              border: '1px solid var(--border-color)',
+              color: 'var(--text-primary)',
+              fontSize: '0.92rem',
+              lineHeight: 1.65,
+              whiteSpace: 'pre-line',
+            }}
+          >
+            {clinicalRecord.postVisitSummary}
+          </div>
+        </div>
+      ) : clinicalRecord?.aiStatus === 'FAILED' ? (
+        <div
+          className="glass-card info-card"
+          style={{
+            marginBottom: '1.5rem',
+            padding: '0.85rem 1.25rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.65rem',
+            color: 'var(--text-muted)',
+            fontSize: '0.85rem',
+            background: 'rgba(15, 23, 42, 0.4)',
+          }}
+        >
+          <Sparkles size={16} color="var(--text-muted)" />
+          <span>Post-visit summary unavailable.</span>
+        </div>
+      ) : null}
 
       {/* Doctor Clinical Advice & Instructions */}
       {clinicalRecord && (

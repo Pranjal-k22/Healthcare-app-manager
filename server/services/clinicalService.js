@@ -6,6 +6,7 @@ const { dispatchPrescriptionAvailable } = require('./notificationService');
 const {
   generateRemindersForPrescription,
 } = require('./medication/medicationScheduleService');
+const { generatePostVisitSummary } = require('./llm/llmService');
 
 /**
  * Save or update clinical notes for an appointment (Doctor authority)
@@ -298,6 +299,19 @@ const completeConsultation = async (appointmentId, doctorUser, workflowData = {}
     ClinicalRecord.findOne({ appointmentId }),
     Prescription.findOne({ appointmentId }),
   ]);
+
+  // Asynchronously trigger Post-Visit LLM summary generation (Non-blocking)
+  if (clinicalRecord && clinicalRecord.clinicalNotes) {
+    const medicines = prescription ? prescription.medicines : [];
+    generatePostVisitSummary(
+      clinicalRecord._id,
+      appointmentId,
+      clinicalRecord.clinicalNotes,
+      medicines
+    ).catch((err) => {
+      console.error('[LLMService] Post-visit generation error:', err.message);
+    });
+  }
 
   return {
     appointment,

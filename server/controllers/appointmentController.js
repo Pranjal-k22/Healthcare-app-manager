@@ -71,6 +71,7 @@ const createAppointment = async (req, res, next) => {
       startTime: req.body.startTime,
       reason: req.body.reason,
       patientNotes: req.body.patientNotes,
+      symptoms: req.body.symptoms || req.body.reason || '',
     };
 
     const appointment = await bookAppointment(payload);

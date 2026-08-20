@@ -57,6 +57,20 @@ const appointmentSchema = new mongoose.Schema(
       maxlength: [1000, 'Patient notes cannot exceed 1000 characters'],
       default: '',
     },
+    symptoms: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    preVisitSummary: {
+      type: mongoose.Schema.Types.Mixed,
+      default: null,
+    },
+    aiStatus: {
+      type: String,
+      enum: ['PENDING', 'READY', 'FAILED'],
+      default: 'PENDING',
+    },
     googleCalendarEventId: {
       type: String,
       default: null,

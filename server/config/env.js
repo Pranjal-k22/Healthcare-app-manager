@@ -35,6 +35,10 @@ const config = {
     process.env.GOOGLE_REDIRECT_URI ||
     'http://localhost:5000/api/calendar/oauth/callback',
   APPOINTMENT_TIMEZONE: process.env.APPOINTMENT_TIMEZONE || 'UTC',
+
+  // Local Ollama LLM Settings (Phase 10)
+  OLLAMA_HOST: process.env.OLLAMA_HOST || 'http://localhost:11434',
+  OLLAMA_MODEL: process.env.OLLAMA_MODEL || 'llama3',
 };
 
 module.exports = config;

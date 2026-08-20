@@ -24,6 +24,8 @@ export interface ClinicalRecord {
   diagnosisNotes?: string;
   patientInstructions?: string;
   followUpDate?: string | null;
+  postVisitSummary?: string | null;
+  aiStatus?: 'PENDING' | 'READY' | 'FAILED';
   createdAt?: string;
   updatedAt?: string;
 }

@@ -16,6 +16,7 @@ const {
 } = require('./notificationService');
 const { queueCalendarJob } = require('./jobs/calendarJob');
 const { isDoctorOnLeave } = require('./leaveService');
+const { generatePreVisitSummary } = require('./llm/llmService');
 
 /**
  * Format populated appointment document into safe, clean response object
@@ -41,6 +42,9 @@ const formatAppointmentResponse = (appDoc) => {
     status: appDoc.status,
     reason: appDoc.reason || '',
     patientNotes: appDoc.patientNotes || '',
+    symptoms: appDoc.symptoms || '',
+    preVisitSummary: appDoc.preVisitSummary || null,
+    aiStatus: appDoc.aiStatus || 'PENDING',
     createdAt: appDoc.createdAt,
     updatedAt: appDoc.updatedAt,
   };
@@ -60,9 +64,11 @@ const bookAppointment = async (payload) => {
     startTime,
     reason,
     patientNotes,
+    symptoms: rawSymptoms,
   } = payload;
 
   const date = rawDate || appointmentDate;
+  const symptoms = (rawSymptoms || reason || '').trim();
 
   // 1. Verify Patient Existence & Role
   const patient = await User.findById(patientId);
@@ -187,6 +193,8 @@ const bookAppointment = async (payload) => {
       status: 'BOOKED',
       reason: reason ? reason.trim() : '',
       patientNotes: patientNotes ? patientNotes.trim() : '',
+      symptoms,
+      aiStatus: symptoms ? 'PENDING' : 'FAILED',
     });
 
     const populated = await Appointment.findById(appointment._id)
@@ -200,6 +208,13 @@ const bookAppointment = async (payload) => {
       console.error('[Notification] dispatchAppointmentBooked error:', err.message);
     });
     queueCalendarJob('CALENDAR_CREATE_EVENT', { appointmentId: appointment._id });
+
+    // Asynchronously trigger Pre-Visit LLM summary generation (Non-blocking)
+    if (symptoms) {
+      generatePreVisitSummary(appointment._id, symptoms).catch((err) => {
+        console.error('[LLMService] Pre-visit generation error:', err.message);
+      });
+    }
 
     return formatted;
   } catch (dbError) {
