@@ -1,12 +1,12 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
+import { MedicationReminderList } from '../../components/patient/MedicationReminderList';
 import {
   FileText,
   HeartPulse,
   Search,
   ShieldCheck,
-  Sparkles,
   Stethoscope,
   User as UserIcon,
 } from 'lucide-react';
@@ -67,6 +67,9 @@ export const PatientDashboard: React.FC = () => {
         </div>
       </div>
 
+      {/* Medication Reminders Section (Phase 8) */}
+      <MedicationReminderList />
+
       <div className="glass-card info-card">
         <h2 style={{ fontSize: '1.35rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <FileText size={20} color="var(--primary)" />
@@ -88,16 +91,6 @@ export const PatientDashboard: React.FC = () => {
               Authenticated (Bearer Token Active)
             </div>
           </div>
-        </div>
-
-        <div className="phase-roadmap-card">
-          <div className="roadmap-title">
-            <Sparkles size={18} />
-            <strong>Phase 2 Active & Ready:</strong>
-          </div>
-          <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-            You can now search all verified doctors and inspect their clinical specializations and consultation hours. Slot booking will be activated in <strong>Phase 3</strong>.
-          </p>
         </div>
       </div>
     </div>

@@ -1,12 +1,15 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { Appointment } from '../../types/appointment';
 import { AppointmentStatusBadge } from './AppointmentStatusBadge';
 import {
   Calendar,
   CheckCircle2,
   Clock,
+  ExternalLink,
   FileText,
   Mail,
+  Pill,
   RefreshCw,
   Stethoscope,
   User,
@@ -31,6 +34,7 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({
   isActionLoading = false,
 }) => {
   const isBooked = appointment.status === 'BOOKED';
+  const isCompleted = appointment.status === 'COMPLETED';
 
   return (
     <div className="glass-card appointment-card">
@@ -83,45 +87,81 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({
         )}
       </div>
 
-      {isBooked && (
-        <div className="appointment-card-actions">
-          {viewRole === 'DOCTOR' && onComplete && (
-            <button
-              type="button"
-              className="btn btn-emerald-outline btn-sm"
-              onClick={() => onComplete(appointment)}
-              disabled={isActionLoading}
-            >
-              <CheckCircle2 size={14} />
-              <span>Mark Completed</span>
-            </button>
-          )}
+      <div className="appointment-card-actions">
+        {/* Doctor Actions */}
+        {viewRole === 'DOCTOR' && (
+          <Link
+            to={`/doctor/consultation/${appointment.id}`}
+            className="btn btn-primary btn-sm"
+            style={{ flex: 1 }}
+          >
+            <Stethoscope size={14} />
+            <span>{isBooked ? 'Consultation Room' : 'View Clinical Record'}</span>
+          </Link>
+        )}
 
-          {viewRole === 'PATIENT' && onReschedule && (
-            <button
-              type="button"
+        {/* Doctor One-Click Complete (if booked) */}
+        {viewRole === 'DOCTOR' && isBooked && onComplete && (
+          <button
+            type="button"
+            className="btn btn-emerald-outline btn-sm"
+            onClick={() => onComplete(appointment)}
+            disabled={isActionLoading}
+            title="Mark Completed"
+          >
+            <CheckCircle2 size={14} />
+          </button>
+        )}
+
+        {/* Patient Completed Details View */}
+        {viewRole === 'PATIENT' && isCompleted && (
+          <Link
+            to={`/patient/appointments/${appointment.id}`}
+            className="btn btn-primary btn-sm btn-block"
+          >
+            <Pill size={14} />
+            <span>View Summary & Prescription</span>
+          </Link>
+        )}
+
+        {/* Patient Active Booked Actions */}
+        {isBooked && viewRole === 'PATIENT' && (
+          <>
+            <Link
+              to={`/patient/appointments/${appointment.id}`}
               className="btn btn-outline btn-sm"
-              onClick={() => onReschedule(appointment)}
-              disabled={isActionLoading}
             >
-              <RefreshCw size={14} />
-              <span>Reschedule</span>
-            </button>
-          )}
+              <ExternalLink size={14} />
+              <span>Details</span>
+            </Link>
 
-          {onCancel && (
-            <button
-              type="button"
-              className="btn btn-danger-outline btn-sm"
-              onClick={() => onCancel(appointment)}
-              disabled={isActionLoading}
-            >
-              <XCircle size={14} />
-              <span>Cancel</span>
-            </button>
-          )}
-        </div>
-      )}
+            {onReschedule && (
+              <button
+                type="button"
+                className="btn btn-outline btn-sm"
+                onClick={() => onReschedule(appointment)}
+                disabled={isActionLoading}
+              >
+                <RefreshCw size={14} />
+                <span>Reschedule</span>
+              </button>
+            )}
+          </>
+        )}
+
+        {/* Cancel Button (Owner/Doctor/Admin) */}
+        {isBooked && onCancel && (
+          <button
+            type="button"
+            className="btn btn-danger-outline btn-sm"
+            onClick={() => onCancel(appointment)}
+            disabled={isActionLoading}
+            title="Cancel Appointment"
+          >
+            <XCircle size={14} />
+          </button>
+        )}
+      </div>
     </div>
   );
 };

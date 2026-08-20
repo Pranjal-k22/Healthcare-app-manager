@@ -2,13 +2,14 @@
 
 ## 1. Overview & Architecture
 
-Phase 3 implements the complete **Appointment Engine** for HealthPulse, providing deterministic slot generation, database-level double-booking prevention, atomic rescheduling, and role-guarded appointment lifecycle workflows for Patients, Doctors, and Admins.
+Phase 3 implements the complete **Appointment Engine** for HealthPulse, providing deterministic slot generation, database-level double-booking prevention, atomic rescheduling, patient notes, and role-guarded appointment lifecycle workflows for Patients, Doctors, and Admins.
 
 ```text
                Patient Selects Doctor & Date
                              │
                              ▼
-               GET /api/appointments/slots/:doctorId/:date
+     GET /api/appointments/slots/:doctorId/:date
+        (or GET /api/doctors/:doctorId/slots)
                              │
                      [slotService.js]
                              │
@@ -79,8 +80,13 @@ Phase 3 implements the complete **Appointment Engine** for HealthPulse, providin
     index: true
   },
   reason: {
-    type: String,       // Optional note / symptom placeholder
+    type: String,       // Reason for visit / chief complaint
     maxlength: 500,
+    default: ''
+  },
+  patientNotes: {
+    type: String,       // Additional patient background notes
+    maxlength: 1000,
     default: ''
   },
   createdAt: Date,
@@ -121,7 +127,7 @@ appointmentSchema.index(
 
 The slot generation engine ([slotService.js](file:///c:/WEB%20DEVELOPMENT/healthcare-appointment-manager/server/services/slotService.js)) generates bookable intervals dynamically:
 
-1. **Profile Resolution**: Finds doctor profile by `doctorId`.
+1. **Profile Resolution**: Finds doctor profile by `doctorId`. Verifies `isAvailable !== false` and `isActive !== false`.
 2. **Past Date Check**: Rejects any `date < today`.
 3. **Leave Check**: If `profile.leaves` contains `date`, returns `[]` (doctor is unavailable all day).
 4. **Weekday Schedule Check**: Resolves weekday (e.g. `monday`). If `workingHours[weekday].enabled === false`, returns `[]`.
@@ -132,7 +138,8 @@ The slot generation engine ([slotService.js](file:///c:/WEB%20DEVELOPMENT/health
 6. **Collision & Past Slot Detection**:
    - Queries MongoDB for active appointments on that date (`status IN ['BOOKED', 'COMPLETED']`).
    - If slot is today and `slotStart <= currentTime`, marks `available: false`.
-   - If slot exists in booked set, marks `available: false`.
+   - Uses interval overlap detection: `existing.start < requested.end && existing.end > requested.start`.
+   - If interval overlaps with any active booking, marks `available: false`.
    - Otherwise, marks `available: true`.
 
 ---
@@ -167,10 +174,11 @@ The slot generation engine ([slotService.js](file:///c:/WEB%20DEVELOPMENT/health
 Rescheduling guarantees that an existing appointment is never lost if the new requested slot fails or conflicts:
 
 1. **Step 1**: Patient chooses new date and start time.
-2. **Step 2**: Backend validates the new slot against doctor's working hours, duration, leaves, and past-time rules.
-3. **Step 3**: Backend attempts to insert the **new appointment** first (`status: 'BOOKED'`).
-4. **Step 4**: If new booking fails (e.g. 409 slot conflict), execution halts; the old appointment remains intact in `BOOKED` state.
-5. **Step 5**: Only after the new appointment is successfully created in MongoDB, the old appointment is updated to `status: 'CANCELLED'`.
+2. **Step 2**: Backend checks if the requested slot is the exact same slot. If so, returns the existing appointment without creating duplicate.
+3. **Step 3**: Backend validates the new slot against doctor's working hours, duration, leaves, and past-time rules.
+4. **Step 4**: Backend attempts to insert the **new appointment** first (`status: 'BOOKED'`).
+5. **Step 5**: If new booking fails (e.g. 409 slot conflict), execution halts; the old appointment remains intact in `BOOKED` state.
+6. **Step 6**: Only after the new appointment is successfully created in MongoDB, the old appointment is updated to `status: 'CANCELLED'`.
 
 ---
 
@@ -188,6 +196,7 @@ Rescheduling guarantees that an existing appointment is never lost if the new re
 | HTTP Method | Endpoint | Authorization | Description |
 | :--- | :--- | :--- | :--- |
 | `GET` | `/api/appointments/slots/:doctorId/:date` | Private (All Roles) | Generate dynamic slot list with availability flags |
+| `GET` | `/api/doctors/:doctorId/slots?date=YYYY-MM-DD` | Private (All Roles) | Alias endpoint for dynamic slot generation |
 | `POST` | `/api/appointments` | Private (`PATIENT`) | Book a consultation slot |
 | `GET` | `/api/appointments/my` | Private (`PATIENT`) | Retrieve patient's personal appointments |
 | `GET` | `/api/appointments/doctor` | Private (`DOCTOR`) | Retrieve doctor's consultation queue |

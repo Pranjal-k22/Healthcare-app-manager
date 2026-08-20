@@ -1,9 +1,10 @@
-const mongoose = require('mongoose');
-const dotenv = require('dotenv');
 const path = require('path');
 
+// Ensure module resolution uses server/node_modules
+const dotenv = require(path.join(__dirname, '../../server/node_modules/dotenv'));
 dotenv.config({ path: path.join(__dirname, '../../.env') });
 
+const mongoose = require(path.join(__dirname, '../../server/node_modules/mongoose'));
 const config = require('../../server/config/env');
 const User = require('../../server/models/User');
 const DoctorProfile = require('../../server/models/DoctorProfile');
@@ -74,9 +75,9 @@ const DEMO_DOCTORS = [
 
 const seedDoctors = async () => {
   try {
-    console.log('Connecting to MongoDB database...');
+    console.log('[Seed] Connecting to MongoDB database...');
     await mongoose.connect(config.MONGO_URI);
-    console.log('✓ Connected to MongoDB');
+    console.log('[Seed] ✓ Connected to MongoDB');
 
     for (const docData of DEMO_DOCTORS) {
       let user = await User.findOne({ email: docData.email });
@@ -88,9 +89,9 @@ const seedDoctors = async () => {
           password: docData.password,
           role: 'DOCTOR',
         });
-        console.log(`✓ Created User account for ${docData.name} (${docData.email})`);
+        console.log(`[Seed] ✓ Created User account for ${docData.name} (${docData.email})`);
       } else {
-        console.log(`- User account exists for ${docData.name}`);
+        console.log(`[Seed] - User account exists for ${docData.name}`);
       }
 
       let profile = await DoctorProfile.findOne({ userId: user._id });
@@ -115,10 +116,10 @@ const seedDoctors = async () => {
 
       if (!profile) {
         await DoctorProfile.create(profilePayload);
-        console.log(`✓ Created DoctorProfile for ${docData.name}`);
+        console.log(`[Seed] ✓ Created DoctorProfile for ${docData.name}`);
       } else {
         await DoctorProfile.findByIdAndUpdate(profile._id, profilePayload);
-        console.log(`✓ Updated DoctorProfile for ${docData.name}`);
+        console.log(`[Seed] ✓ Updated DoctorProfile for ${docData.name}`);
       }
     }
 
@@ -127,7 +128,7 @@ const seedDoctors = async () => {
     console.log('====================================================');
     process.exit(0);
   } catch (error) {
-    console.error('❌ Doctor seeding failed:', error.message);
+    console.error('[Seed] ❌ Doctor seeding failed:', error.message);
     process.exit(1);
   }
 };

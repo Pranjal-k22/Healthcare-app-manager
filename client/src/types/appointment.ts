@@ -14,11 +14,13 @@ export interface Appointment {
   doctorId: string;
   doctorName: string;
   doctorEmail: string;
-  date: string;       // YYYY-MM-DD
-  startTime: string;  // HH:mm
-  endTime: string;    // HH:mm
+  date: string;              // YYYY-MM-DD
+  appointmentDate?: string;  // YYYY-MM-DD
+  startTime: string;         // HH:mm
+  endTime: string;           // HH:mm
   status: AppointmentStatus;
   reason?: string;
+  patientNotes?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -26,11 +28,14 @@ export interface Appointment {
 export interface CreateAppointmentRequest {
   doctorId: string;
   date: string;
+  appointmentDate?: string;
   startTime: string;
   reason?: string;
+  patientNotes?: string;
 }
 
 export interface RescheduleAppointmentRequest {
   date: string;
+  appointmentDate?: string;
   startTime: string;
 }

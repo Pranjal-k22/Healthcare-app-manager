@@ -16,12 +16,21 @@ const {
 
 /**
  * @desc    Get dynamic available slots for a doctor on a specific date
- * @route   GET /api/appointments/slots/:doctorId/:date
+ * @route   GET /api/appointments/slots/:doctorId/:date OR GET /api/doctors/:doctorId/slots?date=YYYY-MM-DD
  * @access  Private (All Authenticated)
  */
 const getAvailableSlots = async (req, res, next) => {
   try {
-    const { doctorId, date } = req.params;
+    const doctorId = req.params.doctorId || req.params.id;
+    const date = req.params.date || req.query.date;
+
+    if (!date) {
+      return res.status(400).json({
+        success: false,
+        message: 'A date parameter (YYYY-MM-DD) is required',
+      });
+    }
+
     const slots = await generateAvailableSlots(doctorId, date);
 
     res.status(200).json({
@@ -40,7 +49,14 @@ const getAvailableSlots = async (req, res, next) => {
  */
 const createAppointment = async (req, res, next) => {
   try {
-    const validation = validateBookingInput(req.body);
+    const targetDate = req.body.date || req.body.appointmentDate;
+    const validation = validateBookingInput({
+      doctorId: req.body.doctorId,
+      date: targetDate,
+      startTime: req.body.startTime,
+      reason: req.body.reason,
+    });
+
     if (!validation.valid) {
       return res.status(400).json({
         success: false,
@@ -51,9 +67,10 @@ const createAppointment = async (req, res, next) => {
     const payload = {
       patientId: req.user._id,
       doctorId: req.body.doctorId,
-      date: req.body.date,
+      date: targetDate,
       startTime: req.body.startTime,
       reason: req.body.reason,
+      patientNotes: req.body.patientNotes,
     };
 
     const appointment = await bookAppointment(payload);
@@ -150,7 +167,12 @@ const cancelAppointmentHandler = async (req, res, next) => {
  */
 const rescheduleAppointmentHandler = async (req, res, next) => {
   try {
-    const validation = validateRescheduleInput(req.body);
+    const targetDate = req.body.date || req.body.appointmentDate;
+    const validation = validateRescheduleInput({
+      date: targetDate,
+      startTime: req.body.startTime,
+    });
+
     if (!validation.valid) {
       return res.status(400).json({
         success: false,
@@ -161,7 +183,7 @@ const rescheduleAppointmentHandler = async (req, res, next) => {
     const newAppointment = await rescheduleAppointment(
       req.params.id,
       {
-        date: req.body.date,
+        date: targetDate,
         startTime: req.body.startTime,
       },
       req.user

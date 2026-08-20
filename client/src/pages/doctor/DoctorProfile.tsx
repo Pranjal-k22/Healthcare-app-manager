@@ -4,7 +4,6 @@ import {
   updateMyDoctorProfile,
 } from '../../services/doctorApi';
 import { Doctor } from '../../types/doctor';
-import { LeaveList } from '../../components/doctor/LeaveList';
 import {
   AlertCircle,
   Award,
@@ -12,7 +11,6 @@ import {
   Calendar,
   CalendarDays,
   CheckCircle2,
-  Clock,
   DollarSign,
   Edit3,
   Mail,
@@ -21,6 +19,9 @@ import {
   Stethoscope,
   X,
 } from 'lucide-react';
+
+import { CalendarSettingsCard } from '../../components/calendar/CalendarSettingsCard';
+import { DoctorLeaveManager } from '../../components/doctor/DoctorLeaveManager';
 
 const DAYS_ORDER: Array<{ key: keyof Doctor['workingHours']; label: string }> = [
   { key: 'monday', label: 'Monday' },
@@ -468,13 +469,18 @@ export const DoctorProfile: React.FC = () => {
         </div>
       </div>
 
-      {/* Doctor Leaves */}
+      {/* Google Calendar Synchronization (Phase 6) */}
+      <div style={{ marginBottom: '1.5rem' }}>
+        <CalendarSettingsCard />
+      </div>
+
+      {/* Doctor Leaves Management (Phase 7) */}
       <div className="glass-card info-card">
         <h3 style={{ fontSize: '1.25rem', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <Calendar size={20} color="#f59e0b" />
-          <span>Registered Leave Days</span>
+          <span>Leave & Absence Management</span>
         </h3>
-        <LeaveList leaves={doctor.leaves || []} />
+        <DoctorLeaveManager />
       </div>
     </div>
   );

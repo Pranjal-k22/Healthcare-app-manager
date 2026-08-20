@@ -14,6 +14,7 @@ const {
   getDoctorLeavesHandler,
   removeDoctorLeaveHandler,
 } = require('../controllers/doctorController');
+const { getAvailableSlots } = require('../controllers/appointmentController');
 
 // All doctor routes require an authenticated user session
 router.use(protect);
@@ -25,8 +26,9 @@ router.get('/', getDoctorsHandler);
 router.get('/me', requireRole('DOCTOR'), getMyDoctorProfileHandler);
 router.put('/me', requireRole('DOCTOR'), updateMyDoctorProfileHandler);
 
-// 3. Single Doctor Details (Authenticated Users)
+// 3. Single Doctor Details & Dynamic Slots (Authenticated Users)
 router.get('/:id', getDoctorByIdHandler);
+router.get('/:id/slots', getAvailableSlots);
 
 // 4. Admin Doctor Provisioning & Updates (Admin Only)
 router.post('/', requireRole('ADMIN'), createDoctorHandler);

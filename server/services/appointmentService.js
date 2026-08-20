@@ -9,6 +9,13 @@ const {
   addMinutesToTime,
   timeToMinutes,
 } = require('../validators/appointmentValidator');
+const {
+  dispatchAppointmentBooked,
+  dispatchAppointmentCancelled,
+  dispatchAppointmentRescheduled,
+} = require('./notificationService');
+const { queueCalendarJob } = require('./jobs/calendarJob');
+const { isDoctorOnLeave } = require('./leaveService');
 
 /**
  * Format populated appointment document into safe, clean response object
@@ -28,10 +35,12 @@ const formatAppointmentResponse = (appDoc) => {
     doctorName: doctor.name || 'Doctor',
     doctorEmail: doctor.email || '',
     date: appDoc.date,
+    appointmentDate: appDoc.date,
     startTime: appDoc.startTime,
     endTime: appDoc.endTime,
     status: appDoc.status,
     reason: appDoc.reason || '',
+    patientNotes: appDoc.patientNotes || '',
     createdAt: appDoc.createdAt,
     updatedAt: appDoc.updatedAt,
   };
@@ -39,11 +48,21 @@ const formatAppointmentResponse = (appDoc) => {
 
 /**
  * Book a new appointment for a patient with double-booking protection
- * @param {object} payload - { patientId, doctorId, date, startTime, reason }
+ * @param {object} payload - { patientId, doctorId, date, startTime, reason, patientNotes }
  * @returns {Promise<object>}
  */
 const bookAppointment = async (payload) => {
-  const { patientId, doctorId, date, startTime, reason } = payload;
+  const {
+    patientId,
+    doctorId,
+    date: rawDate,
+    appointmentDate,
+    startTime,
+    reason,
+    patientNotes,
+  } = payload;
+
+  const date = rawDate || appointmentDate;
 
   // 1. Verify Patient Existence & Role
   const patient = await User.findById(patientId);
@@ -73,6 +92,13 @@ const bookAppointment = async (payload) => {
     throw error;
   }
 
+  // Verify doctor active and available status
+  if (doctorProfile.isActive === false || doctorProfile.isAvailable === false) {
+    const error = new Error('This doctor is currently not accepting appointments');
+    error.statusCode = 400;
+    throw error;
+  }
+
   const doctorUserId = doctorUser._id;
 
   // 3. Verify Date & Time Validity
@@ -92,6 +118,13 @@ const bookAppointment = async (payload) => {
   const isOnLeave = (doctorProfile.leaves || []).some((l) => l.date === date);
   if (isOnLeave) {
     const error = new Error(`Doctor is on scheduled leave on ${date}`);
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const isOnDoctorLeave = await isDoctorOnLeave(doctorUserId, date);
+  if (isOnDoctorLeave) {
+    const error = new Error(`Doctor is on approved leave on ${date}`);
     error.statusCode = 400;
     throw error;
   }
@@ -153,13 +186,22 @@ const bookAppointment = async (payload) => {
       endTime,
       status: 'BOOKED',
       reason: reason ? reason.trim() : '',
+      patientNotes: patientNotes ? patientNotes.trim() : '',
     });
 
     const populated = await Appointment.findById(appointment._id)
       .populate('patientId', 'name email')
       .populate('doctorId', 'name email');
 
-    return formatAppointmentResponse(populated);
+    const formatted = formatAppointmentResponse(populated);
+
+    // Asynchronously dispatch notifications & calendar job (Non-blocking)
+    dispatchAppointmentBooked(populated).catch((err) => {
+      console.error('[Notification] dispatchAppointmentBooked error:', err.message);
+    });
+    queueCalendarJob('CALENDAR_CREATE_EVENT', { appointmentId: appointment._id });
+
+    return formatted;
   } catch (dbError) {
     // Catch MongoDB compound partial unique index violation (Error 11000)
     if (dbError.code === 11000) {
@@ -319,13 +361,19 @@ const cancelAppointment = async (id, requestingUser) => {
   appointment.status = 'CANCELLED';
   await appointment.save();
 
+  // Asynchronously dispatch notifications (Non-blocking)
+  dispatchAppointmentCancelled(appointment, requestingUser).catch((err) => {
+    console.error('[Notification] dispatchAppointmentCancelled error:', err.message);
+  });
+  queueCalendarJob('CALENDAR_DELETE_EVENT', { appointmentId: appointment._id });
+
   return formatAppointmentResponse(appointment);
 };
 
 /**
  * Reschedule an appointment atomically
  * @param {string} id - Original Appointment ID
- * @param {object} newSlot - { date, startTime }
+ * @param {object} newSlot - { date, appointmentDate, startTime }
  * @param {object} requestingUser - { _id, role }
  * @returns {Promise<object>} - Newly created appointment
  */
@@ -364,18 +412,41 @@ const rescheduleAppointment = async (id, newSlot, requestingUser) => {
     throw error;
   }
 
+  const targetDate = newSlot.date || newSlot.appointmentDate;
+
+  // Same-slot reschedule protection
+  if (
+    oldAppointment.date === targetDate &&
+    oldAppointment.startTime === newSlot.startTime
+  ) {
+    const populated = await Appointment.findById(oldAppointment._id)
+      .populate('patientId', 'name email')
+      .populate('doctorId', 'name email');
+    return formatAppointmentResponse(populated);
+  }
+
   // 1. Attempt to create the new appointment first (Guarantees old is not lost if new slot conflicts)
   const newAppointment = await bookAppointment({
     patientId: oldAppointment.patientId,
     doctorId: oldAppointment.doctorId,
-    date: newSlot.date,
+    date: targetDate,
     startTime: newSlot.startTime,
     reason: oldAppointment.reason,
+    patientNotes: oldAppointment.patientNotes,
   });
 
   // 2. Mark old appointment as CANCELLED upon successful new booking
   oldAppointment.status = 'CANCELLED';
   await oldAppointment.save();
+
+  // 3. Asynchronously dispatch reschedule notifications & calendar update (Non-blocking)
+  dispatchAppointmentRescheduled(newAppointment, oldAppointment).catch((err) => {
+    console.error('[Notification] dispatchAppointmentRescheduled error:', err.message);
+  });
+  queueCalendarJob('CALENDAR_UPDATE_EVENT', {
+    newAppointmentId: newAppointment.id,
+    oldAppointmentId: oldAppointment._id,
+  });
 
   return newAppointment;
 };

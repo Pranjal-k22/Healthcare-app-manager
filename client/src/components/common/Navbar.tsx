@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
+import { NotificationBell } from './NotificationBell';
 import {
   Activity,
   Calendar,
@@ -152,6 +153,8 @@ export const Navbar: React.FC = () => {
         <div className="nav-user-panel">
           {isAuthenticated && user ? (
             <>
+              <NotificationBell />
+
               <div className="user-identity">
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <span className="user-name">{user.name}</span>

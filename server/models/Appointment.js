@@ -51,10 +51,26 @@ const appointmentSchema = new mongoose.Schema(
       maxlength: [500, 'Reason cannot exceed 500 characters'],
       default: '',
     },
+    patientNotes: {
+      type: String,
+      trim: true,
+      maxlength: [1000, 'Patient notes cannot exceed 1000 characters'],
+      default: '',
+    },
+    googleCalendarEventId: {
+      type: String,
+      default: null,
+    },
+    calendarSyncStatus: {
+      type: String,
+      enum: ['NOT_REQUIRED', 'PENDING', 'SYNCED', 'FAILED'],
+      default: 'NOT_REQUIRED',
+    },
   },
   {
     timestamps: true,
     toJSON: {
+      virtuals: true,
       transform(doc, ret) {
         delete ret.__v;
         return ret;
@@ -62,6 +78,11 @@ const appointmentSchema = new mongoose.Schema(
     },
   }
 );
+
+// Virtual alias for appointmentDate
+appointmentSchema.virtual('appointmentDate').get(function () {
+  return this.date;
+});
 
 // Compound Partial Unique Index for Database-Level Double-Booking Prevention
 // Applies strictly to active booking states ('BOOKED', 'COMPLETED').

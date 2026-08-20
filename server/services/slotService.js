@@ -8,6 +8,7 @@ const {
   addMinutesToTime,
   timeToMinutes,
 } = require('../validators/appointmentValidator');
+const { isDoctorOnLeave } = require('./leaveService');
 
 /**
  * Generate discrete appointment slots for a given doctor and date
@@ -34,6 +35,11 @@ const generateAvailableSlots = async (doctorId, dateStr) => {
     throw error;
   }
 
+  // Check doctor active & available status
+  if (profile.isActive === false || profile.isAvailable === false) {
+    return [];
+  }
+
   const doctorUserId = profile.userId;
 
   // 2. Reject Past Dates
@@ -41,9 +47,14 @@ const generateAvailableSlots = async (doctorId, dateStr) => {
     return [];
   }
 
-  // 3. Check if Doctor is on Leave on this date
-  const isOnLeave = (profile.leaves || []).some((l) => l.date === dateStr);
-  if (isOnLeave) {
+  // 3. Check if Doctor is on Leave on this date (Profile single dates & DoctorLeave range)
+  const isProfileLeave = (profile.leaves || []).some((l) => l.date === dateStr);
+  if (isProfileLeave) {
+    return [];
+  }
+
+  const isOnDoctorLeave = await isDoctorOnLeave(doctorUserId, dateStr);
+  if (isOnDoctorLeave) {
     return [];
   }
 
@@ -68,9 +79,10 @@ const generateAvailableSlots = async (doctorId, dateStr) => {
     status: { $in: ['BOOKED', 'COMPLETED'] },
   }).select('startTime endTime');
 
-  const bookedStartTimes = new Set(
-    existingAppointments.map((app) => app.startTime)
-  );
+  const existingIntervals = existingAppointments.map((app) => ({
+    startMin: timeToMinutes(app.startTime),
+    endMin: timeToMinutes(app.endTime),
+  }));
 
   // 6. Generate Discrete Time Intervals
   const slots = [];
@@ -80,14 +92,18 @@ const generateAvailableSlots = async (doctorId, dateStr) => {
     const startH = Math.floor(currentMinutes / 60);
     const startM = currentMinutes % 60;
     const startTime = `${String(startH).padStart(2, '0')}:${String(startM).padStart(2, '0')}`;
-
     const endTime = addMinutesToTime(startTime, slotDuration);
+    const endMinutes = currentMinutes + slotDuration;
 
-    // Verify same-day past times and existing bookings
+    // Verify same-day past times
     const isPast = isSlotInPast(dateStr, startTime);
-    const isBooked = bookedStartTimes.has(startTime);
 
-    const available = !isPast && !isBooked;
+    // Interval conflict overlap check: existing.start < requested.end && existing.end > requested.start
+    const hasConflict = existingIntervals.some(
+      (intv) => intv.startMin < endMinutes && intv.endMin > currentMinutes
+    );
+
+    const available = !isPast && !hasConflict;
 
     slots.push({
       startTime,

@@ -16,6 +16,7 @@ import {
   PlusCircle,
   Search,
 } from 'lucide-react';
+import { CalendarSettingsCard } from '../../components/calendar/CalendarSettingsCard';
 
 export const MyAppointments: React.FC = () => {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -104,6 +105,11 @@ export const MyAppointments: React.FC = () => {
           <Search size={16} />
           <span>Book New Consultation</span>
         </Link>
+      </div>
+
+      {/* Google Calendar Synchronization (Phase 6) */}
+      <div style={{ marginBottom: '1.5rem' }}>
+        <CalendarSettingsCard />
       </div>
 
       {actionSuccess && (

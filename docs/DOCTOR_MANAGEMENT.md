@@ -2,7 +2,7 @@
 
 ## 1. Overview & Data Model
 
-Phase 2 introduces practitioner profiles, clinical specializations, weekly consultation hours, consultation slot durations, and leave management.
+Phase 2 provides full doctor management: practitioner profile provisioning, clinical specializations, qualifications, experience, consultation fees, clinic locations, professional biographies, contact details, working days, weekly working hours, slot durations, and availability status.
 
 ```text
 User Collection (Authentication)
@@ -18,7 +18,18 @@ DoctorProfile Collection (Clinical Details)
 ├── _id
 ├── userId (ObjectId -> User._id) [Unique]
 ├── specialization (String)
+├── qualifications ([String]: 'MBBS', 'MD', 'FACC')
+├── experienceYears (Number >= 0)
+├── consultationFee (Number >= 0)
+├── clinicName (String)
+├── clinicAddress (String)
+├── bio (String)
+├── phone (String)
+├── profileImage (String)
+├── workingDays ([String]: 'Monday', 'Tuesday', ...)
 ├── slotDuration (Number: 15, 30, 45, 60 mins)
+├── isAvailable (Boolean, default: true)
+├── isActive (Boolean, default: true)
 ├── workingHours (Structured Object for Mon-Sun)
 └── leaves (Array of { date: 'YYYY-MM-DD', reason: '...' })
 ```
@@ -28,24 +39,27 @@ DoctorProfile Collection (Clinical Details)
 ## 2. User ↔ DoctorProfile Relationship
 
 - The **`User`** model maintains core authentication credentials (name, email, hashed password, role: `DOCTOR`).
-- The **`DoctorProfile`** model holds doctor-specific metadata and links to `User._id` via the `userId` field.
+- The **`DoctorProfile`** model holds doctor-specific professional and availability metadata and links to `User._id` via `userId`.
 - When creating a doctor, both the `User` and `DoctorProfile` documents are created atomically. In environments supporting replica sets, MongoDB sessions/transactions are used; in single-node standalone MongoDB environments, compensating rollback deletes the newly created `User` if profile creation fails.
 
 ---
 
-## 3. Working Hours Data Structure
+## 3. Working Days & Working Hours Data Structure
 
 Working hours are structured as a 7-day map with boolean enablement and strict 24-hour `HH:mm` time strings.
 
 ```json
 {
-  "monday": { "enabled": true, "start": "09:00", "end": "17:00" },
-  "tuesday": { "enabled": true, "start": "09:00", "end": "17:00" },
-  "wednesday": { "enabled": true, "start": "09:00", "end": "17:00" },
-  "thursday": { "enabled": true, "start": "09:00", "end": "17:00" },
-  "friday": { "enabled": true, "start": "09:00", "end": "15:00" },
-  "saturday": { "enabled": false, "start": null, "end": null },
-  "sunday": { "enabled": false, "start": null, "end": null }
+  "workingDays": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+  "workingHours": {
+    "monday": { "enabled": true, "start": "09:00", "end": "17:00" },
+    "tuesday": { "enabled": true, "start": "09:00", "end": "17:00" },
+    "wednesday": { "enabled": true, "start": "09:00", "end": "17:00" },
+    "thursday": { "enabled": true, "start": "09:00", "end": "17:00" },
+    "friday": { "enabled": true, "start": "09:00", "end": "15:00" },
+    "saturday": { "enabled": false, "start": null, "end": null },
+    "sunday": { "enabled": false, "start": null, "end": null }
+  }
 }
 ```
 
@@ -56,59 +70,33 @@ Working hours are structured as a 7-day map with boolean enablement and strict 2
 
 ---
 
-## 4. Slot Duration Format
+## 4. Slot Duration & Availability Format
 
-- **Type**: `Number` (stored in integer minutes).
-- **Standard Supported Values**: `15`, `20`, `30`, `45`, `60`.
-- **Validation**: Strict positive integer (`5 <= slotDuration <= 240`). Never stored as a string.
-
----
-
-## 5. Doctor Leaves Data Structure
-
-Leaves represent dates where a doctor is unavailable for consultations.
-
-```json
-[
-  {
-    "date": "2026-09-20",
-    "reason": "Cardiology World Summit"
-  }
-]
-```
-
-- **Date Format**: `YYYY-MM-DD` (e.g. `2026-09-20`). Real calendar validity is enforced (invalid days like `2026-02-30` are rejected).
-- **Duplicate Prevention**: Re-adding an existing leave date returns `409 Conflict`.
+- **Slot Duration**: `Number` (integer minutes, e.g. 15, 20, 30, 45, 60; min: 5, max: 240).
+- **isAvailable**: `Boolean` flag indicating if doctor is currently accepting bookings.
+- **isActive**: `Boolean` soft-delete flag managed by administrators.
 
 ---
 
-## 6. API Endpoints Reference
+## 5. API Endpoints Reference
 
 | Method | Endpoint | Authorization | Description |
 | :--- | :--- | :--- | :--- |
-| `GET` | `/api/doctors` | Private (All Authenticated) | List doctors with `?search=` and `?specialization=` filters |
+| `GET` | `/api/doctors` | Private (All Authenticated) | List doctors with `?search=`, `?specialization=`, `?isAvailable=` filters |
 | `GET` | `/api/doctors/me` | Private (`DOCTOR`) | Doctor inspects own profile & schedule |
+| `PUT` | `/api/doctors/me` | Private (`DOCTOR`) | Doctor self-service update of qualifications, bio, fees, clinic, availability |
 | `GET` | `/api/doctors/:id` | Private (All Authenticated) | Fetch single doctor details & public schedule |
 | `POST` | `/api/doctors` | Private (`ADMIN`) | Provision new doctor user & profile |
-| `PUT` | `/api/doctors/:id` | Private (`ADMIN`) | Update doctor name, specialization, duration, hours |
+| `PUT` | `/api/doctors/:id` | Private (`ADMIN`) | Full administrative update of doctor profile |
+| `PATCH`| `/api/doctors/:id/status` | Private (`ADMIN`) | Toggle doctor active / deactivated status |
 | `POST` | `/api/doctors/:id/leave` | Private (`ADMIN`) | Schedule a doctor leave date |
 | `GET` | `/api/doctors/:id/leaves` | Private (All Authenticated) | Retrieve doctor leave entries |
-| `DELETE` | `/api/doctors/:id/leave/:date`| Private (`ADMIN`) | Remove a scheduled leave date |
+| `DELETE`| `/api/doctors/:id/leave/:date`| Private (`ADMIN`) | Remove a scheduled leave date |
 
 ---
 
-## 7. Role-Based Access Control Rules
+## 6. Role-Based Access Control Rules
 
-1. **Patient**: Can search doctors (`GET /api/doctors`) and view doctor profiles (`GET /api/doctors/:id`). Cannot create, edit, or delete doctors or leaves.
-2. **Doctor**: Can view their own profile via `GET /api/doctors/me`. Cannot modify another doctor's profile.
-3. **Admin**: Has full authority to provision doctors, update clinical details, and manage leave schedules.
-
----
-
-## 8. Preparation for Phase 3 (Slot Generation)
-
-In **Phase 3**, the slot generation algorithm will take:
-1. `doctor.workingHours` for the requested day of week.
-2. `doctor.slotDuration` (e.g., 30 mins) to generate discrete slot intervals.
-3. `doctor.leaves` to mark full days as unavailable.
-4. `appointments` collection to filter out already-booked or locked slots.
+1. **Patient**: Can discover doctors (`GET /api/doctors`) and view doctor profiles (`GET /api/doctors/:id`). Cannot create, edit, or deactivate doctors.
+2. **Doctor**: Can view their own profile via `GET /api/doctors/me` and update permitted professional fields via `PUT /api/doctors/me`. Cannot modify another doctor's profile or escalate privileges.
+3. **Admin**: Has full authority to provision doctors, update clinical details, toggle active status, and manage leave schedules.

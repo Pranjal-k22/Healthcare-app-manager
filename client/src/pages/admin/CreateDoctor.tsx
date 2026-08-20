@@ -313,6 +313,19 @@ export const CreateDoctor: React.FC = () => {
           />
         </div>
 
+        <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <input
+            id="createDocAvail"
+            type="checkbox"
+            checked={isAvailable}
+            onChange={(e) => setIsAvailable(e.target.checked)}
+            style={{ width: '18px', height: '18px' }}
+          />
+          <label htmlFor="createDocAvail" className="form-label" style={{ marginBottom: 0, cursor: 'pointer' }}>
+            Doctor is actively taking consultations (Available Status)
+          </label>
+        </div>
+
         {/* Working Hours */}
         <div style={{ margin: '2rem 0' }}>
           <WorkingHoursForm

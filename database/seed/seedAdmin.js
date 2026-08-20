@@ -1,4 +1,10 @@
-const mongoose = require('mongoose');
+const path = require('path');
+
+// Ensure module resolution uses server/node_modules
+const dotenv = require(path.join(__dirname, '../../server/node_modules/dotenv'));
+dotenv.config({ path: path.join(__dirname, '../../.env') });
+
+const mongoose = require(path.join(__dirname, '../../server/node_modules/mongoose'));
 const config = require('../../server/config/env');
 const User = require('../../server/models/User');
 

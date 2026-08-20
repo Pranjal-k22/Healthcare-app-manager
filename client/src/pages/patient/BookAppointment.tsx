@@ -27,6 +27,7 @@ export const BookAppointment: React.FC = () => {
   const [slots, setSlots] = useState<AvailableSlot[]>([]);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [reason, setReason] = useState('');
+  const [patientNotes, setPatientNotes] = useState('');
 
   const [isLoadingDoctor, setIsLoadingDoctor] = useState(true);
   const [isLoadingSlots, setIsLoadingSlots] = useState(false);
@@ -88,6 +89,7 @@ export const BookAppointment: React.FC = () => {
         date: selectedDate,
         startTime: selectedSlot,
         reason: reason.trim(),
+        patientNotes: patientNotes.trim(),
       });
 
       setConfirmedAppointment(appointment);
@@ -257,11 +259,27 @@ export const BookAppointment: React.FC = () => {
           <textarea
             id="consultReason"
             className="form-input"
-            rows={3}
+            rows={2}
             placeholder="Briefly describe symptoms or reason for visit (e.g. Annual routine checkup, follow-up on lab tests)"
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             maxLength={500}
+          />
+        </div>
+
+        <div className="form-group">
+          <label className="form-label" htmlFor="patientNotes">
+            <FileText size={15} style={{ display: 'inline', marginRight: '0.35rem' }} />
+            4. Additional Patient Notes (Optional)
+          </label>
+          <textarea
+            id="patientNotes"
+            className="form-input"
+            rows={2}
+            placeholder="Any background notes, allergies, or questions for the doctor..."
+            value={patientNotes}
+            onChange={(e) => setPatientNotes(e.target.value)}
+            maxLength={1000}
           />
         </div>
 
