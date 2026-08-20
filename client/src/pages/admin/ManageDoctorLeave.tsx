@@ -15,7 +15,6 @@ import {
   CalendarOff,
   CheckCircle2,
   Plus,
-  Stethoscope,
 } from 'lucide-react';
 
 export const ManageDoctorLeave: React.FC = () => {

@@ -3,7 +3,7 @@ import { Doctor } from '../../types/doctor';
 import { getDoctors } from '../../services/doctorApi';
 import { DoctorCard } from '../../components/doctor/DoctorCard';
 import { DoctorSearchBar } from '../../components/doctor/DoctorSearchBar';
-import { AlertCircle, Stethoscope, Users } from 'lucide-react';
+import { AlertCircle, Stethoscope } from 'lucide-react';
 
 export const DoctorSearch: React.FC = () => {
   const [doctors, setDoctors] = useState<Doctor[]>([]);

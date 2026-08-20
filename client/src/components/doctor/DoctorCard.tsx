@@ -9,7 +9,6 @@ import {
   Eye,
   Mail,
   Stethoscope,
-  UserCheck,
 } from 'lucide-react';
 
 interface DoctorCardProps {

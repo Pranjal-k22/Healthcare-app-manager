@@ -8,9 +8,7 @@ import {
   CalendarDays,
   Clock,
   Mail,
-  ShieldCheck,
   Stethoscope,
-  UserCheck,
 } from 'lucide-react';
 
 const DAYS_ORDER: Array<{ key: keyof Doctor['workingHours']; label: string }> = [

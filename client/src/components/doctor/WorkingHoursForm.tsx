@@ -1,6 +1,6 @@
 import React from 'react';
 import { WorkingHours } from '../../types/doctor';
-import { CheckCircle2, Clock, Sparkles } from 'lucide-react';
+import { Clock, Sparkles } from 'lucide-react';
 
 const DAYS: Array<{ key: keyof WorkingHours; label: string }> = [
   { key: 'monday', label: 'Monday' },

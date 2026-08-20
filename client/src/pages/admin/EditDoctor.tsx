@@ -6,9 +6,7 @@ import { WorkingHoursForm } from '../../components/doctor/WorkingHoursForm';
 import {
   AlertCircle,
   ArrowLeft,
-  CheckCircle2,
   Save,
-  Stethoscope,
   User,
 } from 'lucide-react';
 

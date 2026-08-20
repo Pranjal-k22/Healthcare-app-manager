@@ -9,9 +9,7 @@ import {
   Calendar,
   CalendarDays,
   Clock,
-  HeartPulse,
   Mail,
-  ShieldCheck,
   Sparkles,
   Stethoscope,
 } from 'lucide-react';

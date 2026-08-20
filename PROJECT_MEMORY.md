@@ -1,9 +1,9 @@
 # PROJECT_MEMORY.md — Source of Truth
 
 ## Current Status
-- **Active Phase**: Phase 1 — Foundation + Authentication
-- **STATUS**: **COMPLETED**
-- **Next Phase**: Phase 2 — Doctor Management + Working Hours & Specializations (Awaiting user command: "NOW PHASE 2")
+- **Phase 1 — Foundation + Authentication**: **COMPLETED**
+- **Phase 2 — Doctor Management**: **COMPLETED**
+- **Next Phase**: Phase 3 — Slot Generation Engine + Double-Booking Prevention + Patient Booking Flow (Awaiting user command: "NOW PHASE 3")
 
 ---
 
@@ -18,8 +18,8 @@
 - **Backend**: Node.js, Express.js (REST API architecture), cookie-parser, cors, dotenv.
 - **Database**: MongoDB with Mongoose ODM.
 - **Security & Auth**: JSON Web Tokens (JWT), Bcryptjs (10 salt rounds), Role-Based Access Control (RBAC).
-- **Future AI (Phase 7/8)**: Local Ollama server (`http://localhost:11434`), structured prompt orchestration. *Not active in Phase 1.*
-- **Future Calendar & Email (Phase 9/10)**: Google Calendar API (OAuth2) & Nodemailer (SMTP). *Not active in Phase 1.*
+- **Future AI (Phase 7/8)**: Local Ollama server (`http://localhost:11434`), structured prompt orchestration. *Not active in Phase 2.*
+- **Future Calendar & Email (Phase 9/10)**: Google Calendar API (OAuth2) & Nodemailer (SMTP). *Not active in Phase 2.*
 
 ---
 
@@ -32,7 +32,7 @@
    - React must NEVER communicate directly with Ollama.
 3. **Role-Based Access Control (RBAC)**:
    - Three distinct roles: `PATIENT`, `DOCTOR`, `ADMIN`.
-   - Public registration strictly assigns `PATIENT`. Admin is created via `seedAdmin.js`. Doctors are provisioned via Admin workflows.
+   - Public registration strictly assigns `PATIENT`. Admin is created via `seedAdmin.js`. Doctors are provisioned via Admin workflows (`seedDoctors.js` or `POST /api/doctors`).
 4. **Security & Data Integrity**:
    - Passwords must always be hashed with bcrypt. Passwords and internal fields (`__v`) are stripped from JSON responses (`toJSON` transform).
    - JWT tokens contain `{ id, role }` and are validated by `authMiddleware.js`.
@@ -42,7 +42,7 @@
 
 ## 4. Master Database Collections Plan
 1. `users` — Base user identity (`PATIENT`, `DOCTOR`, `ADMIN`) [Implemented in Phase 1]
-2. `doctorprofiles` — Specialization, experience, fees, working hours, leaves [Phase 2/5]
+2. `doctorprofiles` — Specialization, experience, fees, working hours, leaves [Implemented in Phase 2]
 3. `appointments` — Patient-Doctor slot bookings, statuses (`PENDING`, `CONFIRMED`, `COMPLETED`, `CANCELLED`) [Phase 3/6]
 4. `symptoms` — Patient-entered symptoms, duration, severity [Phase 3/6]
 5. `aisummaries` — Pre-visit clinical overview & Post-visit consultation summaries [Phase 7/8]
@@ -58,8 +58,8 @@
 | Phase | Description | Status |
 | :--- | :--- | :--- |
 | **Phase 1** | Foundation + JWT Authentication + RBAC + Seeder + Dark UI | ✅ **COMPLETED** |
-| **Phase 2** | Doctor Profile Management + Working Hours + Admin Doctor Provisioning | ⏳ **PENDING (Next)** |
-| **Phase 3** | Slot Generation Engine + Double-Booking Prevention + Patient Booking Flow | ⏳ Planned |
+| **Phase 2** | Doctor Profile Management + Working Hours + Admin Doctor Provisioning | ✅ **COMPLETED** |
+| **Phase 3** | Slot Generation Engine + Double-Booking Prevention + Patient Booking Flow | ⏳ **PENDING (Next)** |
 | **Phase 4** | Symptom Intake + Doctor Clinical Consultation Notes + Prescriptions | ⏳ Planned |
 | **Phase 5** | Local Ollama Integration + Health Probe + Prompt Isolation | ⏳ Planned |
 | **Phase 6** | AI Pre-Visit & Post-Visit Summaries Engine | ⏳ Planned |
@@ -70,85 +70,73 @@
 
 ---
 
-## 6. Phase 1 Implementation Status
+## 6. Phase 1 Implementation Status (COMPLETED)
+- Express REST API with CORS whitelist, JSON body parser, and centralized error handling.
+- `User` model with pre-save bcrypt hashing, `comparePassword`, unique email index, and role enum (`PATIENT`, `DOCTOR`, `ADMIN`).
+- JWT authentication (`generateToken.js`, `authMiddleware.js`, `roleMiddleware.js`).
+- Database seeders: `seedAdmin.js`.
+- React + Vite + TypeScript frontend with `AuthContext.tsx`, `useAuth.ts`, `ProtectedRoute.tsx`, `Navbar.tsx`, `Login.tsx`, `Register.tsx`, and role dashboard placeholders.
 
-### Completion Status: COMPLETED (Verified & Tested)
+---
 
-### Implemented Folders
-- `client/` (Frontend React + TS + Vite SPA)
-- `client/src/components/common/` (Navbar, ProtectedRoute)
-- `client/src/context/` (AuthContext)
-- `client/src/hooks/` (useAuth)
-- `client/src/pages/auth/` (Login, Register)
-- `client/src/pages/dashboard/` (PatientDashboard, DoctorDashboard, AdminDashboard)
-- `client/src/services/` (apiClient, authApi)
-- `client/src/types/` (auth)
-- `client/src/utils/` (constants)
-- `server/` (Backend Node.js & Express REST API)
-- `server/config/` (db.js, env.js)
-- `server/controllers/` (authController.js)
-- `server/middleware/` (authMiddleware.js, roleMiddleware.js, errorMiddleware.js)
-- `server/models/` (User.js)
-- `server/routes/` (authRoutes.js)
-- `server/utils/` (generateToken.js)
-- `database/seed/` (seedAdmin.js)
-- `docs/` (ARCHITECTURE.md)
+## 7. Phase 2 Implementation Status (COMPLETED)
 
-### Implemented Files
-- `server/server.js`, `server/app.js`, `server/package.json`
-- `server/config/db.js`, `server/config/env.js`
-- `server/models/User.js`
-- `server/controllers/authController.js`
-- `server/routes/authRoutes.js`
-- `server/middleware/authMiddleware.js`, `server/middleware/roleMiddleware.js`, `server/middleware/errorMiddleware.js`
-- `server/utils/generateToken.js`
-- `database/seed/seedAdmin.js`
-- `client/package.json`, `client/vite.config.ts`, `client/tsconfig.json`, `client/index.html`
-- `client/src/main.tsx`, `client/src/App.tsx`, `client/src/index.css`
-- `client/src/types/auth.ts`, `client/src/utils/constants.ts`
-- `client/src/services/apiClient.ts`, `client/src/services/authApi.ts`
-- `client/src/context/AuthContext.tsx`, `client/src/hooks/useAuth.ts`
-- `client/src/components/common/Navbar.tsx`, `client/src/components/common/ProtectedRoute.tsx`
-- `client/src/pages/auth/Login.tsx`, `client/src/pages/auth/Register.tsx`
-- `client/src/pages/dashboard/PatientDashboard.tsx`, `client/src/pages/dashboard/DoctorDashboard.tsx`, `client/src/pages/dashboard/AdminDashboard.tsx`
-- `.env`, `.env.example`, `.gitignore`, `README.md`, `docs/ARCHITECTURE.md`, `package.json`, `PROJECT_MEMORY.md`
+### Status: COMPLETED (Verified & Tested)
 
-### Installed Dependencies
-- **Backend**: `express` (^4.19.2), `mongoose` (^8.5.2), `dotenv` (^16.4.5), `cors` (^2.8.5), `bcryptjs` (^2.4.3), `jsonwebtoken` (^9.0.2), `cookie-parser` (^1.4.6), `nodemon` (^3.1.4 dev).
-- **Frontend**: `react` (^18.3.1), `react-dom` (^18.3.1), `react-router-dom` (^6.24.1), `axios` (^1.7.2), `lucide-react` (^0.408.0), `vite` (^5.3.3 dev), `typescript` (^5.5.3 dev).
+### DoctorProfile Model & User Relationship
+- Model file: `server/models/DoctorProfile.js`.
+- 1:1 relationship with `User` via `userId` (`type: ObjectId, ref: 'User', unique: true, required: true`).
+- `specialization`: String, required, trimmed.
+- `slotDuration`: Number (in minutes), required, default: 30, min: 5, max: 240.
+- `workingHours`: Subschema for monday–sunday, each containing `{ enabled: Boolean, start: String (HH:mm), end: String (HH:mm) }`.
+- `leaves`: Array of subdocuments `{ date: String (YYYY-MM-DD), reason: String }`.
+- Unique index: `userId` (1:1 enforce).
+
+### Doctor Validation & Service Layer
+- Validator file: `server/validators/doctorValidator.js`:
+  - 24-hour `HH:mm` format regex validation.
+  - `start < end` chronological time validation.
+  - `YYYY-MM-DD` real calendar date validation (leap year aware).
+  - Weekly working hours validator across all 7 days.
+  - Doctor creation, update, and leave input validators.
+- Service file: `server/services/doctorService.js`:
+  - `createDoctor(data)`: Hashes password, creates User (`role: 'DOCTOR'`), creates `DoctorProfile` with transaction support and compensating rollback.
+  - `getAllDoctors({ specialization, search })`: Queries and populates doctors, case-insensitive keyword search and specialization filters.
+  - `getDoctorById(id)`: Populates user info, returns sanitized doctor profile.
+  - `getDoctorByUserId(userId)`: Resolves doctor profile for authenticated doctor user (`req.user._id`).
+  - `updateDoctor(id, data)`: Admin update for doctor details, specialization, slot duration, and working hours.
+  - `addDoctorLeave(id, { date, reason })`: Adds leave date with duplicate date prevention.
+  - `removeDoctorLeave(id, date)`: Removes scheduled leave date.
+  - `getDoctorLeaves(id)`: Returns doctor's leave array.
 
 ### API Endpoints
-- `GET /api/health` — Public server health probe.
-- `POST /api/auth/register` — Public patient registration (Forces `PATIENT` role).
-- `POST /api/auth/login` — Public login with credentials returning JWT + sanitized user.
-- `GET /api/auth/me` — Protected profile endpoint requiring `Authorization: Bearer <token>`.
+- `GET    /api/doctors` — Authenticated: List all doctors with `?search=` and `?specialization=` filters.
+- `GET    /api/doctors/me` — Doctor only: View own doctor profile & schedule.
+- `GET    /api/doctors/:id` — Authenticated: View doctor details & weekly hours.
+- `POST   /api/doctors` — Admin only: Provision new doctor account and linked profile.
+- `PUT    /api/doctors/:id` — Admin only: Update doctor credentials and schedule.
+- `POST   /api/doctors/:id/leave` — Admin only: Schedule doctor leave date.
+- `GET    /api/doctors/:id/leaves` — Authenticated: Get doctor's scheduled leaves.
+- `DELETE /api/doctors/:id/leave/:date` — Admin only: Remove scheduled leave date.
 
-### User Model Details
-- Schema fields: `name` (String, required), `email` (String, required, unique, lowercase, trimmed), `password` (String, required, min 6 chars, hashed via bcrypt), `role` (String, enum: `['PATIENT', 'DOCTOR', 'ADMIN']`, default: `'PATIENT'`), `timestamps` (createdAt, updatedAt).
-- Methods & Hooks: Pre-save bcrypt hashing (salt rounds: 10), `comparePassword` instance method, `toJSON` transform automatically stripping `password` and `__v`.
+### Frontend Components & Pages
+- Types: `client/src/types/doctor.ts`.
+- API Service: `client/src/services/doctorApi.ts`.
+- Components: `DoctorCard.tsx`, `DoctorSearchBar.tsx`, `WorkingHoursForm.tsx`, `LeaveList.tsx`.
+- Admin Pages: `ManageDoctors.tsx`, `CreateDoctor.tsx`, `EditDoctor.tsx`, `ManageDoctorLeave.tsx`.
+- Patient Pages: `DoctorSearch.tsx`, `DoctorDetails.tsx`.
+- Doctor Pages: `DoctorProfile.tsx`.
+- Nav & Dashboards: Updated `Navbar.tsx` with contextual links, updated `PatientDashboard.tsx`, `DoctorDashboard.tsx`, and `AdminDashboard.tsx`.
 
-### Authentication & JWT Implementation
-- Token payload contains `{ id: user._id, role: user.role }`.
-- Signed with `JWT_SECRET` and configurable expiry (`JWT_EXPIRES_IN=7d`).
-- `authMiddleware.js` extracts Bearer header, validates JWT signature, queries user document excluding password, and sets `req.user`.
+### Seeder Script
+- `database/seed/seedDoctors.js`: Seeds *Dr. Sarah Jenkins* (Cardiology) and *Dr. Marcus Vance* (Neurology). Run via `npm run seed:doctors`.
 
-### Role-Based Authorization Implementation
-- Reusable `requireRole('PATIENT' | 'DOCTOR' | 'ADMIN')` middleware returns `403 Forbidden` if `req.user.role` does not match.
-- Public registration endpoint cannot create `ADMIN` or `DOCTOR` users.
-- Database seeder `seedAdmin.js` creates the initial superuser account.
+### Testing & Validation Results
+- [✓] TypeScript build compilation (`npm run build` in `client/`) passed with 0 errors.
+- [✓] Automated Phase 2 validation checks (`testDoctorPhase2.js`) passed with 0 errors.
+- [✓] Time format, start < end, calendar date, working hours, and doctor creation payload validation verified.
+- [✓] Phase 1 regression test passed: Auth endpoints, JWT verify, and RBAC guards fully intact.
 
-### Frontend Authentication & Protected Routes
-- `AuthContext.tsx` manages `user`, `token`, `isAuthenticated`, `isLoading`, `login()`, `register()`, and `logout()`.
-- Session hydration on app start queries `GET /api/auth/me` to validate stored token.
-- `<ProtectedRoute allowedRoles={['...']}>` guards role-specific views and redirects unauthorized or unauthenticated visits.
-- Role-based redirect logic: `PATIENT` ➔ `/patient/dashboard`, `DOCTOR` ➔ `/doctor/dashboard`, `ADMIN` ➔ `/admin/dashboard`.
-
-### Testing Status
-- [✓] Frontend TypeScript compilation & build (`npm run build`) passed with 0 errors.
-- [✓] Backend module exports and JWT token generation verified with 0 errors.
-- [✓] Bcrypt hashing and password comparison verified.
-- [✓] RBAC role segregation and route guards verified.
-
-### Known Limitations (Intentional for Phase 1)
-- Doctor profiles and appointment booking are placeholders; will be introduced in Phase 2 & 3.
-- Ollama, email notifications, Google Calendar, and background jobs are not yet active, maintaining strict vertical slice isolation.
+### Known Limitations (Strictly by Design for Phase 2)
+- Slot generation and appointment booking will be introduced in **Phase 3**.
+- Ollama local LLM, clinical summaries, prescriptions, Google Calendar, and background jobs will follow in subsequent phases.

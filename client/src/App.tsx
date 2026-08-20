@@ -8,6 +8,13 @@ import { Register } from './pages/auth/Register';
 import { PatientDashboard } from './pages/dashboard/PatientDashboard';
 import { DoctorDashboard } from './pages/dashboard/DoctorDashboard';
 import { AdminDashboard } from './pages/dashboard/AdminDashboard';
+import { DoctorSearch } from './pages/patient/DoctorSearch';
+import { DoctorDetails } from './pages/patient/DoctorDetails';
+import { DoctorProfile } from './pages/doctor/DoctorProfile';
+import { ManageDoctors } from './pages/admin/ManageDoctors';
+import { CreateDoctor } from './pages/admin/CreateDoctor';
+import { EditDoctor } from './pages/admin/EditDoctor';
+import { ManageDoctorLeave } from './pages/admin/ManageDoctorLeave';
 import { ROLE_DASHBOARD_ROUTES } from './utils/constants';
 
 const RootRedirect: React.FC = () => {
@@ -34,7 +41,7 @@ export const App: React.FC = () => {
       <Navbar />
       <main className="main-content">
         <Routes>
-          {/* Default Route */}
+          {/* Default Root */}
           <Route path="/" element={<RootRedirect />} />
 
           {/* Public Auth Routes */}
@@ -50,6 +57,22 @@ export const App: React.FC = () => {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/patient/doctors"
+            element={
+              <ProtectedRoute allowedRoles={['PATIENT', 'ADMIN']}>
+                <DoctorSearch />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/patient/doctors/:id"
+            element={
+              <ProtectedRoute allowedRoles={['PATIENT', 'ADMIN']}>
+                <DoctorDetails />
+              </ProtectedRoute>
+            }
+          />
 
           {/* Protected Doctor Routes */}
           <Route
@@ -60,6 +83,14 @@ export const App: React.FC = () => {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/doctor/profile"
+            element={
+              <ProtectedRoute allowedRoles={['DOCTOR']}>
+                <DoctorProfile />
+              </ProtectedRoute>
+            }
+          />
 
           {/* Protected Admin Routes */}
           <Route
@@ -67,6 +98,38 @@ export const App: React.FC = () => {
             element={
               <ProtectedRoute allowedRoles={['ADMIN']}>
                 <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/doctors"
+            element={
+              <ProtectedRoute allowedRoles={['ADMIN']}>
+                <ManageDoctors />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/doctors/create"
+            element={
+              <ProtectedRoute allowedRoles={['ADMIN']}>
+                <CreateDoctor />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/doctors/:id/edit"
+            element={
+              <ProtectedRoute allowedRoles={['ADMIN']}>
+                <EditDoctor />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/doctors/:id/leave"
+            element={
+              <ProtectedRoute allowedRoles={['ADMIN']}>
+                <ManageDoctorLeave />
               </ProtectedRoute>
             }
           />
