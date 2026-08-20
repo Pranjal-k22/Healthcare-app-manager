@@ -162,5 +162,20 @@
   - `docs/API_QUICK_REFERENCE.md`
   - `docs/DATABASE_QUICK_REFERENCE.md`
   - `docs/FILE_INVENTORY.md`
+  - `docs/DEPLOYMENT.md`
+  - `docs/INTEGRATION_AUDIT.md`
 - **Master README Updated**: Production-ready deployment and quick-start guide.
-- **Verification Complete**: 10/10 automated test suites passed cleanly in 0.50s; client Vite bundle compiled with 0 errors.
+- **Verification Complete**: 10/10 automated test suites passed cleanly; client Vite bundle compiled with 0 errors.
+
+---
+
+## 17. Final Integration Audit & Connectivity Status
+- **MongoDB**: **PASS (Connected)** — Verified at `mongodb://localhost:27017/healthcare_appointment_db`.
+- **Authentication / JWT**: **PASS (Verified)** — Stateless tokens with role-based authorization and IDOR protections.
+- **Frontend ↔ Backend**: **PASS (Verified)** — Axios interceptors with Bearer auth; CORS whitelisted for port 5173.
+- **Background Cron Jobs**: **PASS (Verified)** — 60s appointment reminders and medication schedule workers active.
+- **Transactional Email**: **PASS (Mock/Live Ready)** — Nodemailer with 3-attempt backoff; mock development fallback.
+- **Google Calendar**: **PASS (Configured)** — OAuth2 client with offline token refresh and dual route aliases (`/api/calendar/auth`, `/api/calendar/oauth/callback`).
+- **Local Ollama LLM**: **PASS (Verified & Handled)** — Local provider with timeout and fallback to `aiStatus=FAILED` if daemon is stopped.
+- **Diagnostic Tooling**: `server/scripts/check-integrations.js` (`npm run audit --prefix server`).
+

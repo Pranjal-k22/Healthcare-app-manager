@@ -8,7 +8,10 @@ dotenv.config({ path: path.resolve(__dirname, '../.env') });
 const config = {
   PORT: process.env.PORT || 5000,
   NODE_ENV: process.env.NODE_ENV || 'development',
-  MONGO_URI: process.env.MONGO_URI || 'mongodb://localhost:27017/healthcare_appointment_db',
+  MONGO_URI:
+    process.env.MONGO_URI ||
+    process.env.MONGODB_URI ||
+    'mongodb://localhost:27017/healthcare_appointment_db',
   JWT_SECRET: process.env.JWT_SECRET || 'super_secret_healthcare_jwt_key_phase1_2026',
   JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || '7d',
   CLIENT_URL: process.env.CLIENT_URL || 'http://localhost:5173',
@@ -17,10 +20,10 @@ const config = {
   ADMIN_PASSWORD: process.env.ADMIN_PASSWORD || 'AdminPassword123!',
 
   // Email Notification Settings (Phase 5)
-  SMTP_HOST: process.env.SMTP_HOST || 'smtp.mailtrap.io',
-  SMTP_PORT: parseInt(process.env.SMTP_PORT, 10) || 2525,
-  SMTP_USER: process.env.SMTP_USER || '',
-  SMTP_PASS: process.env.SMTP_PASS || '',
+  SMTP_HOST: process.env.SMTP_HOST || process.env.EMAIL_HOST || 'smtp.mailtrap.io',
+  SMTP_PORT: parseInt(process.env.SMTP_PORT || process.env.EMAIL_PORT, 10) || 2525,
+  SMTP_USER: process.env.SMTP_USER || process.env.EMAIL_USER || '',
+  SMTP_PASS: process.env.SMTP_PASS || process.env.EMAIL_PASSWORD || '',
   EMAIL_FROM: process.env.EMAIL_FROM || 'HealthPulse <notifications@healthpulse.com>',
   ENABLE_EMAIL_NOTIFICATIONS: process.env.ENABLE_EMAIL_NOTIFICATIONS === 'true',
 
@@ -37,7 +40,7 @@ const config = {
   APPOINTMENT_TIMEZONE: process.env.APPOINTMENT_TIMEZONE || 'UTC',
 
   // Local Ollama LLM Settings (Phase 10)
-  OLLAMA_HOST: process.env.OLLAMA_HOST || 'http://localhost:11434',
+  OLLAMA_HOST: process.env.OLLAMA_HOST || process.env.OLLAMA_BASE_URL || 'http://localhost:11434',
   OLLAMA_MODEL: process.env.OLLAMA_MODEL || 'llama3',
 };
 
