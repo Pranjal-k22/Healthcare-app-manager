@@ -239,6 +239,41 @@ h1, h2, h3, h4, h5, h6 {
   border: 1px solid rgba(16, 185, 129, 0.25);
 }
 
+.qualification-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.7rem;
+  font-weight: 600;
+  background: rgba(14, 165, 233, 0.1);
+  color: #38bdf8;
+  border: 1px solid rgba(14, 165, 233, 0.2);
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.status-pill-active {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.status-pill-unavailable {
+  background: rgba(244, 63, 94, 0.12);
+  color: #fda4af;
+  border: 1px solid rgba(244, 63, 94, 0.25);
+}
+
 /* Status Badges */
 .status-badge {
   display: inline-flex;
@@ -378,6 +413,10 @@ h1, h2, h3, h4, h5, h6 {
 .btn-sm {
   padding: 0.4rem 0.8rem;
   font-size: 0.8rem;
+}
+
+.btn-block {
+  width: 100%;
 }
 
 .back-link {
@@ -869,6 +908,11 @@ h1, h2, h3, h4, h5, h6 {
   transform: translateY(-2px);
   border-color: rgba(14, 165, 233, 0.35);
   box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5);
+}
+
+.doctor-card-inactive {
+  opacity: 0.6;
+  border-style: dashed;
 }
 
 .doctor-card-header {
