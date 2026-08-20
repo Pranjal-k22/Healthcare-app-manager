@@ -61,7 +61,7 @@ app.use('/api/auth', authLimiter);
 app.get('/api/health', (req, res) => {
   res.status(200).json({
     success: true,
-    message: 'Healthcare Appointment API is healthy (Phase 9)',
+    message: 'HealthPulse API is healthy (Phase 11 Production Ready)',
     timestamp: new Date().toISOString(),
   });
 });

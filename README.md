@@ -1,178 +1,126 @@
-# Healthcare Appointment & Follow-up Manager (HealthPulse)
+# HealthPulse — Healthcare Appointment & Follow-up Manager
 
-Healthcare Appointment & Follow-up Management System — **Phase 1: Foundation & Authentication**, **Phase 2: Doctor Management**, **Phase 3: Appointment Engine**, **Phase 4: Doctor Clinical Workflow**, **Phase 5: Notifications & Background Jobs**, **Phase 6: Google Calendar Integration**, **Phase 7: Leave Conflict & Reliability**, **Phase 8: Medication Reminders**, and **Phase 9: Testing & Security Hardening**.
-
----
-
-## 🚀 Active Features
-
-### Phase 1 — Foundation & Authentication
-- ✅ **Backend REST API**: Node.js & Express architecture with modular routes, controllers, and centralized error handling.
-- ✅ **Database Persistence**: MongoDB with Mongoose ODM and unique user indexes.
-- ✅ **Stateless Authentication**: JSON Web Token (JWT) issuing, Bearer verification middleware.
-- ✅ **Role-Based Access Control (RBAC)**: Enforced segregation across `PATIENT`, `DOCTOR`, and `ADMIN`.
-- ✅ **Admin Seeder**: Dedicated seeder for the initial administrator account (`npm run seed:admin`).
-
-### Phase 2 — Doctor Management
-- ✅ **DoctorProfile Model**: Dedicated profile collection linked to `User` via unique `userId`.
-- ✅ **Weekly Working Hours**: Structured Monday–Sunday schedules with `HH:mm` 24-hour validation (`start < end`).
-- ✅ **Slot Duration**: Configurable consultation slot lengths (15, 20, 30, 45, 60 minutes).
-- ✅ **Leave Management**: Calendar leave dates (`YYYY-MM-DD`) with duplicate prevention and removal endpoints.
-- ✅ **Admin Doctor Provisioning**: Admin interface & REST endpoints to create, update, and manage doctors.
-- ✅ **Patient Doctor Search**: Real-time filtering by doctor name, keyword, and medical specialization.
-- ✅ **Doctor Self-View**: Verified profile and schedule inspection view for doctors (`/doctor/profile`).
-- ✅ **Doctor Seeder**: Sample doctors seeding script (`npm run seed:doctors`).
-
-### Phase 3 — Appointment Engine
-- ✅ **Appointment Model**: Dedicated appointment collection with ownership references (`patientId`, `doctorId`).
-- ✅ **Double-Booking Prevention**: MongoDB compound partial unique index on `{ doctorId: 1, date: 1, startTime: 1 }` for active bookings (`status IN ['BOOKED', 'COMPLETED']`).
-- ✅ **Dynamic Slot Generator**: Deterministic slot calculation engine respecting doctor working hours, durations, leaves, past dates, and live booking collisions.
-- ✅ **Patient Booking Flow**: Interactive date & slot picker with double-click submission guard and instant confirmation card.
-- ✅ **Atomic Rescheduling**: Safe two-step transition where old appointment remains active if the new slot booking fails or conflicts.
-- ✅ **Doctor Consultation Queue**: Schedule terminal with today, upcoming, and past consultation views and one-click visit completion.
-- ✅ **Admin Appointment Management**: Clinic-wide appointment directory with doctor, date, and status filters.
-
-### Phase 4 — Doctor Clinical Workflow
-- ✅ **ClinicalRecord Model**: Dedicated clinical records collection linked 1:1 with `Appointment`.
-- ✅ **Prescription Model**: Dedicated structured prescription collection with medication array (`name`, `dosage`, `frequency`, `duration`, `instructions`).
-- ✅ **Doctor Consultation Room**: Clinical examination interface (`/doctor/consultation/:appointmentId`) for reviewing intake complaints, recording findings, creating prescriptions, and completing consultations.
-- ✅ **Patient Post-Visit View**: Post-consultation page (`/patient/appointments/:id`) allowing patients to inspect verified clinical advice and structured prescriptions.
-- ✅ **Clinical Authorization & IDOR Protection**: Strict ownership checks ensuring only assigned doctors can create/edit notes, while patients receive read-only post-visit summaries.
-
-### Phase 5 — Notifications & Background Jobs
-- ✅ **Notification Model**: Dedicated in-app notification storage with read status and appointment reference.
-- ✅ **Lifecycle Event Dispatchers**: Automated in-app and email notifications for bookings, cancellations, reschedules, and prescription readiness.
-- ✅ **Background Reminder Scheduler**: Periodic scanner checking upcoming consultations within a configurable window (default 60 mins) with duplicate notification prevention.
-- ✅ **Email Service & Resilient Delivery**: Nodemailer integration with retry loops (up to 3 attempts) and mock development fallback.
-- ✅ **Frontend Notification Bell**: Interactive unread count badge, real-time polling, and direct navigation links in Navbar.
-- ✅ **Notification Management Page**: Dedicated `/notifications` dashboard for browsing, filtering unread alerts, and deleting notifications.
-
-### Phase 6 — Google Calendar Integration
-- ✅ **Google OAuth 2.0 Flow**: User consent screen flow with CSRF state protection and offline access token refresh.
-- ✅ **CalendarConnection Model**: Secure token persistence with automatic stripping from client responses.
-- ✅ **Non-Blocking Calendar Synchronization**: Background event creation, atomic updates on reschedule, and deletion on cancellation.
-- ✅ **Privacy Preservation**: Strict omission of clinical notes, diagnoses, and prescriptions from external Google Calendar payloads.
-- ✅ **Frontend Calendar Settings**: Self-service Connect and Disconnect controls in Doctor Profile and Patient Appointments.
-
-### Phase 7 — Leave Conflict & Reliability
-- ✅ **DoctorLeave Model**: Dedicated collection tracking date range leaves (`startDate` to `endDate`), reasons, and statuses.
-- ✅ **Appointment Conflict Prevention**: Automatic detection of active appointments in requested leave periods (returns `409 Conflict` and prevents silent cancellation of patient bookings).
-- ✅ **Authoritative Backend Protection**: Slot generator and booking controller actively reject bookings on approved leave dates.
-- ✅ **Doctor Leave Manager UI**: Real-time conflict pre-check and leave scheduler in Doctor Profile (`/doctor/profile`).
-
-### Phase 8 — Medication Reminders
-- ✅ **MedicationReminder Model**: Structured dose tracking linked to prescriptions with compound idempotency unique index.
-- ✅ **Deterministic Schedule Parser**: Automatic mapping of frequencies and durations to discrete dose reminder slots (`08:00`, `14:00`, `20:00`).
-- ✅ **Background Dose Worker**: Periodically checks due doses and dispatches in-app notifications and reminder emails.
-- ✅ **Adherence Tracking UI**: Interactive dose timeline on Patient Dashboard (`/patient/dashboard`) with "Take Dose" and "Skip" controls.
-
-### Phase 9 — Testing & Security Hardening
-- ✅ **Automated Test Suite**: 9 comprehensive test suites covering Auth, Appointments, Clinical Records, Leaves, Notifications, Google Calendar, Medication Reminders, Security Hardening, and End-to-End Workflow.
-- ✅ **Helmet HTTP Headers**: Enforced defense against XSS, MIME sniffing, clickjacking, and header tampering.
-- ✅ **Rate Limiting**: Integrated `express-rate-limit` on `/api/auth` to prevent brute-force attacks.
-- ✅ **Error Sanitization**: Production error handler completely strips stack traces and internal schema paths.
-- ✅ **IDOR & Mass Assignment Defense**: Validated resource ownership across all endpoints and prevented unauthorized role escalation.
+HealthPulse is an enterprise-grade full-stack MERN clinic management and patient follow-up platform featuring local Ollama LLM clinical assistance, concurrency-controlled appointment scheduling, resilient background notifications, Google Calendar synchronization, and automated medication adherence tracking.
 
 ---
 
-## 📁 Directory Structure
+## 🌟 Key Features
+
+- **Stateless RBAC Authentication (Phase 1)**: JWT-based authentication for Patients, Doctors, and Administrators with bcrypt password hashing.
+- **Doctor Schedule Management (Phase 2)**: Dynamic weekly working hours and configurable slot durations (15–60 mins).
+- **Concurrency-Safe Appointment Engine (Phase 3)**: Atomic double-booking prevention using MongoDB compound partial unique indexes.
+- **Clinical Consultation Workflow (Phase 4)**: Doctor consultation room with diagnostic findings, clinical notes, and structured prescriptions.
+- **Resilient Background Notifications (Phase 5)**: Nodemailer email delivery with 3-attempt exponential backoff and 60-second appointment reminder worker.
+- **Google Calendar Integration (Phase 6)**: OAuth 2.0 calendar synchronization with offline token refresh and token redaction.
+- **Doctor Leave Conflict Protection (Phase 7)**: 409 Conflict detection and automatic slot blocking during approved leaves.
+- **Medication Reminders & Adherence (Phase 8)**: Deterministic frequency/duration parser and scheduled dose tracking.
+- **Security Hardening (Phase 9)**: Helmet HTTP headers, express rate limiting, payload size limits, and IDOR protection.
+- **Privacy-Preserving Local LLM (Phase 10)**: On-device Ollama LLM integration (`llama3`/`qwen2.5`) generating pre-visit clinical summaries and post-visit patient guidance with zero-hallucination guardrails.
+- **Production Documentation & Verification (Phase 11)**: Comprehensive documentation, 10 passing automated test suites, and clean production builds.
+
+---
+
+## 🏗️ Architecture Overview
 
 ```text
-healthcare-appointment-manager/
-├── client/                     # Vite + React + TypeScript Frontend
-│   ├── src/
-│   │   ├── components/
-│   │   │   ├── common/         # Navbar, ProtectedRoute, NotificationBell
-│   │   │   ├── doctor/         # DoctorCard, DoctorSearchBar, WorkingHoursForm, LeaveList, DoctorLeaveManager
-│   │   │   ├── appointment/    # SlotPicker, AppointmentCard, AppointmentStatusBadge, RescheduleModal, CancelAppointmentModal
-│   │   │   ├── clinical/       # PrescriptionEditor, PrescriptionCard
-│   │   │   ├── calendar/       # CalendarSettingsCard
-│   │   │   └── patient/        # MedicationReminderList
-│   │   ├── context/            # AuthContext
-│   │   ├── hooks/              # useAuth
-│   │   ├── pages/
-│   │   │   ├── auth/           # Login, Register
-│   │   │   ├── admin/          # ManageDoctors, CreateDoctor, EditDoctor, ManageDoctorLeave, ManageAppointments
-│   │   │   ├── doctor/         # DoctorProfile, DoctorAppointments, DoctorConsultation
-│   │   │   ├── patient/        # DoctorSearch, DoctorDetails, BookAppointment, MyAppointments, AppointmentDetails
-│   │   │   ├── notifications/  # NotificationsPage
-│   │   │   └── dashboard/      # Dashboards (PatientDashboard, DoctorDashboard, AdminDashboard)
-│   │   ├── services/           # apiClient, authApi, doctorApi, appointmentApi, clinicalApi, notificationApi, calendarApi, leaveApi, medicationReminderApi
-│   │   ├── types/              # auth.ts, doctor.ts, appointment.ts, clinical.ts, notification.ts, calendar.ts, leave.ts, medicationReminder.ts
-│   │   ├── utils/              # constants.ts
-│   │   ├── App.tsx             # Routing & Layout
-│   │   ├── main.tsx            # Entrypoint
-│   │   └── index.css           # Global Theme & Design Tokens
-│   ├── package.json
-│   ├── tsconfig.json
-│   └── vite.config.ts
-│
-├── server/                     # Express REST API
-│   ├── config/                 # db.js, env.js
-│   ├── controllers/            # authController.js, doctorController.js, appointmentController.js, clinicalController.js, notificationController.js, calendarController.js, leaveController.js, medicationReminderController.js
-│   ├── middleware/             # authMiddleware.js, roleMiddleware.js, errorMiddleware.js
-│   ├── models/                 # User.js, DoctorProfile.js, Appointment.js, ClinicalRecord.js, Prescription.js, Notification.js, CalendarConnection.js, DoctorLeave.js, MedicationReminder.js
-│   ├── routes/                 # authRoutes.js, doctorRoutes.js, appointmentRoutes.js, clinicalRoutes.js, notificationRoutes.js, calendarRoutes.js, leaveRoutes.js, medicationReminderRoutes.js
-│   ├── services/               # doctorService.js, slotService.js, appointmentService.js, clinicalService.js, notificationService.js, leaveService.js
-│   │   ├── email/              # emailService.js, emailTemplates.js
-│   │   ├── google/             # googleCalendarService.js
-│   │   ├── medication/         # medicationScheduleService.js
-│   │   └── jobs/               # reminderJob.js, calendarJob.js, medicationReminderJob.js
-│   ├── tests/                  # Automated test suites
-│   │   ├── auth.test.js
-│   │   ├── appointment.test.js
-│   │   ├── clinical.test.js
-│   │   ├── leave.test.js
-│   │   ├── notification.test.js
-│   │   ├── calendar.test.js
-│   │   ├── medication.test.js
-│   │   ├── security.test.js
-│   │   ├── e2e.test.js
-│   │   └── runAllTests.js      # Master runner (npm test)
-│   ├── utils/                  # generateToken.js
-│   ├── validators/             # doctorValidator.js, appointmentValidator.js, clinicalValidator.js
-│   ├── app.js                  # Express middleware, security headers & route mounting
-│   ├── server.js               # Server bootstrap & graceful shutdown
-│   └── package.json
-│
-├── database/
-│   └── seed/
-│       ├── seedAdmin.js        # Admin seeder
-│       └── seedDoctors.js      # Sample doctors seeder
-│
-├── docs/
-│   ├── ARCHITECTURE.md         # System Architecture & Auth Flow
-│   ├── DOCTOR_MANAGEMENT.md    # Doctor Data Model & Schedule Specs
-│   ├── APPOINTMENT_ENGINE.md   # Appointment Engine & Double-Booking Protection
-│   ├── CLINICAL_WORKFLOW.md    # Doctor Clinical Workflow & Prescription Specs
-│   ├── NOTIFICATIONS_AND_JOBS.md # Notifications & Background Scheduler Specs
-│   ├── GOOGLE_CALENDAR_INTEGRATION.md # Google Calendar OAuth & Sync Specs
-│   ├── LEAVE_AND_RELIABILITY.md # Doctor Leave & Conflict Reliability Specs
-│   ├── MEDICATION_REMINDERS.md # Medication Reminder & Adherence Specs
-│   └── TESTING_AND_SECURITY.md # Automated Testing & Security Audit Specs
-├── .env.example
-├── .gitignore
-├── package.json
-├── PROJECT_MEMORY.md
-└── README.md
+React 18 + Vite (Client) ➔ Express REST API (Backend) ➔ MongoDB (Source of Truth)
+                                │
+          ┌─────────────────────┼─────────────────────┐
+          ▼                     ▼                     ▼
+Background Cron Workers    LLM Service Layer     Google Calendar & Email
+ (Reminders & Adherence)    (Ollama / Llama3)       (OAuth2 & Nodemailer)
 ```
 
 ---
 
-## 🛠️ Installation, Testing & Setup
+## 🚀 Quick Start Guide
 
+### 1. Prerequisites
+- **Node.js**: `v18+`
+- **MongoDB**: Running locally at `mongodb://localhost:27017`
+- **Ollama**: Installed from [ollama.com](https://ollama.com)
+
+### 2. Installation
 ```bash
-# Install all dependencies:
-npm run install:all
+# Clone the repository
+git clone https://github.com/Pranjal-k22/Healthcare-app-manager.git
+cd Healthcare-app-manager
 
-# Run backend automated test suites:
-cd server && npm test
+# Install server dependencies
+npm install --prefix server
 
-# Seed database:
-npm run seed:admin
-npm run seed:doctors
-
-# Start servers:
-npm run dev:server  # Port 5000
-npm run dev:client  # Port 5173
+# Install client dependencies
+npm install --prefix client
 ```
+
+### 3. Environment Configuration
+Copy `.env.example` to `.env` in the root directory:
+```bash
+cp .env.example .env
+```
+Ensure your `.env` contains:
+```env
+PORT=5000
+NODE_ENV=development
+MONGO_URI=mongodb://localhost:27017/healthcare_appointment_db
+JWT_SECRET=super_secret_healthcare_jwt_key_phase1_2026_change_in_production
+CLIENT_URL=http://localhost:5173
+OLLAMA_HOST=http://localhost:11434
+OLLAMA_MODEL=llama3
+```
+
+### 4. Database Seeders
+```bash
+# Seed initial Admin account (admin@healthcare.com / AdminPassword123!)
+npm run seed:admin --prefix server
+
+# Seed sample Doctors and working schedules
+npm run seed:doctors --prefix server
+```
+
+### 5. Running the Application
+```bash
+# Start Ollama (in a separate terminal)
+ollama run llama3
+
+# Start Backend Server (Port 5000)
+npm run dev:server
+
+# Start Frontend Client (Port 5173)
+npm run dev:client
+```
+
+---
+
+## 🧪 Automated Testing
+
+Run the full automated test suite (10 test suites covering all phases):
+```bash
+npm test --prefix server
+```
+
+---
+
+## 📚 System Documentation
+
+Complete architectural documentation is available in the [`docs/`](docs/) directory:
+- [**System Architecture**](docs/ARCHITECTURE.md)
+- [**Project Directory Structure**](docs/PROJECT_STRUCTURE.md)
+- [**Database Schemas & Models**](docs/DATABASE_SCHEMA.md)
+- [**REST API Reference**](docs/API.md)
+- [**Local LLM Setup & Operations**](docs/LOCAL_LLM_SETUP.md)
+- [**LLM Architecture & Safety**](docs/LLM_ARCHITECTURE.md)
+- [**Prompt Engineering & Schemas**](docs/LLM_PROMPTS.md)
+- [**Security & Privacy Guide**](docs/SECURITY.md)
+- [**Final Test Report**](docs/FINAL_TEST_REPORT.md)
+- [**Evaluation Matrix**](docs/EVALUATION_MATRIX.md)
+- [**Live Demo Guide**](docs/DEMO_GUIDE.md)
+- [**File Inventory**](docs/FILE_INVENTORY.md)
+
+---
+
+## ⚠️ Known Limitations
+
+1. **Hardware Requirements for Local LLM**: Running Ollama with 7B/8B models requires at least 8GB of system RAM.
+2. **Google Calendar Configuration**: Requires creating an OAuth 2.0 Web Client ID in the Google Cloud Console.
+3. **Email Delivery Mode**: Operates in development (mock console log) mode unless `ENABLE_EMAIL_NOTIFICATIONS=true` and SMTP credentials are provided.

@@ -1,79 +1,65 @@
-# System Architecture — Phase 1: Foundation & Authentication
+# HealthPulse — System Architecture & Data Flow
 
-## 1. Overview
-
-HealthPulse is a MERN-based Healthcare Appointment & Follow-up Management system. **Phase 1** establishes the core technical foundation: Express REST API, MongoDB data persistence with Mongoose, stateless JWT authentication, and strict Role-Based Access Control (RBAC).
+## 1. High-Level Architectural Diagram
 
 ```text
-React Frontend (Vite + TS)
-         │  (HTTP / JSON with Bearer JWT)
-         ▼
-Express REST API Server
-    ├── CORS, Body Parser, Cookie Parser
-    ├── Auth Middleware (JWT Verification)
-    ├── Role Middleware (RBAC: PATIENT, DOCTOR, ADMIN)
-    └── Centralized Error Handling
-         │
-         ▼
-MongoDB Database (Mongoose ODM)
-    └── Users Collection (Hashed passwords, unique emails, roles)
+                               React 18 + Vite (Client)
+                                          │
+                                          ▼  HTTPS / REST API (JWT Bearer Auth)
+                                   Express Backend
+                                          │
+                   ┌──────────────────────┼──────────────────────┐
+                   ▼                      ▼                      ▼
+           MongoDB Database      Background Cron Jobs       LLM Service Layer
+           (Source of Truth)       (60-Second Loop)              │
+                   │                      │                      ▼
+       ┌───────────┴───────────┐          │                Ollama Runtime
+       ▼                       ▼          │             (http://localhost:11434)
+  Appointments            Doctor Leaves   │                      │
+  Clinical Records        Prescriptions   │                      ▼
+  Users / Roles           Reminders       │                 Local Model
+                                          │           (llama3 / qwen2.5 / mistral)
+                                          ▼
+                         Transactional Notifications &
+                        External Sync (Non-Blocking)
+                                  │       │
+                 ┌────────────────┘       └────────────────┐
+                 ▼                                         ▼
+         Email Transporter                     Google Calendar API
+       (Nodemailer / SMTP)                   (OAuth2 / Calendar Sync)
 ```
 
 ---
 
-## 2. Role-Based Access Control (RBAC)
+## 2. Component Layer Responsibilities
 
-Phase 1 defines three distinct user roles:
+### 1. Presentation Layer (Client)
+- **Framework**: React 18, TypeScript, Vite.
+- **Routing**: React Router v6 with `<ProtectedRoute>` role gates (`PATIENT`, `DOCTOR`, `ADMIN`).
+- **State Management**: Context API (`AuthContext.tsx`) managing authenticated session, user role, and token.
+- **Isolation Constraint**: The client **never** interacts directly with Ollama, SMTP servers, or MongoDB. All interactions pass through the Express REST API.
 
-| Role | Access Level | Creation Mechanism | Default Dashboard |
-| :--- | :--- | :--- | :--- |
-| **`PATIENT`** | Standard access to patient portal | Self-registration via `/api/auth/register` | `/patient/dashboard` |
-| **`DOCTOR`** | Clinical consultation portal access | Provisioned via Admin flow *(Phase 2)* | `/doctor/dashboard` |
-| **`ADMIN`** | System administrator | Database seed script `seedAdmin.js` | `/admin/dashboard` |
+### 2. API & Routing Layer (Backend)
+- **Framework**: Node.js, Express.js.
+- **Security Middleware**:
+  - `helmet`: Enforces modern HTTP security headers.
+  - `express-rate-limit`: Protects sensitive routes (`/api/auth`) from brute force attacks.
+  - `express.json({ limit: '1mb' })`: Prevents large payload abuse.
+  - `authMiddleware.js`: Validates JWT signature and extracts user context.
+  - `roleMiddleware.js`: Enforces strict Role-Based Access Control (`requireRole`).
+  - `errorHandler.js`: Centralized error handling stripping stack traces in production.
 
-### Role Guard Rules
-- Public registration (`POST /api/auth/register`) **strictly assigns `PATIENT` role**, rejecting or overriding any attempt to claim `ADMIN` or `DOCTOR`.
-- Protected frontend routes evaluate `allowedRoles` and redirect unauthorized roles to their respective dashboards.
-- Backend routes use `requireRole('PATIENT' | 'DOCTOR' | 'ADMIN')` to return `403 Forbidden` on role violations.
+### 3. Service Layer
+- **Appointment Service (`appointmentService.js`)**: Calculates doctor availability, enforces double-booking prevention, triggers pre-visit LLM synthesis.
+- **Clinical Service (`clinicalService.js`)**: Completes medical consultations, stores structured prescriptions, triggers post-visit LLM summaries.
+- **LLM Service (`llmService.js` ➔ `ollamaProvider.js`)**: Manages local Ollama HTTP requests with 25-30s timeouts, bounded retries (2 attempts with exponential backoff), and JSON/medication presence validation.
+- **Email Service (`emailService.js`)**: Dispatches transactional emails with 3-attempt exponential backoff.
+- **Google Calendar Service (`googleCalendarService.js`)**: Manages OAuth2 token refresh, event synchronization, and deletion on cancellation.
 
----
+### 4. Persistence Layer (MongoDB)
+- MongoDB is the **single source of truth** for all healthcare records.
+- Database-level compound partial unique index on `{ doctorId: 1, date: 1, startTime: 1 }` with `{ status: { $ne: 'CANCELLED' } }` guarantees atomic double-booking prevention.
 
-## 3. Authentication & JWT Flow
-
-```text
-[Client]                                  [Backend]                              [Database]
-   │                                          │                                      │
-   │─── 1. POST /api/auth/register / login ──>│                                      │
-   │    { email, password, name }             │─── 2. Query User / Check Hash ──────>│
-   │                                          │<── 3. Return User Record ────────────│
-   │                                          │
-   │                                          │─── 4. Generate JWT (id, role)
-   │<── 5. Return 200 OK + JWT + User ────────│
-   │
-   │─── 6. GET /api/auth/me (Bearer JWT) ────>│
-   │                                          │─── 7. Verify JWT Signature
-   │                                          │─── 8. User.findById(id) ────────────>│
-   │                                          │<── 9. Return User Document ──────────│
-   │<── 10. Return Profile (Sanitized) ───────│
-```
-
----
-
-## 4. API Endpoints Reference
-
-| Method | Endpoint | Access | Description | Request Body | Response |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| `GET` | `/api/health` | Public | Service health probe | None | `{ success, message, timestamp }` |
-| `POST` | `/api/auth/register` | Public | Register patient | `{ name, email, password }` | `{ success, message, token, user }` |
-| `POST` | `/api/auth/login` | Public | Log in user | `{ email, password }` | `{ success, message, token, user }` |
-| `GET` | `/api/auth/me` | Private | Current user profile | None (`Bearer <token>`) | `{ success, user }` |
-
----
-
-## 5. Security Best Practices Implemented
-
-1. **Password Hashing**: Bcrypt salt rounds = 10. Passwords are never stored or logged in plain text.
-2. **Password Exclusion**: Mongoose schema `toJSON` transform automatically strips `password` and `__v` from all JSON responses.
-3. **Privilege Escalation Prevention**: Registration handler hardcodes `role: 'PATIENT'` regardless of client payload.
-4. **Token Expiration**: Configurable JWT expiration (default `7d`).
-5. **Standardized Error Responses**: Centralized error middleware ensures predictable `{ success: false, message: ... }` responses without leaking stack traces in production.
+### 5. Background Jobs Layer
+- **Appointment Reminder Worker (`reminderJob.js`)**: Runs every 60 seconds, detects appointments starting within 60 minutes, and dispatches in-app and email reminders.
+- **Medication Reminder Worker (`medicationReminderJob.js`)**: Runs every 60 seconds, scans active dose schedules, and dispatches adherence notifications.
