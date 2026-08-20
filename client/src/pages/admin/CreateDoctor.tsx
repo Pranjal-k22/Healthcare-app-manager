@@ -6,11 +6,6 @@ import { WorkingHoursForm } from '../../components/doctor/WorkingHoursForm';
 import {
   AlertCircle,
   ArrowLeft,
-  Award,
-  Building,
-  DollarSign,
-  FileText,
-  Phone,
   ShieldCheck,
   Stethoscope,
   User,

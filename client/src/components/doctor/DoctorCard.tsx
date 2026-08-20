@@ -10,7 +10,6 @@ import {
   Edit3,
   Eye,
   Mail,
-  Phone,
   Power,
   Stethoscope,
 } from 'lucide-react';
