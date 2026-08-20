@@ -1,15 +1,31 @@
 const mongoose = require('mongoose');
+const dotenv = require('dotenv');
+const path = require('path');
+
+dotenv.config({ path: path.join(__dirname, '../../.env') });
+
 const config = require('../../server/config/env');
 const User = require('../../server/models/User');
 const DoctorProfile = require('../../server/models/DoctorProfile');
 
-const sampleDoctors = [
+const DEMO_DOCTORS = [
   {
     name: 'Dr. Sarah Jenkins',
     email: 'dr.sarah@healthcare.com',
     password: 'DoctorPassword123!',
+    role: 'DOCTOR',
     specialization: 'Cardiology',
+    qualifications: ['MBBS', 'MD (Cardiology)', 'FACC'],
+    experienceYears: 12,
+    consultationFee: 150,
+    clinicName: 'HealthPulse Heart & Vascular Institute',
+    clinicAddress: '742 Evergreen Terrace, Suite 400, Springfield',
+    bio: 'Board-certified cardiologist specializing in preventive cardiology, echocardiography, and hypertension management with over 12 years of clinical excellence.',
+    phone: '+1 (555) 234-5678',
+    workingDays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
     slotDuration: 30,
+    isAvailable: true,
+    isActive: true,
     workingHours: {
       monday: { enabled: true, start: '09:00', end: '17:00' },
       tuesday: { enabled: true, start: '09:00', end: '17:00' },
@@ -20,22 +36,36 @@ const sampleDoctors = [
       sunday: { enabled: false, start: null, end: null },
     },
     leaves: [
-      { date: '2026-09-20', reason: 'Cardiology World Summit' },
+      {
+        date: '2026-11-26',
+        reason: 'Thanksgiving Holiday',
+      },
     ],
   },
   {
     name: 'Dr. Marcus Vance',
     email: 'dr.marcus@healthcare.com',
     password: 'DoctorPassword123!',
+    role: 'DOCTOR',
     specialization: 'Neurology',
+    qualifications: ['MBBS', 'DM (Neurology)'],
+    experienceYears: 9,
+    consultationFee: 180,
+    clinicName: 'HealthPulse Brain & Spine Center',
+    clinicAddress: '100 Medical Parkway, Building B, Springfield',
+    bio: 'Experienced clinical neurologist focusing on migraines, neurodegenerative conditions, and neuromuscular disorders.',
+    phone: '+1 (555) 876-5432',
+    workingDays: ['Tuesday', 'Wednesday', 'Thursday', 'Saturday'],
     slotDuration: 45,
+    isAvailable: true,
+    isActive: true,
     workingHours: {
-      monday: { enabled: true, start: '10:00', end: '18:00' },
+      monday: { enabled: false, start: null, end: null },
       tuesday: { enabled: true, start: '10:00', end: '18:00' },
       wednesday: { enabled: true, start: '10:00', end: '18:00' },
       thursday: { enabled: true, start: '10:00', end: '18:00' },
       friday: { enabled: false, start: null, end: null },
-      saturday: { enabled: true, start: '09:00', end: '13:00' },
+      saturday: { enabled: true, start: '09:00', end: '14:00' },
       sunday: { enabled: false, start: null, end: null },
     },
     leaves: [],
@@ -44,50 +74,60 @@ const sampleDoctors = [
 
 const seedDoctors = async () => {
   try {
-    console.log('[SeedDoctors] Connecting to MongoDB...');
+    console.log('Connecting to MongoDB database...');
     await mongoose.connect(config.MONGO_URI);
-    console.log('[SeedDoctors] MongoDB Connected.');
+    console.log('✓ Connected to MongoDB');
 
-    for (const docData of sampleDoctors) {
-      const email = docData.email.toLowerCase().trim();
-      let user = await User.findOne({ email });
+    for (const docData of DEMO_DOCTORS) {
+      let user = await User.findOne({ email: docData.email });
 
       if (!user) {
         user = await User.create({
           name: docData.name,
-          email,
+          email: docData.email,
           password: docData.password,
           role: 'DOCTOR',
         });
-        console.log(`[SeedDoctors] Created User account for: ${docData.name} (${email})`);
+        console.log(`✓ Created User account for ${docData.name} (${docData.email})`);
       } else {
-        console.log(`[SeedDoctors] User already exists for: ${docData.name} (${email})`);
+        console.log(`- User account exists for ${docData.name}`);
       }
 
       let profile = await DoctorProfile.findOne({ userId: user._id });
+
+      const profilePayload = {
+        userId: user._id,
+        specialization: docData.specialization,
+        qualifications: docData.qualifications,
+        experienceYears: docData.experienceYears,
+        consultationFee: docData.consultationFee,
+        clinicName: docData.clinicName,
+        clinicAddress: docData.clinicAddress,
+        bio: docData.bio,
+        phone: docData.phone,
+        workingDays: docData.workingDays,
+        slotDuration: docData.slotDuration,
+        isAvailable: docData.isAvailable,
+        isActive: docData.isActive,
+        workingHours: docData.workingHours,
+        leaves: docData.leaves,
+      };
+
       if (!profile) {
-        profile = await DoctorProfile.create({
-          userId: user._id,
-          specialization: docData.specialization,
-          slotDuration: docData.slotDuration,
-          workingHours: docData.workingHours,
-          leaves: docData.leaves,
-        });
-        console.log(`[SeedDoctors] Created DoctorProfile for: ${docData.name}`);
+        await DoctorProfile.create(profilePayload);
+        console.log(`✓ Created DoctorProfile for ${docData.name}`);
       } else {
-        console.log(`[SeedDoctors] DoctorProfile already exists for: ${docData.name}`);
+        await DoctorProfile.findByIdAndUpdate(profile._id, profilePayload);
+        console.log(`✓ Updated DoctorProfile for ${docData.name}`);
       }
     }
 
-    console.log('==============================================');
-    console.log('🎉 Sample Doctors seeded successfully!');
-    console.log('1. Dr. Sarah Jenkins (dr.sarah@healthcare.com / DoctorPassword123!) - Cardiology');
-    console.log('2. Dr. Marcus Vance (dr.marcus@healthcare.com / DoctorPassword123!) - Neurology');
-    console.log('==============================================');
-
+    console.log('====================================================');
+    console.log('🎉 DEMO DOCTORS SEED COMPLETED SUCCESSFULLY!');
+    console.log('====================================================');
     process.exit(0);
   } catch (error) {
-    console.error(`[SeedDoctors] Error: ${error.message}`);
+    console.error('❌ Doctor seeding failed:', error.message);
     process.exit(1);
   }
 };

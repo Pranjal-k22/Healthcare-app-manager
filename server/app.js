@@ -4,6 +4,7 @@ const cookieParser = require('cookie-parser');
 const config = require('./config/env');
 const authRoutes = require('./routes/authRoutes');
 const doctorRoutes = require('./routes/doctorRoutes');
+const appointmentRoutes = require('./routes/appointmentRoutes');
 const { notFound, errorHandler } = require('./middleware/errorMiddleware');
 
 const app = express();
@@ -32,7 +33,7 @@ app.use(cookieParser());
 app.get('/api/health', (req, res) => {
   res.status(200).json({
     success: true,
-    message: 'Healthcare Appointment API is healthy (Phase 1)',
+    message: 'Healthcare Appointment API is healthy (Phase 3)',
     timestamp: new Date().toISOString(),
   });
 });
@@ -40,6 +41,7 @@ app.get('/api/health', (req, res) => {
 // Mount Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/doctors', doctorRoutes);
+app.use('/api/appointments', appointmentRoutes);
 
 // Error Handling Middleware
 app.use(notFound);

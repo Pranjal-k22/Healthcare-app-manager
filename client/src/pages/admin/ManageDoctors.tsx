@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Doctor } from '../../types/doctor';
-import { getDoctors } from '../../services/doctorApi';
+import { getDoctors, toggleDoctorActiveStatus } from '../../services/doctorApi';
 import { DoctorCard } from '../../components/doctor/DoctorCard';
 import { DoctorSearchBar } from '../../components/doctor/DoctorSearchBar';
 import {
   AlertCircle,
+  CheckCircle2,
   PlusCircle,
   Stethoscope,
   Users,
@@ -15,6 +16,8 @@ export const ManageDoctors: React.FC = () => {
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [isStatusUpdating, setIsStatusUpdating] = useState(false);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSpecialization, setSelectedSpecialization] = useState('');
@@ -26,6 +29,7 @@ export const ManageDoctors: React.FC = () => {
       const data = await getDoctors({
         search: searchTerm,
         specialization: selectedSpecialization,
+        includeInactive: true,
       });
       setDoctors(data);
     } catch (err: any) {
@@ -41,6 +45,27 @@ export const ManageDoctors: React.FC = () => {
     }, 300);
     return () => clearTimeout(timer);
   }, [searchTerm, selectedSpecialization]);
+
+  const handleToggleStatus = async (doctorId: string, newStatus: boolean) => {
+    try {
+      setIsStatusUpdating(true);
+      setError(null);
+      setSuccessMsg(null);
+      await toggleDoctorActiveStatus(doctorId, newStatus);
+      setSuccessMsg(
+        `Doctor has been ${newStatus ? 'activated' : 'deactivated'} successfully.`
+      );
+      fetchDoctorsList();
+    } catch (err: any) {
+      setError(
+        err.response?.data?.message ||
+          err.message ||
+          'Failed to update doctor status.'
+      );
+    } finally {
+      setIsStatusUpdating(false);
+    }
+  };
 
   const uniqueSpecializations = Array.from(
     new Set(doctors.map((d) => d.specialization).filter(Boolean))
@@ -87,6 +112,13 @@ export const ManageDoctors: React.FC = () => {
         </div>
       </div>
 
+      {successMsg && (
+        <div className="alert alert-success" style={{ marginBottom: '1rem' }}>
+          <CheckCircle2 size={18} />
+          <span>{successMsg}</span>
+        </div>
+      )}
+
       <DoctorSearchBar
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
@@ -130,7 +162,13 @@ export const ManageDoctors: React.FC = () => {
       ) : (
         <div className="doctors-grid">
           {doctors.map((doc) => (
-            <DoctorCard key={doc.id} doctor={doc} isAdminView={true} />
+            <DoctorCard
+              key={doc.id}
+              doctor={doc}
+              isAdminView={true}
+              onToggleStatus={handleToggleStatus}
+              isStatusUpdating={isStatusUpdating}
+            />
           ))}
         </div>
       )}

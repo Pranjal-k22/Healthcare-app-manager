@@ -10,11 +10,15 @@ import { DoctorDashboard } from './pages/dashboard/DoctorDashboard';
 import { AdminDashboard } from './pages/dashboard/AdminDashboard';
 import { DoctorSearch } from './pages/patient/DoctorSearch';
 import { DoctorDetails } from './pages/patient/DoctorDetails';
+import { BookAppointment } from './pages/patient/BookAppointment';
+import { MyAppointments } from './pages/patient/MyAppointments';
 import { DoctorProfile } from './pages/doctor/DoctorProfile';
+import { DoctorAppointments } from './pages/doctor/DoctorAppointments';
 import { ManageDoctors } from './pages/admin/ManageDoctors';
 import { CreateDoctor } from './pages/admin/CreateDoctor';
 import { EditDoctor } from './pages/admin/EditDoctor';
 import { ManageDoctorLeave } from './pages/admin/ManageDoctorLeave';
+import { ManageAppointments } from './pages/admin/ManageAppointments';
 import { ROLE_DASHBOARD_ROUTES } from './utils/constants';
 
 const RootRedirect: React.FC = () => {
@@ -73,6 +77,22 @@ export const App: React.FC = () => {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/patient/book/:doctorId"
+            element={
+              <ProtectedRoute allowedRoles={['PATIENT']}>
+                <BookAppointment />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/patient/appointments"
+            element={
+              <ProtectedRoute allowedRoles={['PATIENT']}>
+                <MyAppointments />
+              </ProtectedRoute>
+            }
+          />
 
           {/* Protected Doctor Routes */}
           <Route
@@ -88,6 +108,14 @@ export const App: React.FC = () => {
             element={
               <ProtectedRoute allowedRoles={['DOCTOR']}>
                 <DoctorProfile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/doctor/appointments"
+            element={
+              <ProtectedRoute allowedRoles={['DOCTOR']}>
+                <DoctorAppointments />
               </ProtectedRoute>
             }
           />
@@ -130,6 +158,14 @@ export const App: React.FC = () => {
             element={
               <ProtectedRoute allowedRoles={['ADMIN']}>
                 <ManageDoctorLeave />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/appointments"
+            element={
+              <ProtectedRoute allowedRoles={['ADMIN']}>
+                <ManageAppointments />
               </ProtectedRoute>
             }
           />

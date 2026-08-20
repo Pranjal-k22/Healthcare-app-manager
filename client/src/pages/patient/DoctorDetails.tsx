@@ -6,10 +6,14 @@ import { LeaveList } from '../../components/doctor/LeaveList';
 import {
   AlertCircle,
   ArrowLeft,
+  Award,
+  Building,
   Calendar,
   CalendarDays,
   Clock,
+  DollarSign,
   Mail,
+  Phone,
   Sparkles,
   Stethoscope,
 } from 'lucide-react';
@@ -86,27 +90,71 @@ export const DoctorDetails: React.FC = () => {
 
       {/* Doctor Header Card */}
       <div className="glass-card info-card" style={{ marginBottom: '1.5rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', flexWrap: 'wrap' }}>
-          <div className="doctor-avatar" style={{ width: '64px', height: '64px' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1.5rem', flexWrap: 'wrap' }}>
+          <div className="doctor-avatar" style={{ width: '68px', height: '68px' }}>
             <Stethoscope size={36} color="#10b981" />
           </div>
           <div style={{ flex: 1 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-              <h1 style={{ fontSize: '1.85rem', fontWeight: 800 }}>{doctor.name}</h1>
-              <span className="specialization-badge" style={{ fontSize: '0.85rem', padding: '0.3rem 0.8rem' }}>
-                {doctor.specialization}
-              </span>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                <h1 style={{ fontSize: '1.85rem', fontWeight: 800 }}>{doctor.name}</h1>
+                <span className="specialization-badge" style={{ fontSize: '0.85rem', padding: '0.3rem 0.8rem' }}>
+                  {doctor.specialization}
+                </span>
+                {doctor.qualifications && doctor.qualifications.length > 0 && (
+                  <span className="qualification-badge">
+                    {doctor.qualifications.join(', ')}
+                  </span>
+                )}
+              </div>
+
+              {doctor.isAvailable ? (
+                <span className="status-pill status-pill-active">Available</span>
+              ) : (
+                <span className="status-pill status-pill-unavailable">Unavailable</span>
+              )}
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginTop: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginTop: '0.75rem', color: 'var(--text-secondary)', fontSize: '0.875rem', flexWrap: 'wrap' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                 <Mail size={15} />
                 <span>{doctor.email}</span>
+              </div>
+              {doctor.phone && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <Phone size={15} />
+                  <span>{doctor.phone}</span>
+                </div>
+              )}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <Award size={15} color="var(--accent-teal)" />
+                <span>{doctor.experienceYears || 0} yrs experience</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#10b981', fontWeight: 600 }}>
+                <DollarSign size={15} />
+                <span>${doctor.consultationFee || 0} / visit</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                 <Clock size={15} color="var(--primary)" />
                 <span>{doctor.slotDuration} min consultation slots</span>
               </div>
             </div>
+
+            {doctor.clinicName && (
+              <div style={{ marginTop: '0.65rem', fontSize: '0.85rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <Building size={15} />
+                <span>
+                  {doctor.clinicName}
+                  {doctor.clinicAddress ? ` — ${doctor.clinicAddress}` : ''}
+                </span>
+              </div>
+            )}
+
+            {doctor.bio && (
+              <p style={{ marginTop: '1rem', color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: 1.6, borderTop: '1px solid var(--border-color)', paddingTop: '0.75rem' }}>
+                {doctor.bio}
+              </p>
+            )}
           </div>
         </div>
       </div>
@@ -148,7 +196,7 @@ export const DoctorDetails: React.FC = () => {
         <LeaveList leaves={doctor.leaves || []} />
       </div>
 
-      {/* Booking Teaser / Phase 3 Integration */}
+      {/* Booking Action */}
       <div className="glass-card" style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', border: '1px solid var(--primary-glow)', background: 'rgba(14, 165, 233, 0.06)' }}>
         <div>
           <h3 style={{ fontSize: '1.1rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -156,12 +204,13 @@ export const DoctorDetails: React.FC = () => {
             <span>Ready to book a consultation?</span>
           </h3>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginTop: '0.25rem' }}>
-            Interactive time slot booking with double-booking protection will be activated in <strong>Phase 3</strong>.
+            Select an available date and choose your preferred time slot with real-time double-booking protection.
           </p>
         </div>
-        <button type="button" className="btn btn-primary" disabled style={{ opacity: 0.6, cursor: 'not-allowed' }}>
-          Book Appointment (Phase 3)
-        </button>
+        <Link to={`/patient/book/${doctor.id}`} className="btn btn-primary">
+          <Calendar size={16} />
+          <span>Book Appointment</span>
+        </Link>
       </div>
     </div>
   );

@@ -6,7 +6,13 @@ import { WorkingHoursForm } from '../../components/doctor/WorkingHoursForm';
 import {
   AlertCircle,
   ArrowLeft,
+  Award,
+  Building,
+  DollarSign,
+  FileText,
+  Phone,
   ShieldCheck,
+  Stethoscope,
   User,
 } from 'lucide-react';
 
@@ -27,7 +33,15 @@ export const CreateDoctor: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [specialization, setSpecialization] = useState('');
+  const [qualificationsStr, setQualificationsStr] = useState('MBBS, MD');
+  const [experienceYears, setExperienceYears] = useState<number>(5);
+  const [consultationFee, setConsultationFee] = useState<number>(100);
+  const [clinicName, setClinicName] = useState('HealthPulse Medical Center');
+  const [clinicAddress, setClinicAddress] = useState('');
+  const [phone, setPhone] = useState('');
+  const [bio, setBio] = useState('');
   const [slotDuration, setSlotDuration] = useState<number>(30);
+  const [isAvailable, setIsAvailable] = useState(true);
   const [workingHours, setWorkingHours] = useState<WorkingHours>(DEFAULT_WORKING_HOURS);
 
   const [error, setError] = useState<string | null>(null);
@@ -38,7 +52,7 @@ export const CreateDoctor: React.FC = () => {
     setError(null);
 
     if (!name.trim() || !email.trim() || !password || !specialization.trim()) {
-      setError('Please complete all required fields.');
+      setError('Please complete all required credentials.');
       return;
     }
 
@@ -47,6 +61,11 @@ export const CreateDoctor: React.FC = () => {
       return;
     }
 
+    const qualificationsArray = qualificationsStr
+      .split(',')
+      .map((q) => q.trim())
+      .filter(Boolean);
+
     try {
       setIsSubmitting(true);
       await createDoctor({
@@ -54,30 +73,42 @@ export const CreateDoctor: React.FC = () => {
         email: email.trim(),
         password,
         specialization: specialization.trim(),
+        qualifications: qualificationsArray,
+        experienceYears: Number(experienceYears) || 0,
+        consultationFee: Number(consultationFee) || 0,
+        clinicName: clinicName.trim(),
+        clinicAddress: clinicAddress.trim(),
+        phone: phone.trim(),
+        bio: bio.trim(),
         slotDuration,
+        isAvailable,
         workingHours,
       });
 
       navigate('/admin/doctors', { replace: true });
     } catch (err: any) {
-      setError(err.message || 'Failed to create doctor profile.');
+      setError(
+        err.response?.data?.message ||
+          err.message ||
+          'Failed to create doctor profile.'
+      );
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="container dashboard-container" style={{ maxWidth: '840px' }}>
+    <div className="container dashboard-container" style={{ maxWidth: '880px' }}>
       <div style={{ marginBottom: '1.5rem' }}>
         <Link to="/admin/doctors" className="back-link">
           <ArrowLeft size={16} />
           <span>Back to Doctor Directory</span>
         </Link>
         <h1 className="welcome-title" style={{ fontSize: '1.75rem', marginTop: '0.5rem' }}>
-          Create Doctor Profile
+          Provision Doctor Profile
         </h1>
         <p className="welcome-subtitle">
-          Provision a verified DOCTOR user account, set clinical specialization, and define weekly consultation hours.
+          Provision a practitioner account, clinical qualifications, experience, clinic location, and consultation hours.
         </p>
       </div>
 
@@ -89,9 +120,10 @@ export const CreateDoctor: React.FC = () => {
       )}
 
       <form onSubmit={handleSubmit} className="glass-card form-card">
+        {/* Basic Credentials */}
         <h3 style={{ fontSize: '1.15rem', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <User size={18} color="var(--primary)" />
-          <span>Practitioner Credentials</span>
+          <span>Practitioner Account Credentials</span>
         </h3>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem' }}>
@@ -143,6 +175,28 @@ export const CreateDoctor: React.FC = () => {
           </div>
 
           <div className="form-group">
+            <label className="form-label" htmlFor="docPhone">
+              Contact Phone
+            </label>
+            <input
+              id="docPhone"
+              type="tel"
+              className="form-input"
+              placeholder="+1 (555) 000-0000"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+            />
+          </div>
+        </div>
+
+        {/* Clinical Qualifications & Experience */}
+        <h3 style={{ fontSize: '1.15rem', margin: '1.75rem 0 1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <Stethoscope size={18} color="#10b981" />
+          <span>Professional Specialization & Practice</span>
+        </h3>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem' }}>
+          <div className="form-group">
             <label className="form-label" htmlFor="docSpec">
               Specialization *
             </label>
@@ -156,26 +210,115 @@ export const CreateDoctor: React.FC = () => {
               required
             />
           </div>
+
+          <div className="form-group">
+            <label className="form-label" htmlFor="docQual">
+              Qualifications (comma-separated)
+            </label>
+            <input
+              id="docQual"
+              type="text"
+              className="form-input"
+              placeholder="MBBS, MD, FACC"
+              value={qualificationsStr}
+              onChange={(e) => setQualificationsStr(e.target.value)}
+            />
+          </div>
         </div>
 
-        <div className="form-group" style={{ maxWidth: '300px' }}>
-          <label className="form-label" htmlFor="docSlotDuration">
-            Appointment Slot Duration
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+          <div className="form-group">
+            <label className="form-label" htmlFor="docExp">
+              Experience (Years)
+            </label>
+            <input
+              id="docExp"
+              type="number"
+              min={0}
+              className="form-input"
+              value={experienceYears}
+              onChange={(e) => setExperienceYears(Number(e.target.value))}
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label" htmlFor="docFee">
+              Consultation Fee ($)
+            </label>
+            <input
+              id="docFee"
+              type="number"
+              min={0}
+              className="form-input"
+              value={consultationFee}
+              onChange={(e) => setConsultationFee(Number(e.target.value))}
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label" htmlFor="docSlotDuration">
+              Slot Duration
+            </label>
+            <select
+              id="docSlotDuration"
+              className="form-input"
+              value={slotDuration}
+              onChange={(e) => setSlotDuration(Number(e.target.value))}
+            >
+              <option value={15}>15 Minutes</option>
+              <option value={20}>20 Minutes</option>
+              <option value={30}>30 Minutes (Standard)</option>
+              <option value={45}>45 Minutes</option>
+              <option value={60}>60 Minutes (1 Hour)</option>
+            </select>
+          </div>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem' }}>
+          <div className="form-group">
+            <label className="form-label" htmlFor="clinicName">
+              Clinic / Hospital Name
+            </label>
+            <input
+              id="clinicName"
+              type="text"
+              className="form-input"
+              value={clinicName}
+              onChange={(e) => setClinicName(e.target.value)}
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label" htmlFor="clinicAddress">
+              Clinic Address
+            </label>
+            <input
+              id="clinicAddress"
+              type="text"
+              className="form-input"
+              placeholder="Suite, Street, City"
+              value={clinicAddress}
+              onChange={(e) => setClinicAddress(e.target.value)}
+            />
+          </div>
+        </div>
+
+        <div className="form-group">
+          <label className="form-label" htmlFor="docBio">
+            Professional Biography
           </label>
-          <select
-            id="docSlotDuration"
+          <textarea
+            id="docBio"
             className="form-input"
-            value={slotDuration}
-            onChange={(e) => setSlotDuration(Number(e.target.value))}
-          >
-            <option value={15}>15 Minutes</option>
-            <option value={20}>20 Minutes</option>
-            <option value={30}>30 Minutes (Standard)</option>
-            <option value={45}>45 Minutes</option>
-            <option value={60}>60 Minutes (1 Hour)</option>
-          </select>
+            rows={3}
+            placeholder="Brief description of doctor clinical background, focus areas, and hospital associations..."
+            value={bio}
+            onChange={(e) => setBio(e.target.value)}
+            maxLength={2000}
+          />
         </div>
 
+        {/* Working Hours */}
         <div style={{ margin: '2rem 0' }}>
           <WorkingHoursForm
             workingHours={workingHours}

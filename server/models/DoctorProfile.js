@@ -57,6 +57,59 @@ const doctorProfileSchema = new mongoose.Schema(
       minlength: [2, 'Specialization must be at least 2 characters long'],
       maxlength: [100, 'Specialization cannot exceed 100 characters'],
     },
+    qualifications: {
+      type: [String],
+      default: ['MBBS'],
+    },
+    experienceYears: {
+      type: Number,
+      default: 0,
+      min: [0, 'Experience years cannot be negative'],
+    },
+    consultationFee: {
+      type: Number,
+      default: 0,
+      min: [0, 'Consultation fee cannot be negative'],
+    },
+    clinicName: {
+      type: String,
+      trim: true,
+      default: 'HealthPulse Medical Center',
+    },
+    clinicAddress: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    bio: {
+      type: String,
+      trim: true,
+      maxlength: [2000, 'Bio cannot exceed 2000 characters'],
+      default: '',
+    },
+    phone: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    profileImage: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    workingDays: {
+      type: [String],
+      enum: [
+        'Monday',
+        'Tuesday',
+        'Wednesday',
+        'Thursday',
+        'Friday',
+        'Saturday',
+        'Sunday',
+      ],
+      default: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+    },
     slotDuration: {
       type: Number,
       required: [true, 'Slot duration in minutes is required'],
@@ -64,14 +117,43 @@ const doctorProfileSchema = new mongoose.Schema(
       min: [5, 'Slot duration must be at least 5 minutes'],
       max: [240, 'Slot duration cannot exceed 240 minutes'],
     },
+    isAvailable: {
+      type: Boolean,
+      default: true,
+    },
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
     workingHours: {
-      monday: { type: workingDaySchema, default: () => ({ enabled: true, start: '09:00', end: '17:00' }) },
-      tuesday: { type: workingDaySchema, default: () => ({ enabled: true, start: '09:00', end: '17:00' }) },
-      wednesday: { type: workingDaySchema, default: () => ({ enabled: true, start: '09:00', end: '17:00' }) },
-      thursday: { type: workingDaySchema, default: () => ({ enabled: true, start: '09:00', end: '17:00' }) },
-      friday: { type: workingDaySchema, default: () => ({ enabled: true, start: '09:00', end: '17:00' }) },
-      saturday: { type: workingDaySchema, default: () => ({ enabled: false, start: null, end: null }) },
-      sunday: { type: workingDaySchema, default: () => ({ enabled: false, start: null, end: null }) },
+      monday: {
+        type: workingDaySchema,
+        default: () => ({ enabled: true, start: '09:00', end: '17:00' }),
+      },
+      tuesday: {
+        type: workingDaySchema,
+        default: () => ({ enabled: true, start: '09:00', end: '17:00' }),
+      },
+      wednesday: {
+        type: workingDaySchema,
+        default: () => ({ enabled: true, start: '09:00', end: '17:00' }),
+      },
+      thursday: {
+        type: workingDaySchema,
+        default: () => ({ enabled: true, start: '09:00', end: '17:00' }),
+      },
+      friday: {
+        type: workingDaySchema,
+        default: () => ({ enabled: true, start: '09:00', end: '17:00' }),
+      },
+      saturday: {
+        type: workingDaySchema,
+        default: () => ({ enabled: false, start: null, end: null }),
+      },
+      sunday: {
+        type: workingDaySchema,
+        default: () => ({ enabled: false, start: null, end: null }),
+      },
     },
     leaves: [leaveSchema],
   },
@@ -85,6 +167,9 @@ const doctorProfileSchema = new mongoose.Schema(
     },
   }
 );
+
+// Indexes for fast searching and filtering
+doctorProfileSchema.index({ specialization: 1, isAvailable: 1, isActive: 1 });
 
 const DoctorProfile = mongoose.model('DoctorProfile', doctorProfileSchema);
 

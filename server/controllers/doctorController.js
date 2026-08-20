@@ -1,16 +1,27 @@
-const doctorService = require('../services/doctorService');
 const {
   validateCreateDoctorInput,
   validateUpdateDoctorInput,
   validateLeaveInput,
 } = require('../validators/doctorValidator');
+const {
+  createDoctor,
+  getAllDoctors,
+  getDoctorById,
+  getDoctorByUserId,
+  updateDoctor,
+  updateDoctorSelf,
+  addDoctorLeave,
+  removeDoctorLeave,
+  getDoctorLeaves,
+  setDoctorActiveStatus,
+} = require('../services/doctorService');
 
 /**
  * @desc    Create a new doctor (Admin only)
  * @route   POST /api/doctors
- * @access  Private/Admin
+ * @access  Private (ADMIN)
  */
-const createDoctor = async (req, res, next) => {
+const createDoctorHandler = async (req, res, next) => {
   try {
     const validation = validateCreateDoctorInput(req.body);
     if (!validation.valid) {
@@ -20,37 +31,35 @@ const createDoctor = async (req, res, next) => {
       });
     }
 
-    const doctor = await doctorService.createDoctor(req.body);
+    const doctor = await createDoctor(req.body);
 
-    return res.status(201).json({
+    res.status(201).json({
       success: true,
       message: 'Doctor account and profile created successfully',
       data: doctor,
     });
   } catch (error) {
-    if (error.statusCode) {
-      return res.status(error.statusCode).json({
-        success: false,
-        message: error.message,
-      });
-    }
     next(error);
   }
 };
 
 /**
- * @desc    Get all doctors with optional search and specialization filters
+ * @desc    Get all doctors with optional filtering
  * @route   GET /api/doctors
- * @access  Private (Authenticated users)
+ * @access  Private (All Authenticated)
  */
-const getDoctors = async (req, res, next) => {
+const getDoctorsHandler = async (req, res, next) => {
   try {
-    const { specialization, search } = req.query;
-    const doctors = await doctorService.getAllDoctors({ specialization, search });
+    const { specialization, search, isAvailable, includeInactive } = req.query;
+    const doctors = await getAllDoctors({
+      specialization,
+      search,
+      isAvailable,
+      includeInactive: req.user && req.user.role === 'ADMIN' ? includeInactive === 'true' : false,
+    });
 
-    return res.status(200).json({
+    res.status(200).json({
       success: true,
-      count: doctors.length,
       data: doctors,
     });
   } catch (error) {
@@ -59,59 +68,29 @@ const getDoctors = async (req, res, next) => {
 };
 
 /**
- * @desc    Get doctor by ID
- * @route   GET /api/doctors/:id
- * @access  Private (Authenticated users)
- */
-const getDoctorById = async (req, res, next) => {
-  try {
-    const doctor = await doctorService.getDoctorById(req.params.id);
-
-    return res.status(200).json({
-      success: true,
-      data: doctor,
-    });
-  } catch (error) {
-    if (error.statusCode) {
-      return res.status(error.statusCode).json({
-        success: false,
-        message: error.message,
-      });
-    }
-    next(error);
-  }
-};
-
-/**
- * @desc    Get current doctor's own profile
+ * @desc    Get currently logged-in doctor profile
  * @route   GET /api/doctors/me
- * @access  Private/Doctor
+ * @access  Private (DOCTOR)
  */
-const getMyDoctorProfile = async (req, res, next) => {
+const getMyDoctorProfileHandler = async (req, res, next) => {
   try {
-    const doctor = await doctorService.getDoctorByUserId(req.user._id);
+    const doctor = await getDoctorByUserId(req.user._id);
 
-    return res.status(200).json({
+    res.status(200).json({
       success: true,
       data: doctor,
     });
   } catch (error) {
-    if (error.statusCode) {
-      return res.status(error.statusCode).json({
-        success: false,
-        message: error.message,
-      });
-    }
     next(error);
   }
 };
 
 /**
- * @desc    Update doctor profile (Admin only)
- * @route   PUT /api/doctors/:id
- * @access  Private/Admin
+ * @desc    Update currently logged-in doctor profile (Doctor self-service)
+ * @route   PUT /api/doctors/me
+ * @access  Private (DOCTOR)
  */
-const updateDoctor = async (req, res, next) => {
+const updateMyDoctorProfileHandler = async (req, res, next) => {
   try {
     const validation = validateUpdateDoctorInput(req.body);
     if (!validation.valid) {
@@ -121,30 +100,96 @@ const updateDoctor = async (req, res, next) => {
       });
     }
 
-    const doctor = await doctorService.updateDoctor(req.params.id, req.body);
+    const updated = await updateDoctorSelf(req.user._id, req.body);
 
-    return res.status(200).json({
+    res.status(200).json({
       success: true,
       message: 'Doctor profile updated successfully',
-      data: doctor,
+      data: updated,
     });
   } catch (error) {
-    if (error.statusCode) {
-      return res.status(error.statusCode).json({
-        success: false,
-        message: error.message,
-      });
-    }
     next(error);
   }
 };
 
 /**
- * @desc    Add a leave date for a doctor (Admin only)
- * @route   POST /api/doctors/:id/leave
- * @access  Private/Admin
+ * @desc    Get single doctor by ID
+ * @route   GET /api/doctors/:id
+ * @access  Private (All Authenticated)
  */
-const addLeave = async (req, res, next) => {
+const getDoctorByIdHandler = async (req, res, next) => {
+  try {
+    const doctor = await getDoctorById(req.params.id);
+
+    res.status(200).json({
+      success: true,
+      data: doctor,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Update doctor profile (Admin only)
+ * @route   PUT /api/doctors/:id
+ * @access  Private (ADMIN)
+ */
+const updateDoctorHandler = async (req, res, next) => {
+  try {
+    const validation = validateUpdateDoctorInput(req.body);
+    if (!validation.valid) {
+      return res.status(400).json({
+        success: false,
+        message: validation.error,
+      });
+    }
+
+    const updated = await updateDoctor(req.params.id, req.body);
+
+    res.status(200).json({
+      success: true,
+      message: 'Doctor updated successfully',
+      data: updated,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Toggle doctor active / deactivated status (Admin only)
+ * @route   PATCH /api/doctors/:id/status
+ * @access  Private (ADMIN)
+ */
+const toggleDoctorStatusHandler = async (req, res, next) => {
+  try {
+    const { isActive } = req.body;
+    if (typeof isActive !== 'boolean') {
+      return res.status(400).json({
+        success: false,
+        message: 'isActive boolean is required',
+      });
+    }
+
+    const updated = await setDoctorActiveStatus(req.params.id, isActive);
+
+    res.status(200).json({
+      success: true,
+      message: `Doctor ${isActive ? 'activated' : 'deactivated'} successfully`,
+      data: updated,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Add leave date for doctor (Admin only)
+ * @route   POST /api/doctors/:id/leave
+ * @access  Private (ADMIN)
+ */
+const addDoctorLeaveHandler = async (req, res, next) => {
   try {
     const validation = validateLeaveInput(req.body);
     if (!validation.valid) {
@@ -154,83 +199,65 @@ const addLeave = async (req, res, next) => {
       });
     }
 
-    const leaves = await doctorService.addDoctorLeave(req.params.id, req.body);
+    const leaves = await addDoctorLeave(req.params.id, req.body);
 
-    return res.status(201).json({
+    res.status(200).json({
       success: true,
-      message: 'Doctor leave scheduled successfully',
+      message: 'Leave scheduled successfully',
       data: leaves,
     });
   } catch (error) {
-    if (error.statusCode) {
-      return res.status(error.statusCode).json({
-        success: false,
-        message: error.message,
-      });
-    }
     next(error);
   }
 };
 
 /**
- * @desc    Remove a scheduled leave date for a doctor (Admin only)
- * @route   DELETE /api/doctors/:id/leave/:date
- * @access  Private/Admin
- */
-const removeLeave = async (req, res, next) => {
-  try {
-    const leaves = await doctorService.removeDoctorLeave(
-      req.params.id,
-      req.params.date
-    );
-
-    return res.status(200).json({
-      success: true,
-      message: 'Doctor leave removed successfully',
-      data: leaves,
-    });
-  } catch (error) {
-    if (error.statusCode) {
-      return res.status(error.statusCode).json({
-        success: false,
-        message: error.message,
-      });
-    }
-    next(error);
-  }
-};
-
-/**
- * @desc    Get all scheduled leaves for a doctor
+ * @desc    Get leaves for doctor
  * @route   GET /api/doctors/:id/leaves
- * @access  Private
+ * @access  Private (All Authenticated)
  */
-const getLeaves = async (req, res, next) => {
+const getDoctorLeavesHandler = async (req, res, next) => {
   try {
-    const leaves = await doctorService.getDoctorLeaves(req.params.id);
+    const leaves = await getDoctorLeaves(req.params.id);
 
-    return res.status(200).json({
+    res.status(200).json({
       success: true,
       data: leaves,
     });
   } catch (error) {
-    if (error.statusCode) {
-      return res.status(error.statusCode).json({
-        success: false,
-        message: error.message,
-      });
-    }
+    next(error);
+  }
+};
+
+/**
+ * @desc    Remove scheduled leave for doctor (Admin only)
+ * @route   DELETE /api/doctors/:id/leave/:date
+ * @access  Private (ADMIN)
+ */
+const removeDoctorLeaveHandler = async (req, res, next) => {
+  try {
+    const { date } = req.params;
+    const leaves = await removeDoctorLeave(req.params.id, date);
+
+    res.status(200).json({
+      success: true,
+      message: 'Leave removed successfully',
+      data: leaves,
+    });
+  } catch (error) {
     next(error);
   }
 };
 
 module.exports = {
-  createDoctor,
-  getDoctors,
-  getDoctorById,
-  getMyDoctorProfile,
-  updateDoctor,
-  addLeave,
-  removeLeave,
-  getLeaves,
+  createDoctorHandler,
+  getDoctorsHandler,
+  getMyDoctorProfileHandler,
+  updateMyDoctorProfileHandler,
+  getDoctorByIdHandler,
+  updateDoctorHandler,
+  toggleDoctorStatusHandler,
+  addDoctorLeaveHandler,
+  getDoctorLeavesHandler,
+  removeDoctorLeaveHandler,
 };

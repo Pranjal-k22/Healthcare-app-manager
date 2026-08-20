@@ -1,24 +1,23 @@
-export interface WorkingDay {
+export interface WorkingDayConfig {
   enabled: boolean;
   start: string | null; // HH:mm
   end: string | null;   // HH:mm
 }
 
 export interface WorkingHours {
-  monday: WorkingDay;
-  tuesday: WorkingDay;
-  wednesday: WorkingDay;
-  thursday: WorkingDay;
-  friday: WorkingDay;
-  saturday: WorkingDay;
-  sunday: WorkingDay;
+  monday: WorkingDayConfig;
+  tuesday: WorkingDayConfig;
+  wednesday: WorkingDayConfig;
+  thursday: WorkingDayConfig;
+  friday: WorkingDayConfig;
+  saturday: WorkingDayConfig;
+  sunday: WorkingDayConfig;
 }
 
 export interface Leave {
   _id?: string;
   date: string; // YYYY-MM-DD
   reason: string;
-  createdAt?: string;
 }
 
 export interface Doctor {
@@ -28,10 +27,21 @@ export interface Doctor {
   email: string;
   role: 'DOCTOR';
   specialization: string;
+  qualifications: string[];
+  experienceYears: number;
+  consultationFee: number;
+  clinicName: string;
+  clinicAddress: string;
+  bio: string;
+  phone: string;
+  profileImage: string;
+  workingDays: string[];
   slotDuration: number;
+  isAvailable: boolean;
+  isActive: boolean;
   workingHours: WorkingHours;
   leaves: Leave[];
-  createdAt: string;
+  createdAt?: string;
   updatedAt?: string;
 }
 
@@ -40,36 +50,39 @@ export interface CreateDoctorRequest {
   email: string;
   password: string;
   specialization: string;
-  slotDuration: number;
-  workingHours: WorkingHours;
+  qualifications?: string[];
+  experienceYears?: number;
+  consultationFee?: number;
+  clinicName?: string;
+  clinicAddress?: string;
+  bio?: string;
+  phone?: string;
+  profileImage?: string;
+  workingDays?: string[];
+  slotDuration?: number;
+  isAvailable?: boolean;
+  workingHours?: WorkingHours;
 }
 
 export interface UpdateDoctorRequest {
   name?: string;
   specialization?: string;
+  qualifications?: string[];
+  experienceYears?: number;
+  consultationFee?: number;
+  clinicName?: string;
+  clinicAddress?: string;
+  bio?: string;
+  phone?: string;
+  profileImage?: string;
+  workingDays?: string[];
   slotDuration?: number;
+  isAvailable?: boolean;
+  isActive?: boolean;
   workingHours?: WorkingHours;
 }
 
-export interface AddLeaveRequest {
+export interface LeaveRequest {
   date: string;
   reason?: string;
-}
-
-export interface DoctorsApiResponse {
-  success: boolean;
-  count: number;
-  data: Doctor[];
-}
-
-export interface SingleDoctorApiResponse {
-  success: boolean;
-  message?: string;
-  data: Doctor;
-}
-
-export interface LeavesApiResponse {
-  success: boolean;
-  message?: string;
-  data: Leave[];
 }

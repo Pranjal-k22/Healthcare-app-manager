@@ -3,7 +3,8 @@
 ## Current Status
 - **Phase 1 — Foundation + Authentication**: **COMPLETED**
 - **Phase 2 — Doctor Management**: **COMPLETED**
-- **Next Phase**: Phase 3 — Slot Generation Engine + Double-Booking Prevention + Patient Booking Flow (Awaiting user command: "NOW PHASE 3")
+- **Phase 3 — Appointment Engine**: **COMPLETED**
+- **Next Phase**: Phase 4 — Symptom Intake + Doctor Clinical Consultation Notes + Prescriptions (Awaiting user command: "NOW PHASE 4")
 
 ---
 
@@ -18,8 +19,8 @@
 - **Backend**: Node.js, Express.js (REST API architecture), cookie-parser, cors, dotenv.
 - **Database**: MongoDB with Mongoose ODM.
 - **Security & Auth**: JSON Web Tokens (JWT), Bcryptjs (10 salt rounds), Role-Based Access Control (RBAC).
-- **Future AI (Phase 7/8)**: Local Ollama server (`http://localhost:11434`), structured prompt orchestration. *Not active in Phase 2.*
-- **Future Calendar & Email (Phase 9/10)**: Google Calendar API (OAuth2) & Nodemailer (SMTP). *Not active in Phase 2.*
+- **Future AI (Phase 5/6)**: Local Ollama server (`http://localhost:11434`), structured prompt orchestration. *Not active in Phase 3.*
+- **Future Calendar & Email (Phase 7/8)**: Google Calendar API (OAuth2) & Nodemailer (SMTP). *Not active in Phase 3.*
 
 ---
 
@@ -43,13 +44,13 @@
 ## 4. Master Database Collections Plan
 1. `users` — Base user identity (`PATIENT`, `DOCTOR`, `ADMIN`) [Implemented in Phase 1]
 2. `doctorprofiles` — Specialization, experience, fees, working hours, leaves [Implemented in Phase 2]
-3. `appointments` — Patient-Doctor slot bookings, statuses (`PENDING`, `CONFIRMED`, `COMPLETED`, `CANCELLED`) [Phase 3/6]
-4. `symptoms` — Patient-entered symptoms, duration, severity [Phase 3/6]
-5. `aisummaries` — Pre-visit clinical overview & Post-visit consultation summaries [Phase 7/8]
-6. `prescriptions` — Medications, dosage, frequency, follow-up instructions [Phase 8]
-7. `notifications` — In-app alerts and notifications [Phase 9/11]
-8. `calendarevents` — Google Calendar event metadata and synchronization [Phase 10]
-9. `oauthtokens` — Stored OAuth credentials for Google Calendar integration [Phase 10]
+3. `appointments` — Patient-Doctor slot bookings, statuses (`BOOKED`, `COMPLETED`, `CANCELLED`) [Implemented in Phase 3]
+4. `symptoms` — Patient-entered symptoms, duration, severity [Phase 4]
+5. `aisummaries` — Pre-visit clinical overview & Post-visit consultation summaries [Phase 6]
+6. `prescriptions` — Medications, dosage, frequency, follow-up instructions [Phase 4]
+7. `notifications` — In-app alerts and notifications [Phase 7/9]
+8. `calendarevents` — Google Calendar event metadata and synchronization [Phase 8]
+9. `oauthtokens` — Stored OAuth credentials for Google Calendar integration [Phase 8]
 
 ---
 
@@ -59,8 +60,8 @@
 | :--- | :--- | :--- |
 | **Phase 1** | Foundation + JWT Authentication + RBAC + Seeder + Dark UI | ✅ **COMPLETED** |
 | **Phase 2** | Doctor Profile Management + Working Hours + Admin Doctor Provisioning | ✅ **COMPLETED** |
-| **Phase 3** | Slot Generation Engine + Double-Booking Prevention + Patient Booking Flow | ⏳ **PENDING (Next)** |
-| **Phase 4** | Symptom Intake + Doctor Clinical Consultation Notes + Prescriptions | ⏳ Planned |
+| **Phase 3** | Slot Generation Engine + Double-Booking Prevention + Patient Booking Flow | ✅ **COMPLETED** |
+| **Phase 4** | Symptom Intake + Doctor Clinical Consultation Notes + Prescriptions | ⏳ **PENDING (Next)** |
 | **Phase 5** | Local Ollama Integration + Health Probe + Prompt Isolation | ⏳ Planned |
 | **Phase 6** | AI Pre-Visit & Post-Visit Summaries Engine | ⏳ Planned |
 | **Phase 7** | Transactional Email Notifications (Nodemailer) | ⏳ Planned |
@@ -80,63 +81,70 @@
 ---
 
 ## 7. Phase 2 Implementation Status (COMPLETED)
+- Model file: `server/models/DoctorProfile.js` (1:1 with `User` via `userId`).
+- Validator file: `server/validators/doctorValidator.js` (24-hour `HH:mm` format, `start < end`, `YYYY-MM-DD` calendar validation).
+- Service file: `server/services/doctorService.js` (CRUD, leaves management, transactions with compensating rollback).
+- Endpoints: `GET /api/doctors`, `GET /api/doctors/me`, `GET /api/doctors/:id`, `POST /api/doctors`, `PUT /api/doctors/:id`, `POST /api/doctors/:id/leave`, `DELETE /api/doctors/:id/leave/:date`.
+- Frontend: `DoctorCard.tsx`, `DoctorSearchBar.tsx`, `WorkingHoursForm.tsx`, `LeaveList.tsx`, `ManageDoctors.tsx`, `CreateDoctor.tsx`, `EditDoctor.tsx`, `ManageDoctorLeave.tsx`, `DoctorSearch.tsx`, `DoctorDetails.tsx`, `DoctorProfile.tsx`.
+
+---
+
+## 8. Phase 3 Implementation Status (COMPLETED)
 
 ### Status: COMPLETED (Verified & Tested)
 
-### DoctorProfile Model & User Relationship
-- Model file: `server/models/DoctorProfile.js`.
-- 1:1 relationship with `User` via `userId` (`type: ObjectId, ref: 'User', unique: true, required: true`).
-- `specialization`: String, required, trimmed.
-- `slotDuration`: Number (in minutes), required, default: 30, min: 5, max: 240.
-- `workingHours`: Subschema for monday–sunday, each containing `{ enabled: Boolean, start: String (HH:mm), end: String (HH:mm) }`.
-- `leaves`: Array of subdocuments `{ date: String (YYYY-MM-DD), reason: String }`.
-- Unique index: `userId` (1:1 enforce).
+### Appointment Model & Double-Booking Protection
+- Model file: `server/models/Appointment.js`.
+- Fields: `patientId` (ref: `User`), `doctorId` (ref: `User`), `date` (`YYYY-MM-DD`), `startTime` (`HH:mm`), `endTime` (`HH:mm`), `status` (`'BOOKED' | 'COMPLETED' | 'CANCELLED'`), `reason` (String placeholder).
+- **Compound Partial Unique Index**: `{ doctorId: 1, date: 1, startTime: 1 }` with `{ partialFilterExpression: { status: { $in: ['BOOKED', 'COMPLETED'] } } }`.
+- Guarantees database-level race condition protection against simultaneous bookings.
+- When an appointment is set to `CANCELLED`, MongoDB omits it from the unique index, making the slot available for rebooking.
+- Query Indexes: `{ patientId: 1, date: 1, status: 1 }`, `{ doctorId: 1, date: 1, status: 1 }`.
 
-### Doctor Validation & Service Layer
-- Validator file: `server/validators/doctorValidator.js`:
-  - 24-hour `HH:mm` format regex validation.
-  - `start < end` chronological time validation.
-  - `YYYY-MM-DD` real calendar date validation (leap year aware).
-  - Weekly working hours validator across all 7 days.
-  - Doctor creation, update, and leave input validators.
-- Service file: `server/services/doctorService.js`:
-  - `createDoctor(data)`: Hashes password, creates User (`role: 'DOCTOR'`), creates `DoctorProfile` with transaction support and compensating rollback.
-  - `getAllDoctors({ specialization, search })`: Queries and populates doctors, case-insensitive keyword search and specialization filters.
-  - `getDoctorById(id)`: Populates user info, returns sanitized doctor profile.
-  - `getDoctorByUserId(userId)`: Resolves doctor profile for authenticated doctor user (`req.user._id`).
-  - `updateDoctor(id, data)`: Admin update for doctor details, specialization, slot duration, and working hours.
-  - `addDoctorLeave(id, { date, reason })`: Adds leave date with duplicate date prevention.
-  - `removeDoctorLeave(id, date)`: Removes scheduled leave date.
-  - `getDoctorLeaves(id)`: Returns doctor's leave array.
+### Slot Generation & Validation Layer
+- Validator file: `server/validators/appointmentValidator.js`:
+  - Validates `doctorId`, `date` (`YYYY-MM-DD`, not in past), `startTime` (`HH:mm`), and reason.
+  - Standardized timezone math in integer minutes from midnight.
+- Service file: `server/services/slotService.js`:
+  - `generateAvailableSlots(doctorId, date)`: Resolves working hours and slot duration, bounds intervals strictly within `[start, end]`, detects leaves, filters past same-day times, checks existing active bookings, and returns `{ startTime, endTime, available }`.
+
+### Appointment Service Layer
+- Service file: `server/services/appointmentService.js`:
+  - `bookAppointment(payload)`: Validates doctor availability, working hours, and leaves; calculates server-side `endTime`; attempts MongoDB insert; translates duplicate key error (code 11000) into clean `409 Conflict`.
+  - `getPatientAppointments(patientId, status)`: Retrieves patient's appointments.
+  - `getDoctorAppointments(doctorUserId, status, date)`: Retrieves doctor's appointments.
+  - `getAppointmentById(id, requestingUser)`: Ownership-verified fetch (patient owner, assigned doctor, or admin).
+  - `cancelAppointment(id, requestingUser)`: Validates ownership, ensures appointment is `BOOKED` and not in past, and sets `status = 'CANCELLED'`.
+  - `rescheduleAppointment(id, newSlot, requestingUser)`: Validates new slot, creates new appointment first, then marks old appointment `CANCELLED`.
+  - `completeAppointment(id, requestingUser)`: Transitions `BOOKED` ➔ `COMPLETED` for assigned doctor or admin.
+  - `getAllAppointmentsAdmin(filters)`: Administrative query for clinic-wide appointments.
 
 ### API Endpoints
-- `GET    /api/doctors` — Authenticated: List all doctors with `?search=` and `?specialization=` filters.
-- `GET    /api/doctors/me` — Doctor only: View own doctor profile & schedule.
-- `GET    /api/doctors/:id` — Authenticated: View doctor details & weekly hours.
-- `POST   /api/doctors` — Admin only: Provision new doctor account and linked profile.
-- `PUT    /api/doctors/:id` — Admin only: Update doctor credentials and schedule.
-- `POST   /api/doctors/:id/leave` — Admin only: Schedule doctor leave date.
-- `GET    /api/doctors/:id/leaves` — Authenticated: Get doctor's scheduled leaves.
-- `DELETE /api/doctors/:id/leave/:date` — Admin only: Remove scheduled leave date.
+- `GET   /api/appointments/slots/:doctorId/:date` — Private: Generate slots with availability flags.
+- `POST  /api/appointments` — Private (Patient): Book a consultation.
+- `GET   /api/appointments/my` — Private (Patient): List own appointments.
+- `GET   /api/appointments/doctor` — Private (Doctor): List doctor consultation queue.
+- `GET   /api/appointments/admin/all` — Private (Admin): Master appointments view.
+- `GET   /api/appointments/:id` — Private: Ownership-checked appointment details.
+- `PATCH /api/appointments/:id/cancel` — Private: Cancel appointment.
+- `PATCH /api/appointments/:id/reschedule` — Private: Atomic reschedule.
+- `PATCH /api/appointments/:id/complete` — Private (Doctor/Admin): Mark visit completed.
 
 ### Frontend Components & Pages
-- Types: `client/src/types/doctor.ts`.
-- API Service: `client/src/services/doctorApi.ts`.
-- Components: `DoctorCard.tsx`, `DoctorSearchBar.tsx`, `WorkingHoursForm.tsx`, `LeaveList.tsx`.
-- Admin Pages: `ManageDoctors.tsx`, `CreateDoctor.tsx`, `EditDoctor.tsx`, `ManageDoctorLeave.tsx`.
-- Patient Pages: `DoctorSearch.tsx`, `DoctorDetails.tsx`.
-- Doctor Pages: `DoctorProfile.tsx`.
-- Nav & Dashboards: Updated `Navbar.tsx` with contextual links, updated `PatientDashboard.tsx`, `DoctorDashboard.tsx`, and `AdminDashboard.tsx`.
-
-### Seeder Script
-- `database/seed/seedDoctors.js`: Seeds *Dr. Sarah Jenkins* (Cardiology) and *Dr. Marcus Vance* (Neurology). Run via `npm run seed:doctors`.
+- Types: `client/src/types/appointment.ts`.
+- API Service: `client/src/services/appointmentApi.ts`.
+- Components: `SlotPicker.tsx`, `AppointmentStatusBadge.tsx`, `AppointmentCard.tsx`, `CancelAppointmentModal.tsx`, `RescheduleModal.tsx`.
+- Pages: `BookAppointment.tsx`, `MyAppointments.tsx`, `DoctorAppointments.tsx`, `ManageAppointments.tsx`.
+- Navigation: Updated `Navbar.tsx` and activated "Book Appointment" in `DoctorDetails.tsx`.
 
 ### Testing & Validation Results
 - [✓] TypeScript build compilation (`npm run build` in `client/`) passed with 0 errors.
-- [✓] Automated Phase 2 validation checks (`testDoctorPhase2.js`) passed with 0 errors.
-- [✓] Time format, start < end, calendar date, working hours, and doctor creation payload validation verified.
-- [✓] Phase 1 regression test passed: Auth endpoints, JWT verify, and RBAC guards fully intact.
+- [✓] Automated Phase 3 validation checks (`testAppointmentPhase3.js`) passed with 0 errors.
+- [✓] Slot generation bounded within working hours, past-time checks, and leaves verified.
+- [✓] Double-booking partial unique index and error 11000 translation verified.
+- [✓] Atomic rescheduling verified.
+- [✓] Phase 1 & Phase 2 regression tests passed: Auth, RBAC, Doctor profiles, and leaves remain 100% operational.
 
-### Known Limitations (Strictly by Design for Phase 2)
-- Slot generation and appointment booking will be introduced in **Phase 3**.
-- Ollama local LLM, clinical summaries, prescriptions, Google Calendar, and background jobs will follow in subsequent phases.
+### Known Limitations (Strictly by Design for Phase 3)
+- Symptoms intake, doctor clinical notes, and structured prescriptions will be introduced in **Phase 4**.
+- Ollama local LLM, clinical summaries, Nodemailer, and Google Calendar will follow in subsequent phases.

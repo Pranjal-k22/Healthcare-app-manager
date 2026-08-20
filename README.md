@@ -1,6 +1,6 @@
 # Healthcare Appointment & Follow-up Manager (HealthPulse)
 
-Healthcare Appointment & Follow-up Management System — **Phase 1: Foundation & Authentication** & **Phase 2: Doctor Management**.
+Healthcare Appointment & Follow-up Management System — **Phase 1: Foundation & Authentication**, **Phase 2: Doctor Management**, and **Phase 3: Appointment Engine**.
 
 ---
 
@@ -23,6 +23,15 @@ Healthcare Appointment & Follow-up Management System — **Phase 1: Foundation &
 - ✅ **Doctor Self-View**: Verified profile and schedule inspection view for doctors (`/doctor/profile`).
 - ✅ **Doctor Seeder**: Sample doctors seeding script (`npm run seed:doctors`).
 
+### Phase 3 — Appointment Engine
+- ✅ **Appointment Model**: Dedicated appointment collection with ownership references (`patientId`, `doctorId`).
+- ✅ **Double-Booking Prevention**: MongoDB compound partial unique index on `{ doctorId: 1, date: 1, startTime: 1 }` for active bookings (`status IN ['BOOKED', 'COMPLETED']`).
+- ✅ **Dynamic Slot Generator**: Deterministic slot calculation engine respecting doctor working hours, durations, leaves, past dates, and live booking collisions.
+- ✅ **Patient Booking Flow**: Interactive date & slot picker with double-click submission guard and instant confirmation card.
+- ✅ **Atomic Rescheduling**: Safe two-step transition where old appointment remains active if the new slot booking fails or conflicts.
+- ✅ **Doctor Consultation Queue**: Schedule terminal with today, upcoming, and past consultation views and one-click visit completion.
+- ✅ **Admin Appointment Management**: Clinic-wide appointment directory with doctor, date, and status filters.
+
 ---
 
 ## 📁 Directory Structure
@@ -33,17 +42,18 @@ healthcare-appointment-manager/
 │   ├── src/
 │   │   ├── components/
 │   │   │   ├── common/         # Navbar, ProtectedRoute
-│   │   │   └── doctor/         # DoctorCard, DoctorSearchBar, WorkingHoursForm, LeaveList
+│   │   │   ├── doctor/         # DoctorCard, DoctorSearchBar, WorkingHoursForm, LeaveList
+│   │   │   └── appointment/    # SlotPicker, AppointmentCard, AppointmentStatusBadge, RescheduleModal, CancelAppointmentModal
 │   │   ├── context/            # AuthContext
 │   │   ├── hooks/              # useAuth
 │   │   ├── pages/
 │   │   │   ├── auth/           # Login, Register
-│   │   │   ├── admin/          # ManageDoctors, CreateDoctor, EditDoctor, ManageDoctorLeave
-│   │   │   ├── doctor/         # DoctorProfile
-│   │   │   ├── patient/        # DoctorSearch, DoctorDetails
+│   │   │   ├── admin/          # ManageDoctors, CreateDoctor, EditDoctor, ManageDoctorLeave, ManageAppointments
+│   │   │   ├── doctor/         # DoctorProfile, DoctorAppointments
+│   │   │   ├── patient/        # DoctorSearch, DoctorDetails, BookAppointment, MyAppointments
 │   │   │   └── dashboard/      # Dashboards
-│   │   ├── services/           # apiClient, authApi, doctorApi
-│   │   ├── types/              # auth.ts, doctor.ts
+│   │   ├── services/           # apiClient, authApi, doctorApi, appointmentApi
+│   │   ├── types/              # auth.ts, doctor.ts, appointment.ts
 │   │   ├── utils/              # constants.ts
 │   │   ├── App.tsx             # Routing & Layout
 │   │   ├── main.tsx            # Entrypoint
@@ -54,13 +64,13 @@ healthcare-appointment-manager/
 │
 ├── server/                     # Express REST API
 │   ├── config/                 # db.js, env.js
-│   ├── controllers/            # authController.js, doctorController.js
+│   ├── controllers/            # authController.js, doctorController.js, appointmentController.js
 │   ├── middleware/             # authMiddleware.js, roleMiddleware.js, errorMiddleware.js
-│   ├── models/                 # User.js, DoctorProfile.js
-│   ├── routes/                 # authRoutes.js, doctorRoutes.js
-│   ├── services/               # doctorService.js
+│   ├── models/                 # User.js, DoctorProfile.js, Appointment.js
+│   ├── routes/                 # authRoutes.js, doctorRoutes.js, appointmentRoutes.js
+│   ├── services/               # doctorService.js, slotService.js, appointmentService.js
 │   ├── utils/                  # generateToken.js
-│   ├── validators/             # doctorValidator.js
+│   ├── validators/             # doctorValidator.js, appointmentValidator.js
 │   ├── app.js                  # Express middleware & route mounting
 │   ├── server.js               # Server bootstrap & DB connection
 │   └── package.json
@@ -72,7 +82,8 @@ healthcare-appointment-manager/
 │
 ├── docs/
 │   ├── ARCHITECTURE.md         # System Architecture & Auth Flow
-│   └── DOCTOR_MANAGEMENT.md    # Doctor Data Model & Schedule Specs
+│   ├── DOCTOR_MANAGEMENT.md    # Doctor Data Model & Schedule Specs
+│   └── APPOINTMENT_ENGINE.md   # Appointment Engine & Double-Booking Protection
 ├── .env.example
 ├── .gitignore
 ├── package.json
@@ -84,62 +95,38 @@ healthcare-appointment-manager/
 
 ## 🛠️ Installation & Setup
 
-### 1. Install Dependencies
-
 ```bash
-# In the root directory:
+# Install all dependencies:
 npm run install:all
-```
 
-### 2. Configure Environment Variables
-
-```bash
-cp .env.example .env
-```
-
-Ensure your MongoDB instance is running, or provide your MongoDB connection string in `.env`.
-
----
-
-## ⚡ Running & Seeding
-
-### 1. Seed Database
-
-```bash
-# Seed Super Admin (admin@healthcare.com / AdminPassword123!)
+# Seed database:
 npm run seed:admin
-
-# Seed Demo Doctors (Cardiology, Neurology)
 npm run seed:doctors
-```
 
-### 2. Start Servers
-
-```bash
-# Terminal 1 - Backend API (http://localhost:5000)
-npm run dev:server
-
-# Terminal 2 - React Frontend (http://localhost:5173)
-npm run dev:client
+# Start servers:
+npm run dev:server  # Port 5000
+npm run dev:client  # Port 5173
 ```
 
 ---
 
-## 🧪 Testing Phase 2 Doctor Workflows
+## 🧪 Testing Phase 3 Appointment Workflows
 
-### 1. Admin Doctor Management
-- Log in as Admin (`admin@healthcare.com` / `AdminPassword123!`).
-- Navigate to **Manage Doctors** via the Navbar or Dashboard.
-- Click **Add New Doctor** to create a doctor with custom weekly hours and slot duration.
-- Click **Edit** to modify specialization or hours; click **Leaves** to add/delete leave dates.
+### 1. Patient Booking & Slot Generation
+- Log in as Patient (or register).
+- Click **Find Doctors** ➔ Select doctor ➔ Click **Book Appointment**.
+- Choose a date (e.g. tomorrow) ➔ Select an available slot ➔ Click **Confirm & Book Appointment**.
+- Receive appointment confirmation and view entry in **My Appointments**.
 
-### 2. Patient Doctor Search
-- Log in as a Patient (or register a new patient account).
-- Click **Find Doctors** in the Navbar.
-- Search by doctor name or filter by specialization.
-- Click **View Profile & Schedule** to view working hours and upcoming leaves.
+### 2. Double-Booking Prevention
+- If two patients attempt to book the same doctor, date, and start time, MongoDB's partial unique index blocks the second write, returning a clean `409 Conflict` error without race conditions.
 
-### 3. Doctor Self-Profile View
-- Log in as a Doctor (e.g. `dr.sarah@healthcare.com` / `DoctorPassword123!`).
-- Click **My Profile** in the Navbar.
-- Inspect active consultation hours and registered leaves.
+### 3. Patient Reschedule & Cancellation
+- On **My Appointments**, click **Reschedule** on an upcoming booking.
+- Pick a new date/slot ➔ Confirm reschedule (old appointment is cancelled, new slot is booked).
+- Click **Cancel** on a booking to release the slot back to the doctor's available pool.
+
+### 4. Doctor Queue & Completion
+- Log in as Doctor (`dr.sarah@healthcare.com` / `DoctorPassword123!`).
+- Navigate to **Appointments** in the Navbar.
+- Review Today's queue and click **Mark Completed** when the consultation ends.

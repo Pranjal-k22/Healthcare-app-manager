@@ -1,33 +1,41 @@
 const express = require('express');
 const router = express.Router();
-const {
-  createDoctor,
-  getDoctors,
-  getDoctorById,
-  getMyDoctorProfile,
-  updateDoctor,
-  addLeave,
-  removeLeave,
-  getLeaves,
-} = require('../controllers/doctorController');
 const { protect } = require('../middleware/authMiddleware');
 const { requireRole } = require('../middleware/roleMiddleware');
+const {
+  createDoctorHandler,
+  getDoctorsHandler,
+  getMyDoctorProfileHandler,
+  updateMyDoctorProfileHandler,
+  getDoctorByIdHandler,
+  updateDoctorHandler,
+  toggleDoctorStatusHandler,
+  addDoctorLeaveHandler,
+  getDoctorLeavesHandler,
+  removeDoctorLeaveHandler,
+} = require('../controllers/doctorController');
 
-// All doctor routes require valid authentication
+// All doctor routes require an authenticated user session
 router.use(protect);
 
-// Doctor self-view (Must precede /:id to prevent matching 'me' as an ObjectId)
-router.get('/me', requireRole('DOCTOR'), getMyDoctorProfile);
+// 1. Doctor Directory & Search (Authenticated Users)
+router.get('/', getDoctorsHandler);
 
-// Public / Authenticated search & viewing
-router.get('/', getDoctors);
-router.get('/:id', getDoctorById);
-router.get('/:id/leaves', getLeaves);
+// 2. Doctor Self Profile (Doctor Only)
+router.get('/me', requireRole('DOCTOR'), getMyDoctorProfileHandler);
+router.put('/me', requireRole('DOCTOR'), updateMyDoctorProfileHandler);
 
-// Admin-only management endpoints
-router.post('/', requireRole('ADMIN'), createDoctor);
-router.put('/:id', requireRole('ADMIN'), updateDoctor);
-router.post('/:id/leave', requireRole('ADMIN'), addLeave);
-router.delete('/:id/leave/:date', requireRole('ADMIN'), removeLeave);
+// 3. Single Doctor Details (Authenticated Users)
+router.get('/:id', getDoctorByIdHandler);
+
+// 4. Admin Doctor Provisioning & Updates (Admin Only)
+router.post('/', requireRole('ADMIN'), createDoctorHandler);
+router.put('/:id', requireRole('ADMIN'), updateDoctorHandler);
+router.patch('/:id/status', requireRole('ADMIN'), toggleDoctorStatusHandler);
+
+// 5. Leave Management
+router.post('/:id/leave', requireRole('ADMIN'), addDoctorLeaveHandler);
+router.get('/:id/leaves', getDoctorLeavesHandler);
+router.delete('/:id/leave/:date', requireRole('ADMIN'), removeDoctorLeaveHandler);
 
 module.exports = router;

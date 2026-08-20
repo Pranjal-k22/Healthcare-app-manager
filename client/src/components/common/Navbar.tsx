@@ -3,6 +3,8 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import {
   Activity,
+  Calendar,
+  CalendarCheck,
   LogOut,
   Search,
   ShieldCheck,
@@ -63,39 +65,85 @@ export const Navbar: React.FC = () => {
           {isAuthenticated && user && (
             <nav className="nav-links">
               {user.role === 'PATIENT' && (
-                <Link
-                  to="/patient/doctors"
-                  className={`nav-link-item ${
-                    location.pathname.startsWith('/patient/doctors') ? 'nav-link-active' : ''
-                  }`}
-                >
-                  <Search size={15} />
-                  <span>Find Doctors</span>
-                </Link>
+                <>
+                  <Link
+                    to="/patient/doctors"
+                    className={`nav-link-item ${
+                      location.pathname.startsWith('/patient/doctors') ||
+                      location.pathname.startsWith('/patient/book')
+                        ? 'nav-link-active'
+                        : ''
+                    }`}
+                  >
+                    <Search size={15} />
+                    <span>Find Doctors</span>
+                  </Link>
+                  <Link
+                    to="/patient/appointments"
+                    className={`nav-link-item ${
+                      location.pathname.startsWith('/patient/appointments')
+                        ? 'nav-link-active'
+                        : ''
+                    }`}
+                  >
+                    <CalendarCheck size={15} />
+                    <span>My Appointments</span>
+                  </Link>
+                </>
               )}
 
               {user.role === 'DOCTOR' && (
-                <Link
-                  to="/doctor/profile"
-                  className={`nav-link-item ${
-                    location.pathname.startsWith('/doctor/profile') ? 'nav-link-active' : ''
-                  }`}
-                >
-                  <Stethoscope size={15} />
-                  <span>My Profile</span>
-                </Link>
+                <>
+                  <Link
+                    to="/doctor/appointments"
+                    className={`nav-link-item ${
+                      location.pathname.startsWith('/doctor/appointments')
+                        ? 'nav-link-active'
+                        : ''
+                    }`}
+                  >
+                    <Calendar size={15} />
+                    <span>Appointments</span>
+                  </Link>
+                  <Link
+                    to="/doctor/profile"
+                    className={`nav-link-item ${
+                      location.pathname.startsWith('/doctor/profile')
+                        ? 'nav-link-active'
+                        : ''
+                    }`}
+                  >
+                    <Stethoscope size={15} />
+                    <span>My Profile</span>
+                  </Link>
+                </>
               )}
 
               {user.role === 'ADMIN' && (
-                <Link
-                  to="/admin/doctors"
-                  className={`nav-link-item ${
-                    location.pathname.startsWith('/admin/doctors') ? 'nav-link-active' : ''
-                  }`}
-                >
-                  <Users size={15} />
-                  <span>Manage Doctors</span>
-                </Link>
+                <>
+                  <Link
+                    to="/admin/doctors"
+                    className={`nav-link-item ${
+                      location.pathname.startsWith('/admin/doctors')
+                        ? 'nav-link-active'
+                        : ''
+                    }`}
+                  >
+                    <Users size={15} />
+                    <span>Manage Doctors</span>
+                  </Link>
+                  <Link
+                    to="/admin/appointments"
+                    className={`nav-link-item ${
+                      location.pathname.startsWith('/admin/appointments')
+                        ? 'nav-link-active'
+                        : ''
+                    }`}
+                  >
+                    <Calendar size={15} />
+                    <span>Appointments</span>
+                  </Link>
+                </>
               )}
             </nav>
           )}

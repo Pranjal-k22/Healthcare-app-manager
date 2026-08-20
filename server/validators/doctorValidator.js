@@ -8,6 +8,16 @@ const DAYS_OF_WEEK = [
   'sunday',
 ];
 
+const VALID_WORKING_DAYS = [
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+  'Sunday',
+];
+
 /**
  * Validate 24-hour time format (HH:mm) from 00:00 to 23:59
  * @param {string} timeStr
@@ -111,7 +121,19 @@ const validateWorkingHours = (workingHours) => {
  * @returns {{ valid: boolean, error?: string }}
  */
 const validateCreateDoctorInput = (data) => {
-  const { name, email, password, specialization, slotDuration, workingHours } = data;
+  const {
+    name,
+    email,
+    password,
+    specialization,
+    slotDuration,
+    workingHours,
+    experienceYears,
+    consultationFee,
+    qualifications,
+    workingDays,
+    bio,
+  } = data;
 
   if (!name || typeof name !== 'string' || name.trim().length < 2) {
     return { valid: false, error: 'Doctor name must be at least 2 characters long' };
@@ -129,10 +151,40 @@ const validateCreateDoctorInput = (data) => {
     return { valid: false, error: 'Specialization is required (at least 2 characters)' };
   }
 
+  if (experienceYears !== undefined) {
+    if (typeof experienceYears !== 'number' || experienceYears < 0) {
+      return { valid: false, error: 'Experience years must be a non-negative number' };
+    }
+  }
+
+  if (consultationFee !== undefined) {
+    if (typeof consultationFee !== 'number' || consultationFee < 0) {
+      return { valid: false, error: 'Consultation fee must be a non-negative number' };
+    }
+  }
+
   if (slotDuration !== undefined) {
     if (typeof slotDuration !== 'number' || slotDuration < 5 || slotDuration > 240) {
       return { valid: false, error: 'Slot duration must be a number between 5 and 240 minutes' };
     }
+  }
+
+  if (qualifications !== undefined && !Array.isArray(qualifications)) {
+    return { valid: false, error: 'Qualifications must be an array of strings' };
+  }
+
+  if (workingDays !== undefined) {
+    if (!Array.isArray(workingDays)) {
+      return { valid: false, error: 'workingDays must be an array' };
+    }
+    const invalidDay = workingDays.find((d) => !VALID_WORKING_DAYS.includes(d));
+    if (invalidDay) {
+      return { valid: false, error: `Invalid working day '${invalidDay}'` };
+    }
+  }
+
+  if (bio && typeof bio === 'string' && bio.length > 2000) {
+    return { valid: false, error: 'Bio cannot exceed 2000 characters' };
   }
 
   if (workingHours) {
@@ -149,7 +201,17 @@ const validateCreateDoctorInput = (data) => {
  * @returns {{ valid: boolean, error?: string }}
  */
 const validateUpdateDoctorInput = (data) => {
-  const { name, specialization, slotDuration, workingHours } = data;
+  const {
+    name,
+    specialization,
+    slotDuration,
+    workingHours,
+    experienceYears,
+    consultationFee,
+    qualifications,
+    workingDays,
+    bio,
+  } = data;
 
   if (name !== undefined) {
     if (typeof name !== 'string' || name.trim().length < 2) {
@@ -163,10 +225,40 @@ const validateUpdateDoctorInput = (data) => {
     }
   }
 
+  if (experienceYears !== undefined) {
+    if (typeof experienceYears !== 'number' || experienceYears < 0) {
+      return { valid: false, error: 'Experience years must be a non-negative number' };
+    }
+  }
+
+  if (consultationFee !== undefined) {
+    if (typeof consultationFee !== 'number' || consultationFee < 0) {
+      return { valid: false, error: 'Consultation fee must be a non-negative number' };
+    }
+  }
+
   if (slotDuration !== undefined) {
     if (typeof slotDuration !== 'number' || slotDuration < 5 || slotDuration > 240) {
       return { valid: false, error: 'Slot duration must be a number between 5 and 240 minutes' };
     }
+  }
+
+  if (qualifications !== undefined && !Array.isArray(qualifications)) {
+    return { valid: false, error: 'Qualifications must be an array of strings' };
+  }
+
+  if (workingDays !== undefined) {
+    if (!Array.isArray(workingDays)) {
+      return { valid: false, error: 'workingDays must be an array' };
+    }
+    const invalidDay = workingDays.find((d) => !VALID_WORKING_DAYS.includes(d));
+    if (invalidDay) {
+      return { valid: false, error: `Invalid working day '${invalidDay}'` };
+    }
+  }
+
+  if (bio && typeof bio === 'string' && bio.length > 2000) {
+    return { valid: false, error: 'Bio cannot exceed 2000 characters' };
   }
 
   if (workingHours !== undefined) {
@@ -197,6 +289,7 @@ const validateLeaveInput = (data) => {
 
 module.exports = {
   DAYS_OF_WEEK,
+  VALID_WORKING_DAYS,
   isValidTimeFormat,
   isStartBeforeEnd,
   isValidDateFormat,
