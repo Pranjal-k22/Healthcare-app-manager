@@ -108,17 +108,10 @@ const holdSlot = async (payload) => {
     throw error;
   }
 
-  // 4. Verify Doctor Leave Status
-  const isOnLeave = (doctorProfile.leaves || []).some((l) => l.date === date);
-  if (isOnLeave) {
-    const error = new Error(`Doctor is on scheduled leave on ${date}`);
-    error.statusCode = 400;
-    throw error;
-  }
-
+  // 4. Verify Doctor Leave Status (DoctorLeave collection)
   const isOnDoctorLeave = await isDoctorOnLeave(doctorUserId, date);
   if (isOnDoctorLeave) {
-    const error = new Error(`Doctor is on approved leave on ${date}`);
+    const error = new Error(`Doctor is on scheduled leave on ${date}`);
     error.statusCode = 400;
     throw error;
   }
@@ -314,17 +307,10 @@ const bookAppointment = async (payload) => {
     throw error;
   }
 
-  // 4. Verify Doctor Leave Status
-  const isOnLeave = (doctorProfile.leaves || []).some((l) => l.date === date);
-  if (isOnLeave) {
-    const error = new Error(`Doctor is on scheduled leave on ${date}`);
-    error.statusCode = 400;
-    throw error;
-  }
-
+  // 4. Verify Doctor Leave Status (DoctorLeave collection)
   const isOnDoctorLeave = await isDoctorOnLeave(doctorUserId, date);
   if (isOnDoctorLeave) {
-    const error = new Error(`Doctor is on approved leave on ${date}`);
+    const error = new Error(`Doctor is on scheduled leave on ${date}`);
     error.statusCode = 400;
     throw error;
   }

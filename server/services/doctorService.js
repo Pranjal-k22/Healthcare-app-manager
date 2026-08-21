@@ -1,19 +1,40 @@
 const mongoose = require('mongoose');
 const User = require('../models/User');
 const DoctorProfile = require('../models/DoctorProfile');
+const DoctorLeave = require('../models/DoctorLeave');
 const Appointment = require('../models/Appointment');
 const notificationService = require('./notificationService');
 
 /**
  * Format populated doctor entity into clean, safe API response object
  * @param {object} profileDoc - Mongoose DoctorProfile document with populated userId
- * @returns {object}
+ * @returns {Promise<object>}
  */
-const formatDoctorResponse = (profileDoc) => {
+const formatDoctorResponse = async (profileDoc) => {
   const user = profileDoc.userId || {};
+  const doctorUserId = user._id || profileDoc.userId;
+
+  let leaves = [];
+  if (doctorUserId) {
+    const doctorLeaves = await DoctorLeave.find({
+      doctorId: doctorUserId,
+      status: 'APPROVED',
+    }).sort({ startDate: 1 });
+
+    leaves = doctorLeaves.map((l) => ({
+      id: l._id.toString(),
+      _id: l._id,
+      date: l.startDate,
+      startDate: l.startDate,
+      endDate: l.endDate,
+      reason: l.reason,
+      status: l.status,
+    }));
+  }
+
   return {
     id: profileDoc._id,
-    userId: user._id || profileDoc.userId,
+    userId: doctorUserId,
     name: user.name || 'Doctor',
     email: user.email || '',
     role: user.role || 'DOCTOR',
@@ -37,7 +58,7 @@ const formatDoctorResponse = (profileDoc) => {
     isAvailable: profileDoc.isAvailable !== false,
     isActive: profileDoc.isActive !== false,
     workingHours: profileDoc.workingHours,
-    leaves: profileDoc.leaves || [],
+    leaves,
     createdAt: profileDoc.createdAt,
     updatedAt: profileDoc.updatedAt,
   };
@@ -136,7 +157,7 @@ const createDoctor = async (data) => {
       'name email role createdAt'
     );
 
-    return formatDoctorResponse(populated);
+    return await formatDoctorResponse(populated);
   } catch (error) {
     if (session) {
       await session.abortTransaction();
@@ -197,7 +218,7 @@ const getAllDoctors = async (filters = {}) => {
     });
   }
 
-  return doctorProfiles.map(formatDoctorResponse);
+  return await Promise.all(doctorProfiles.map(formatDoctorResponse));
 };
 
 /**
@@ -230,7 +251,7 @@ const getDoctorById = async (id) => {
     throw error;
   }
 
-  return formatDoctorResponse(profile);
+  return await formatDoctorResponse(profile);
 };
 
 /**
@@ -250,7 +271,7 @@ const getDoctorByUserId = async (userId) => {
     throw error;
   }
 
-  return formatDoctorResponse(profile);
+  return await formatDoctorResponse(profile);
 };
 
 /**
@@ -329,7 +350,7 @@ const updateDoctor = async (id, updateData) => {
     'name email role createdAt'
   );
 
-  return formatDoctorResponse(populated);
+  return await formatDoctorResponse(populated);
 };
 
 /**
@@ -394,12 +415,13 @@ const updateDoctorSelf = async (doctorUserId, updateData) => {
     'name email role createdAt'
   );
 
-  return formatDoctorResponse(populated);
+  return await formatDoctorResponse(populated);
 };
 
 /**
  * Add a leave date for a doctor (Admin Override Flow)
- * Automatically cancels conflicting BOOKED appointments and dispatches cancellation notifications.
+ * Automatically cancels conflicting BOOKED appointments, dispatches cancellation notifications,
+ * and creates a DoctorLeave document.
  * @param {string} id - Doctor Profile ID or Doctor User ID
  * @param {object} leaveData - { date: 'YYYY-MM-DD', reason?: string }
  * @returns {Promise<object>} - { leave, leaves, cancelledAppointmentsCount, affectedPatientIds }
@@ -425,9 +447,15 @@ const addDoctorLeave = async (id, leaveData) => {
   const { date, reason = 'Unavailable' } = leaveData;
   const doctorUserId = profile.userId;
 
-  // Duplicate leave date prevention
-  const dateExists = profile.leaves.some((l) => l.date === date);
-  if (dateExists) {
+  // Duplicate leave check querying DoctorLeave collection
+  const existingLeave = await DoctorLeave.findOne({
+    doctorId: doctorUserId,
+    status: 'APPROVED',
+    startDate: { $lte: date },
+    endDate: { $gte: date },
+  });
+
+  if (existingLeave) {
     const error = new Error(`Doctor already has a scheduled leave on ${date}`);
     error.statusCode = 409;
     throw error;
@@ -465,21 +493,50 @@ const addDoctorLeave = async (id, leaveData) => {
     }
   }
 
-  // 3. Save leave to doctor's profile
-  const newLeave = { date, reason: reason.trim() };
-  profile.leaves.push(newLeave);
-  await profile.save();
+  // 3. Create DoctorLeave document in dedicated collection
+  const newLeave = await DoctorLeave.create({
+    doctorId: doctorUserId,
+    startDate: date,
+    endDate: date,
+    reason: (reason || 'Unavailable').trim(),
+    status: 'APPROVED',
+    approvedAt: new Date(),
+  });
+
+  // Fetch all approved doctor leaves for frontend compatibility
+  const allLeaves = await DoctorLeave.find({
+    doctorId: doctorUserId,
+    status: 'APPROVED',
+  }).sort({ startDate: 1 });
+
+  const formattedLeaves = allLeaves.map((l) => ({
+    id: l._id.toString(),
+    _id: l._id,
+    date: l.startDate,
+    startDate: l.startDate,
+    endDate: l.endDate,
+    reason: l.reason,
+    status: l.status,
+  }));
 
   return {
-    leave: newLeave,
-    leaves: profile.leaves,
+    leave: {
+      id: newLeave._id.toString(),
+      _id: newLeave._id,
+      date: newLeave.startDate,
+      startDate: newLeave.startDate,
+      endDate: newLeave.endDate,
+      reason: newLeave.reason,
+      status: newLeave.status,
+    },
+    leaves: formattedLeaves,
     cancelledAppointmentsCount: conflictingAppointments.length,
     affectedPatientIds,
   };
 };
 
 /**
- * Remove a scheduled leave date for a doctor
+ * Remove a scheduled leave date for a doctor (Cancels in DoctorLeave collection)
  * @param {string} id
  * @param {string} dateStr - 'YYYY-MM-DD'
  * @returns {Promise<Array>}
@@ -502,14 +559,39 @@ const removeDoctorLeave = async (id, dateStr) => {
     throw error;
   }
 
-  profile.leaves = profile.leaves.filter((l) => l.date !== dateStr);
-  await profile.save();
+  const doctorUserId = profile.userId;
 
-  return profile.leaves;
+  // Soft-cancel matching leave in DoctorLeave collection
+  const leave = await DoctorLeave.findOne({
+    doctorId: doctorUserId,
+    status: 'APPROVED',
+    startDate: { $lte: dateStr },
+    endDate: { $gte: dateStr },
+  });
+
+  if (leave) {
+    leave.status = 'CANCELLED';
+    await leave.save();
+  }
+
+  const allLeaves = await DoctorLeave.find({
+    doctorId: doctorUserId,
+    status: 'APPROVED',
+  }).sort({ startDate: 1 });
+
+  return allLeaves.map((l) => ({
+    id: l._id.toString(),
+    _id: l._id,
+    date: l.startDate,
+    startDate: l.startDate,
+    endDate: l.endDate,
+    reason: l.reason,
+    status: l.status,
+  }));
 };
 
 /**
- * Get leaves for a doctor
+ * Get leaves for a doctor from DoctorLeave collection
  * @param {string} id
  * @returns {Promise<Array>}
  */
@@ -531,7 +613,22 @@ const getDoctorLeaves = async (id) => {
     throw error;
   }
 
-  return profile.leaves;
+  const doctorUserId = profile.userId;
+
+  const leaves = await DoctorLeave.find({
+    doctorId: doctorUserId,
+    status: 'APPROVED',
+  }).sort({ startDate: 1 });
+
+  return leaves.map((l) => ({
+    id: l._id.toString(),
+    _id: l._id,
+    date: l.startDate,
+    startDate: l.startDate,
+    endDate: l.endDate,
+    reason: l.reason,
+    status: l.status,
+  }));
 };
 
 /**

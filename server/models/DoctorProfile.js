@@ -155,6 +155,7 @@ const doctorProfileSchema = new mongoose.Schema(
         default: () => ({ enabled: false, start: null, end: null }),
       },
     },
+    // DEPRECATED: superseded by DoctorLeave collection as of Task 4. Do not read or write this field.
     leaves: [leaveSchema],
   },
   {

@@ -49,12 +49,7 @@ const generateAvailableSlots = async (doctorId, dateStr, requestingPatientId = n
     return [];
   }
 
-  // 3. Check if Doctor is on Leave on this date (Profile single dates & DoctorLeave range)
-  const isProfileLeave = (profile.leaves || []).some((l) => l.date === dateStr);
-  if (isProfileLeave) {
-    return [];
-  }
-
+  // 3. Check if Doctor is on Leave on this date (DoctorLeave collection)
   const isOnDoctorLeave = await isDoctorOnLeave(doctorUserId, dateStr);
   if (isOnDoctorLeave) {
     return [];
