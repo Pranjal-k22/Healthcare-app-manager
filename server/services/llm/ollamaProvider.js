@@ -1,83 +1,89 @@
-const config = require('../../config/env');
-const {
-  LLMConnectionError,
-  LLMTimeoutError,
-  LLMResponseError,
-} = require('./llmErrors');
-const { CLINICAL_SAFETY_SYSTEM_PROMPT } = require('./prompts');
+// server/services/llm/ollamaProvider.js
+// Thin HTTP client for the local Ollama daemon. Knows nothing about prompts,
+// schemas, or retries -- just "send this chat request, get text back, respect
+// the timeout." Uses global fetch (Node 18+, matches the stated runtime requirement).
+
+const { LLMConnectionError, LLMTimeoutError, LLMProviderError } = require('./llmErrors');
+
+const OLLAMA_HOST = process.env.OLLAMA_HOST || 'http://localhost:11434';
+const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'llama3';
+const DEFAULT_TIMEOUT_MS = Number(process.env.OLLAMA_TIMEOUT_MS || 28000); // 25-30s per spec
 
 /**
- * Ollama Local Provider (Phase 10)
- * Communicates with local Ollama daemon via REST API.
+ * Sends a single chat completion request to Ollama and returns the raw text.
+ * @param {{system: string, user: string}} prompt
+ * @param {{timeoutMs?: number, model?: string}} [opts]
+ * @returns {Promise<string>} raw model output text
  */
-
-/**
- * Make a generation request to Ollama
- * @param {object} options
- * @param {string} options.prompt - Prompt string
- * @param {string} [options.system] - System instructions
- * @param {string} [options.format] - 'json' or undefined
- * @param {number} [options.timeoutMs] - Timeout in milliseconds (default: 30000)
- * @returns {Promise<string>} - Raw text response from Ollama
- */
-const generateCompletion = async ({
-  prompt,
-  system = CLINICAL_SAFETY_SYSTEM_PROMPT,
-  format,
-  timeoutMs = 30000,
-}) => {
-  const host = (config.OLLAMA_HOST || 'http://localhost:11434').replace(/\/+$/, '');
-  const model = config.OLLAMA_MODEL || 'llama3';
-  const url = `${host}/api/generate`;
+async function generate({ system, user }, opts = {}) {
+  const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+  const model = opts.model ?? OLLAMA_MODEL;
 
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
 
+  let response;
   try {
-    const payload = {
-      model,
-      prompt,
-      system,
-      stream: false,
-      ...(format === 'json' && { format: 'json' }),
-    };
-
-    const response = await fetch(url, {
+    response = await fetch(`${OLLAMA_HOST}/api/chat`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
+      headers: { 'Content-Type': 'application/json' },
       signal: controller.signal,
+      body: JSON.stringify({
+        model,
+        stream: false,
+        format: 'json',
+        messages: [
+          { role: 'system', content: system },
+          { role: 'user', content: user },
+        ],
+        options: {
+          temperature: 0.2, // low temperature: this is extraction/summarization, not creative writing
+        },
+      }),
     });
-
-    if (!response.ok) {
-      throw new LLMResponseError(
-        `Ollama HTTP Error: ${response.status} ${response.statusText}`
-      );
+  } catch (err) {
+    if (err.name === 'AbortError') {
+      throw new LLMTimeoutError(`Ollama request exceeded ${timeoutMs}ms timeout`, err);
     }
-
-    const data = await response.json();
-    return data.response || '';
-  } catch (error) {
-    if (error.name === 'AbortError') {
-      throw new LLMTimeoutError(`Ollama request timed out after ${timeoutMs}ms`);
-    }
-    if (
-      error.code === 'ECONNREFUSED' ||
-      error.code === 'ENOTFOUND' ||
-      error.message.includes('fetch failed')
-    ) {
-      throw new LLMConnectionError(
-        `Failed to connect to local Ollama runtime at ${host}: ${error.message}`
-      );
-    }
-    throw error;
+    // fetch throws TypeError on connection refused / DNS failure
+    throw new LLMConnectionError(`Could not reach Ollama at ${OLLAMA_HOST}`, err);
   } finally {
-    clearTimeout(timeoutId);
+    clearTimeout(timer);
   }
-};
+
+  if (!response.ok) {
+    const body = await response.text().catch(() => '');
+    throw new LLMProviderError(`Ollama responded with HTTP ${response.status}`, {
+      status: response.status,
+      cause: body,
+    });
+  }
+
+  const data = await response.json();
+  // Ollama /api/chat non-streaming shape: { message: { role, content }, ... }
+  const text = data?.message?.content;
+  if (typeof text !== 'string') {
+    throw new LLMProviderError('Ollama response missing message.content', { status: response.status });
+  }
+  return text;
+}
+
+/** Lightweight health check used by /api/health and startup diagnostics. */
+async function isAvailable() {
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 3000);
+    const res = await fetch(`${OLLAMA_HOST}/api/tags`, { signal: controller.signal });
+    clearTimeout(timer);
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
 
 module.exports = {
-  generateCompletion,
+  generate,
+  isAvailable,
+  OLLAMA_HOST,
+  OLLAMA_MODEL,
 };

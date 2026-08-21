@@ -7,6 +7,12 @@ export interface MedicineItem {
   instructions: string;
 }
 
+export interface PostVisitSummary {
+  summary: string;
+  medicationSchedule?: string;
+  followUpSteps?: string;
+}
+
 export interface ClinicalRecord {
   _id: string;
   appointmentId: string;
@@ -24,7 +30,7 @@ export interface ClinicalRecord {
   diagnosisNotes?: string;
   patientInstructions?: string;
   followUpDate?: string | null;
-  postVisitSummary?: string | null;
+  postVisitSummary?: PostVisitSummary | string | null;
   aiStatus?: 'PENDING' | 'READY' | 'FAILED';
   createdAt?: string;
   updatedAt?: string;

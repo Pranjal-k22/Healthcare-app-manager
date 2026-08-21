@@ -6,7 +6,8 @@ const { dispatchPrescriptionAvailable } = require('./notificationService');
 const {
   generateRemindersForPrescription,
 } = require('./medication/medicationScheduleService');
-const { generatePostVisitSummary } = require('./llm/llmService');
+const llmService = require('./llm/llmService');
+const { AI_STATUS } = require('./llm/schemas');
 
 /**
  * Save or update clinical notes for an appointment (Doctor authority)
@@ -310,17 +311,10 @@ const completeConsultation = async (appointmentId, doctorUser, workflowData = {}
     Prescription.findOne({ appointmentId }),
   ]);
 
-  // Asynchronously trigger Post-Visit LLM summary generation (Non-blocking)
+  // Asynchronously trigger Post-Visit LLM summary generation (Non-blocking fire-and-forget)
   if (clinicalRecord && clinicalRecord.clinicalNotes) {
     const medicines = prescription ? prescription.medicines : [];
-    generatePostVisitSummary(
-      clinicalRecord._id,
-      appointmentId,
-      clinicalRecord.clinicalNotes,
-      medicines
-    ).catch((err) => {
-      console.error('[LLMService] Post-visit generation error:', err.message);
-    });
+    triggerPostVisitSummary(clinicalRecord._id, clinicalRecord.clinicalNotes, medicines);
   }
 
   return {
@@ -330,6 +324,28 @@ const completeConsultation = async (appointmentId, doctorUser, workflowData = {}
   };
 };
 
+/**
+ * Asynchronously synthesize Post-Visit Patient Summary via Local LLM Layer
+ * Fire-and-forget: does not block HTTP response; updates MongoDB record on completion.
+ * @param {string} clinicalRecordId
+ * @param {string} clinicalNotes
+ * @param {Array<object>} medicines
+ */
+const triggerPostVisitSummary = async (clinicalRecordId, clinicalNotes, medicines) => {
+  try {
+    const result = await llmService.generatePostVisitSummary(clinicalNotes, medicines);
+    await ClinicalRecord.findByIdAndUpdate(clinicalRecordId, {
+      aiStatus: result.status,               // 'READY' or 'FAILED'
+      postVisitSummary: result.data || null, // { summary, medicationSchedule, followUpSteps }
+      aiPromptVersion: result.promptVersion,
+    });
+  } catch (err) {
+    // Defense in depth: catch unexpected failures and ensure status is marked FAILED without throwing
+    await ClinicalRecord.findByIdAndUpdate(clinicalRecordId, { aiStatus: AI_STATUS.FAILED }).catch(() => {});
+    console.error('[clinicalService] post-visit trigger crashed:', err.message);
+  }
+};
+
 module.exports = {
   saveClinicalRecord,
   savePrescription,
@@ -337,4 +353,5 @@ module.exports = {
   getPrescriptionByAppointment,
   getPatientPrescriptionsList,
   completeConsultation,
+  triggerPostVisitSummary,
 };

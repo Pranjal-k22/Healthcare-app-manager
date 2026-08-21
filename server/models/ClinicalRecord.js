@@ -46,13 +46,17 @@ const clinicalRecordSchema = new mongoose.Schema(
       default: null,
     },
     postVisitSummary: {
-      type: String,
+      type: mongoose.Schema.Types.Mixed,
       default: null,
     },
     aiStatus: {
       type: String,
       enum: ['PENDING', 'READY', 'FAILED'],
       default: 'PENDING',
+    },
+    aiPromptVersion: {
+      type: String,
+      default: null,
     },
   },
   {

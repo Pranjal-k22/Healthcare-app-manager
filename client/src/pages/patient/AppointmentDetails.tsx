@@ -163,6 +163,7 @@ export const AppointmentDetails: React.FC = () => {
       </div>
 
       {/* Post-Visit AI Patient Summary */}
+      {/* Post-Visit AI Patient Summary */}
       {clinicalRecord?.aiStatus === 'READY' && clinicalRecord.postVisitSummary ? (
         <div
           className="glass-card info-card"
@@ -188,17 +189,43 @@ export const AppointmentDetails: React.FC = () => {
 
           <div
             style={{
-              padding: '1rem 1.15rem',
+              padding: '1.15rem',
               background: 'rgba(15, 23, 42, 0.5)',
               borderRadius: 'var(--radius-sm)',
               border: '1px solid var(--border-color)',
               color: 'var(--text-primary)',
               fontSize: '0.92rem',
               lineHeight: 1.65,
-              whiteSpace: 'pre-line',
             }}
           >
-            {clinicalRecord.postVisitSummary}
+            {typeof clinicalRecord.postVisitSummary === 'string' ? (
+              <div style={{ whiteSpace: 'pre-line' }}>{clinicalRecord.postVisitSummary}</div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                <div>
+                  <h4 style={{ fontSize: '0.82rem', fontWeight: 700, color: '#10b981', textTransform: 'uppercase', marginBottom: '0.25rem' }}>
+                    Visit Summary & Care Explanation
+                  </h4>
+                  <p style={{ margin: 0, color: 'var(--text-primary)' }}>{clinicalRecord.postVisitSummary.summary}</p>
+                </div>
+                {clinicalRecord.postVisitSummary.medicationSchedule && (
+                  <div>
+                    <h4 style={{ fontSize: '0.82rem', fontWeight: 700, color: '#38bdf8', textTransform: 'uppercase', marginBottom: '0.25rem' }}>
+                      Medication Instructions & Schedule
+                    </h4>
+                    <p style={{ margin: 0, color: 'var(--text-secondary)' }}>{clinicalRecord.postVisitSummary.medicationSchedule}</p>
+                  </div>
+                )}
+                {clinicalRecord.postVisitSummary.followUpSteps && (
+                  <div>
+                    <h4 style={{ fontSize: '0.82rem', fontWeight: 700, color: '#f59e0b', textTransform: 'uppercase', marginBottom: '0.25rem' }}>
+                      Next Steps & Follow-Up
+                    </h4>
+                    <p style={{ margin: 0, color: 'var(--text-secondary)' }}>{clinicalRecord.postVisitSummary.followUpSteps}</p>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       ) : clinicalRecord?.aiStatus === 'FAILED' ? (
@@ -216,7 +243,7 @@ export const AppointmentDetails: React.FC = () => {
           }}
         >
           <Sparkles size={16} color="var(--text-muted)" />
-          <span>Post-visit summary unavailable.</span>
+          <span>AI summary unavailable</span>
         </div>
       ) : null}
 

@@ -57,6 +57,9 @@ const config = {
   // Local Ollama LLM Settings (Phase 10)
   OLLAMA_HOST: process.env.OLLAMA_HOST || process.env.OLLAMA_BASE_URL || 'http://localhost:11434',
   OLLAMA_MODEL: process.env.OLLAMA_MODEL || 'llama3',
+  OLLAMA_TIMEOUT_MS: parseInt(process.env.OLLAMA_TIMEOUT_MS, 10) || 28000,
+  LLM_MAX_ATTEMPTS: parseInt(process.env.LLM_MAX_ATTEMPTS, 10) || 2,
+  LLM_BACKOFF_BASE_MS: parseInt(process.env.LLM_BACKOFF_BASE_MS, 10) || 300,
 };
 
 module.exports = config;

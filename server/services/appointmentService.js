@@ -17,7 +17,8 @@ const {
 } = require('./notificationService');
 const { queueCalendarJob } = require('./jobs/calendarJob');
 const { isDoctorOnLeave } = require('./leaveService');
-const { generatePreVisitSummary } = require('./llm/llmService');
+const llmService = require('./llm/llmService');
+const { AI_STATUS } = require('./llm/schemas');
 
 /**
  * Format populated appointment document into safe, clean response object
@@ -390,11 +391,9 @@ const bookAppointment = async (payload) => {
     });
     queueCalendarJob('CALENDAR_CREATE_EVENT', { appointmentId: appointment._id });
 
-    // Asynchronously trigger Pre-Visit LLM summary generation (Non-blocking)
+    // Asynchronously trigger Pre-Visit LLM summary generation (Non-blocking fire-and-forget)
     if (symptoms) {
-      generatePreVisitSummary(appointment._id, symptoms).catch((err) => {
-        console.error('[LLMService] Pre-visit generation error:', err.message);
-      });
+      triggerPreVisitSummary(appointment._id, symptoms);
     }
 
     return formatted;
@@ -725,6 +724,28 @@ const getAllAppointmentsAdmin = async (filters = {}) => {
   return appointments.map(formatAppointmentResponse);
 };
 
+/**
+ * Asynchronously synthesize Pre-Visit Clinical Summary via Local LLM Layer
+ * Fire-and-forget: does not block HTTP response; updates MongoDB record on completion.
+ * @param {string} appointmentId
+ * @param {string} symptoms
+ */
+const triggerPreVisitSummary = async (appointmentId, symptoms) => {
+  try {
+    const result = await llmService.generatePreVisitSummary(symptoms);
+    await Appointment.findByIdAndUpdate(appointmentId, {
+      aiStatus: result.status,               // 'READY' or 'FAILED'
+      preVisitSummary: result.data || null,  // { urgency, chiefComplaint, suggestedQuestions }
+      aiPromptVersion: result.promptVersion,
+    });
+  } catch (err) {
+    // Defense in depth: even if something above llmService throws unexpectedly,
+    // never let it propagate into an unhandled rejection that could crash the process.
+    await Appointment.findByIdAndUpdate(appointmentId, { aiStatus: AI_STATUS.FAILED }).catch(() => {});
+    console.error('[appointmentService] pre-visit trigger crashed:', err.message);
+  }
+};
+
 module.exports = {
   holdSlot,
   bookAppointment,
@@ -735,4 +756,6 @@ module.exports = {
   rescheduleAppointment,
   completeAppointment,
   getAllAppointmentsAdmin,
+  triggerPreVisitSummary,
 };
+

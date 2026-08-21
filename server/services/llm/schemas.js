@@ -1,76 +1,46 @@
-/**
- * HealthPulse LLM Schemas & Configuration Constants (Phase 10)
- * 
- * Enforces structured schema shapes, versioning constants, and valid enum states.
- */
+// server/services/llm/schemas.js
+// Canonical schemas + enums for LLM outputs. Kept separate from validator.js so
+// the shapes can be imported by Mongoose models/tests without pulling in the
+// validation logic itself.
 
-const PRE_VISIT_PROMPT_VERSION = 'v1';
-const POST_VISIT_PROMPT_VERSION = 'v1';
+const URGENCY_LEVELS = ['Low', 'Medium', 'High'];
 
-// Supported Urgency Levels (Normalized Title Case and Upper Case)
-const VALID_URGENCY_LEVELS = ['Low', 'Medium', 'High', 'Emergency'];
-const URGENCY_ENUM_MAP = {
-  low: 'Low',
-  medium: 'Medium',
-  high: 'High',
-  emergency: 'Emergency',
-  LOW: 'Low',
-  MEDIUM: 'Medium',
-  HIGH: 'High',
-  EMERGENCY: 'Emergency',
+const AI_STATUS = {
+  PENDING: 'PENDING',
+  READY: 'READY',
+  FAILED: 'FAILED',
 };
 
-// Maximum input string lengths to prevent local LLM compute exhaustion
-const MAX_INPUT_LENGTHS = {
-  symptoms: 2000,
-  clinicalNotes: 5000,
-  prescriptionText: 4000,
-};
-
-// Expected schema structures
+// JSON-Schema-ish description of the pre-visit output, used both for documentation
+// and as a lightweight reference the validator checks against field by field.
 const PRE_VISIT_SCHEMA = {
   type: 'object',
   required: ['urgency', 'chiefComplaint', 'suggestedQuestions'],
   properties: {
-    urgency: {
-      type: 'string',
-      enum: ['Low', 'Medium', 'High', 'Emergency'],
-    },
-    chiefComplaint: {
-      type: 'string',
-      minLength: 3,
-      maxLength: 500,
-    },
+    urgency: { type: 'string', enum: URGENCY_LEVELS },
+    chiefComplaint: { type: 'string', minLength: 3 },
     suggestedQuestions: {
       type: 'array',
       minItems: 3,
       maxItems: 3,
-      items: {
-        type: 'string',
-        minLength: 5,
-        maxLength: 300,
-      },
+      items: { type: 'string', minLength: 5 },
     },
   },
 };
 
 const POST_VISIT_SCHEMA = {
   type: 'object',
-  required: ['summary'],
+  required: ['summary', 'medicationSchedule', 'followUpSteps'],
   properties: {
-    summary: {
-      type: 'string',
-      minLength: 10,
-    },
+    summary: { type: 'string', minLength: 10 },
+    medicationSchedule: { type: 'string', minLength: 0 }, // may legitimately be empty if no meds
+    followUpSteps: { type: 'string', minLength: 0 },
   },
 };
 
 module.exports = {
-  PRE_VISIT_PROMPT_VERSION,
-  POST_VISIT_PROMPT_VERSION,
-  VALID_URGENCY_LEVELS,
-  URGENCY_ENUM_MAP,
-  MAX_INPUT_LENGTHS,
+  URGENCY_LEVELS,
+  AI_STATUS,
   PRE_VISIT_SCHEMA,
   POST_VISIT_SCHEMA,
 };

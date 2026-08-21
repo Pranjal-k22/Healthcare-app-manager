@@ -79,6 +79,10 @@ const appointmentSchema = new mongoose.Schema(
       enum: ['PENDING', 'READY', 'FAILED'],
       default: 'PENDING',
     },
+    aiPromptVersion: {
+      type: String,
+      default: null,
+    },
     calendarEvents: [
       {
         userId: {
