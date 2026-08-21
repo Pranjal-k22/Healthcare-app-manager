@@ -119,6 +119,44 @@ Complete architectural documentation is available in the [`docs/`](docs/) direct
 
 ---
 
+## 📅 Google Calendar OAuth Multi-User Integration
+
+### 1. Architecture Overview
+- **Per-User Authenticated Clients**: Rather than a single shared/global client instance, a fresh `google.auth.OAuth2` client is instantiated per request from the logged-in user's stored credentials.
+- **AES-256-GCM Token Encryption at Rest**: `accessToken` and `refreshToken` are encrypted with an authenticated 32-byte key (`TOKEN_ENCRYPTION_KEY`) using `crypto.createCipheriv('aes-256-gcm', ...)` and are never stored in plaintext or exposed in API responses.
+- **Signed State CSRF Protection**: `GET /api/auth/google/connect` issues a cryptographically signed JWT `state` containing the requesting `userId` and a high-entropy nonce (valid for 10 minutes, signed with `GOOGLE_OAUTH_STATE_SECRET`), ensuring safe identification upon Google callback without session leaks.
+- **Automatic Token Refresh**: The OAuth client listens to the `tokens` event on every request, automatically persisting updated access tokens and newly issued refresh tokens directly back to MongoDB.
+- **Graceful Failure**: If a user is not connected or their token was revoked externally, appointment booking, rescheduling, and cancellations continue uninterrupted while flipping connection status back to disconnected.
+
+### 2. Endpoints
+- `GET /api/auth/google/connect`: Generates consent URL with signed state and `prompt: consent`.
+- `GET /api/auth/google/callback`: Public callback endpoint that verifies signed state, exchanges code for tokens, encrypts credentials, and redirects to `${FRONTEND_URL}/patient/appointments?calendar_connected=true`.
+- `GET /api/patient/google-calendar/status`: Returns `{ connected: boolean, googleAccountEmail, connectedAt, calendarId }`.
+- `POST /api/patient/google-calendar/disconnect`: Revokes token with Google and cleans up stored credentials.
+
+### 3. Google Cloud Console Setup Steps
+1. Navigate to the [Google Cloud Console](https://console.cloud.google.com/).
+2. Create a new Project (e.g. `HealthPulse-Clinic`).
+3. Enable the **Google Calendar API** and **Google People API** under **APIs & Services > Library**.
+4. Configure the **OAuth Consent Screen** (User Type: External / Internal) and add scopes:
+   - `https://www.googleapis.com/auth/calendar.events`
+   - `https://www.googleapis.com/auth/userinfo.email`
+5. Go to **Credentials > Create Credentials > OAuth client ID** (Application type: Web application).
+6. Set **Authorized redirect URIs**:
+   - `http://localhost:5000/api/auth/google/callback`
+   - `http://localhost:5000/api/calendar/oauth/callback`
+7. Copy the generated **Client ID** and **Client Secret** into your `.env`:
+   ```env
+   GOOGLE_CLIENT_ID=your_client_id.apps.googleusercontent.com
+   GOOGLE_CLIENT_SECRET=your_client_secret
+   GOOGLE_REDIRECT_URI=http://localhost:5000/api/auth/google/callback
+   GOOGLE_OAUTH_STATE_SECRET=your_secure_state_secret
+   TOKEN_ENCRYPTION_KEY=your_32_byte_aes_key_here
+   FRONTEND_URL=http://localhost:5173
+   ```
+
+---
+
 ## 💳 Profile, Billing & Prescriptions Architecture
 
 ### 1. Patient Profile Management
@@ -156,4 +194,5 @@ Complete architectural documentation is available in the [`docs/`](docs/) direct
 3. **Email Delivery Mode**: Operates in development (mock console log) mode unless `ENABLE_EMAIL_NOTIFICATIONS=true` and SMTP credentials are provided.
 4. **Payment Gateway**: The billing payment endpoint simulates successful settlement for development. Wire Stripe/PayPal API keys for live transactions.
 5. **Avatar Storage**: Uses local static disk storage under `/uploads/avatars`. Wire AWS S3 or Cloudflare R2 for multi-instance deployments.
+
 

@@ -48,15 +48,27 @@ export const CalendarSettingsCard: React.FC = () => {
 
     // Check for redirect search params from OAuth callback
     const searchParams = new URLSearchParams(location.search);
-    if (searchParams.get('calendar_connected') === 'true') {
+    const isConnectedParam =
+      searchParams.get('calendar_connected') === 'true' ||
+      searchParams.get('calendar') === 'connected';
+    const errorParam =
+      searchParams.get('calendar_error') ||
+      (searchParams.get('calendar') === 'error' ? 'Connection was cancelled or failed' : null);
+
+    if (isConnectedParam) {
       const successMsg = 'Google Calendar successfully linked! Future consultations will be synchronized.';
       setMessage(successMsg);
       success(successMsg, 'Calendar Linked');
+      fetchStatus();
+      // Clean query params from URL bar so it doesn't persist on page refresh
+      window.history.replaceState({}, document.title, window.location.pathname);
     }
-    if (searchParams.get('calendar_error')) {
-      const errMsg = `Google OAuth encountered an issue: ${searchParams.get('calendar_error')}`;
+    if (errorParam) {
+      const errMsg = `Google OAuth encountered an issue: ${errorParam}`;
       setError(errMsg);
       toastError(errMsg, 'OAuth Error');
+      // Clean query params from URL bar
+      window.history.replaceState({}, document.title, window.location.pathname);
     }
   }, [location.search]);
 

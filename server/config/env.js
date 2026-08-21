@@ -31,12 +31,21 @@ const config = {
   APPOINTMENT_REMINDER_MINUTES: parseInt(process.env.APPOINTMENT_REMINDER_MINUTES, 10) || 60,
   REMINDER_JOB_INTERVAL_MS: parseInt(process.env.REMINDER_JOB_INTERVAL_MS, 10) || 60000,
 
-  // Google Calendar OAuth Settings (Phase 6)
+  // Google Calendar OAuth Settings (Multi-User)
   GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID || '',
   GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET || '',
   GOOGLE_REDIRECT_URI:
     process.env.GOOGLE_REDIRECT_URI ||
-    'http://localhost:5000/api/calendar/oauth/callback',
+    'http://localhost:5000/api/auth/google/callback',
+  GOOGLE_OAUTH_STATE_SECRET:
+    process.env.GOOGLE_OAUTH_STATE_SECRET ||
+    process.env.JWT_SECRET ||
+    'google_oauth_state_signing_secret_2026',
+  TOKEN_ENCRYPTION_KEY:
+    process.env.TOKEN_ENCRYPTION_KEY ||
+    'default_healthpulse_token_enc_key_2026_32bytes!',
+  FRONTEND_URL:
+    process.env.FRONTEND_URL || process.env.CLIENT_URL || 'http://localhost:5173',
   APPOINTMENT_TIMEZONE: process.env.APPOINTMENT_TIMEZONE || 'UTC',
 
   // Local Ollama LLM Settings (Phase 10)

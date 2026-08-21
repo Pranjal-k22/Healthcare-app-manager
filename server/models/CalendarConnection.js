@@ -35,10 +35,18 @@ const calendarConnectionSchema = new mongoose.Schema(
       type: [String],
       default: [],
     },
+    calendarId: {
+      type: String,
+      default: 'primary',
+    },
     isConnected: {
       type: Boolean,
       default: true,
       index: true,
+    },
+    connectedAt: {
+      type: Date,
+      default: Date.now,
     },
   },
   {

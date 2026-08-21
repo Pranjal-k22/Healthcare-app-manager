@@ -11,6 +11,10 @@ const {
   changePassword,
   uploadAvatar,
 } = require('../controllers/profileController');
+const {
+  getStatus: getCalendarStatus,
+  disconnect: disconnectCalendar,
+} = require('../controllers/calendarController');
 
 const router = express.Router();
 
@@ -68,5 +72,9 @@ router.get('/profile', getProfile);
 router.put('/profile', updateProfile);
 router.post('/profile/change-password', passwordChangeLimiter, changePassword);
 router.post('/profile/avatar', upload.single('avatar'), uploadAvatar);
+
+// Google Calendar Patient Endpoints
+router.get('/google-calendar/status', getCalendarStatus);
+router.post('/google-calendar/disconnect', disconnectCalendar);
 
 module.exports = router;

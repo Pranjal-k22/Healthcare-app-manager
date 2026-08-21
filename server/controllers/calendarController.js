@@ -1,34 +1,30 @@
-const {
-  generateAuthUrl,
-  handleOAuthCallback,
-  getConnectionStatus,
-  disconnectGoogleCalendar,
-  syncAppointmentCreated,
-} = require('../services/google/googleCalendarService');
+const calendarService = require('../services/calendarService');
 const Appointment = require('../models/Appointment');
 const config = require('../config/env');
 
 /**
- * @desc    Get Google OAuth authorization URL
- * @route   GET /api/calendar/oauth/url
- * @access  Private (All Authenticated)
+ * GET /api/auth/google/connect or /api/calendar/oauth/url
+ * Initiate Google Calendar connection
  */
-const getAuthUrlHandler = async (req, res, next) => {
+const getConnectUrl = async (req, res, next) => {
   try {
     if (!config.GOOGLE_CLIENT_ID || !config.GOOGLE_CLIENT_SECRET) {
       return res.status(400).json({
         success: false,
-        message:
-          'Google Calendar OAuth is not configured. Please set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in server environment.',
+        message: 'Google Calendar OAuth is not configured. Please set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in server environment.',
       });
     }
 
-    const authUrl = generateAuthUrl(req.user._id.toString());
+    const userId = (req.user.id || req.user._id).toString();
+    const url = calendarService.generateConnectAuthUrl(userId);
 
     res.status(200).json({
       success: true,
+      url,
+      authUrl: url,
       data: {
-        authUrl,
+        url,
+        authUrl: url,
       },
     });
   } catch (error) {
@@ -37,47 +33,55 @@ const getAuthUrlHandler = async (req, res, next) => {
 };
 
 /**
- * @desc    Handle Google OAuth callback redirect
- * @route   GET /api/calendar/oauth/callback
- * @access  Public (Redirect from Google OAuth)
+ * GET /api/auth/google/callback or /api/calendar/oauth/callback
+ * Handle OAuth callback redirect from Google
  */
-const oauthCallbackHandler = async (req, res, next) => {
+const handleCallback = async (req, res, next) => {
   try {
     const { code, state, error: googleError } = req.query;
+    const frontendUrl = config.FRONTEND_URL || config.CLIENT_URL || 'http://localhost:5173';
 
     if (googleError) {
-      console.warn('[GoogleCalendar] User denied or encountered OAuth error:', googleError);
-      return res.redirect(`${config.CLIENT_URL}/?calendar_error=${encodeURIComponent(googleError)}`);
+      console.warn('[CalendarController] Google OAuth error / access denied:', googleError);
+      return res.redirect(`${frontendUrl}/patient/appointments?calendar_error=${encodeURIComponent(googleError)}`);
     }
 
     if (!code || !state) {
-      return res.redirect(`${config.CLIENT_URL}/?calendar_error=missing_oauth_parameters`);
+      return res.redirect(`${frontendUrl}/patient/appointments?calendar_error=missing_oauth_parameters`);
     }
 
-    const result = await handleOAuthCallback(code, state);
+    const result = await calendarService.handleOAuthCallback(code, state);
 
-    // Sync any future booked appointments for this user
+    // Initial sync of upcoming booked appointments
     try {
       const todayStr = new Date().toISOString().split('T')[0];
       const futureAppointments = await Appointment.find({
         $or: [{ patientId: result.userId }, { doctorId: result.userId }],
         date: { $gte: todayStr },
         status: 'BOOKED',
-      }).select('_id');
+      }).populate('doctorId', 'name').populate('patientId', 'name');
 
       for (const app of futureAppointments) {
-        syncAppointmentCreated(app._id.toString(), result.userId).catch(() => {});
+        const startDateTime = `${app.date}T${app.startTime}:00`;
+        const endDateTime = `${app.date}T${app.endTime}:00`;
+        calendarService.createEvent(result.userId, {
+          summary: `Medical Consultation - Dr. ${app.doctorId?.name || 'Practitioner'}`,
+          description: `HealthPulse Appointment Reference: ${app._id}\nReason: ${app.reason || 'General Consultation'}`,
+          startDateTime,
+          endDateTime,
+        }).catch(() => {});
       }
     } catch (syncErr) {
-      console.warn('[GoogleCalendar] Initial sync after OAuth had warning:', syncErr.message);
+      console.warn('[CalendarController] Post-connect appointment sync warning:', syncErr.message);
     }
 
-    // Redirect safely back to frontend without tokens in URL
-    res.redirect(`${config.CLIENT_URL}/?calendar_connected=true`);
+    // Redirect cleanly back to Appointments page
+    return res.redirect(`${frontendUrl}/patient/appointments?calendar_connected=true`);
   } catch (error) {
-    console.error('[GoogleCalendar] OAuth callback error:', error.message);
-    res.redirect(
-      `${config.CLIENT_URL}/?calendar_error=${encodeURIComponent(
+    console.error('[CalendarController] OAuth callback error:', error.message);
+    const frontendUrl = config.FRONTEND_URL || config.CLIENT_URL || 'http://localhost:5173';
+    return res.redirect(
+      `${frontendUrl}/patient/appointments?calendar_error=${encodeURIComponent(
         error.message || 'oauth_failed'
       )}`
     );
@@ -85,17 +89,17 @@ const oauthCallbackHandler = async (req, res, next) => {
 };
 
 /**
- * @desc    Get current user's Google Calendar connection status
- * @route   GET /api/calendar/status
- * @access  Private (All Authenticated)
+ * GET /api/patient/google-calendar/status or /api/calendar/status
  */
-const getConnectionStatusHandler = async (req, res, next) => {
+const getStatus = async (req, res, next) => {
   try {
-    const status = await getConnectionStatus(req.user._id);
+    const userId = (req.user.id || req.user._id).toString();
+    const status = await calendarService.getConnectionStatus(userId);
 
     res.status(200).json({
       success: true,
       data: status,
+      ...status,
     });
   } catch (error) {
     next(error);
@@ -103,42 +107,19 @@ const getConnectionStatusHandler = async (req, res, next) => {
 };
 
 /**
- * @desc    Disconnect Google Calendar for current user
- * @route   POST /api/calendar/disconnect
- * @access  Private (All Authenticated)
+ * POST /api/patient/google-calendar/disconnect or /api/calendar/disconnect
  */
-const disconnectCalendarHandler = async (req, res, next) => {
+const disconnect = async (req, res, next) => {
   try {
-    await disconnectGoogleCalendar(req.user._id);
+    const userId = (req.user.id || req.user._id).toString();
+    await calendarService.disconnectCalendar(userId);
 
     res.status(200).json({
       success: true,
       message: 'Google Calendar disconnected successfully',
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-/**
- * @desc    Manually trigger sync for an appointment
- * @route   POST /api/calendar/sync/:appointmentId
- * @access  Private (All Authenticated)
- */
-const manualSyncHandler = async (req, res, next) => {
-  try {
-    const success = await syncAppointmentCreated(
-      req.params.appointmentId,
-      req.user._id.toString()
-    );
-
-    res.status(200).json({
-      success: true,
-      message: success
-        ? 'Appointment synchronized with Google Calendar'
-        : 'Could not synchronize. Please verify Google Calendar connection.',
       data: {
-        synced: success,
+        connected: false,
+        isConnected: false,
       },
     });
   } catch (error) {
@@ -146,10 +127,27 @@ const manualSyncHandler = async (req, res, next) => {
   }
 };
 
+/**
+ * GET /api/calendar/events (List upcoming events for sync check)
+ */
+const listEvents = async (req, res, next) => {
+  try {
+    const userId = (req.user.id || req.user._id).toString();
+    const events = await calendarService.listUpcomingEvents(userId, req.query);
+
+    res.status(200).json({
+      success: true,
+      data: events,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
-  getAuthUrlHandler,
-  oauthCallbackHandler,
-  getConnectionStatusHandler,
-  disconnectCalendarHandler,
-  manualSyncHandler,
+  getConnectUrl,
+  handleCallback,
+  getStatus,
+  disconnect,
+  listEvents,
 };
