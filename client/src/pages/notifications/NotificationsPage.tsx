@@ -10,7 +10,6 @@ import { NotificationItem } from '../../types/notification';
 import { useAuth } from '../../hooks/useAuth';
 import {
   AlertCircle,
-  Bell,
   Calendar,
   CheckCheck,
   Clock,

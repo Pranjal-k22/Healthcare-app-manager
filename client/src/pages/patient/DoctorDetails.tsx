@@ -3,6 +3,9 @@ import { Link, useParams } from 'react-router-dom';
 import { getDoctorById } from '../../services/doctorApi';
 import { Doctor } from '../../types/doctor';
 import { LeaveList } from '../../components/doctor/LeaveList';
+import Button from '../../components/ui/Button';
+import Card from '../../components/ui/Card';
+import StatusBadge from '../../components/ui/StatusBadge';
 import {
   AlertCircle,
   ArrowLeft,
@@ -16,6 +19,8 @@ import {
   Phone,
   Sparkles,
   Stethoscope,
+  ShieldCheck,
+  CheckCircle2,
 } from 'lucide-react';
 
 const DAYS_ORDER: Array<{ key: keyof Doctor['workingHours']; label: string }> = [
@@ -55,9 +60,18 @@ export const DoctorDetails: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="container dashboard-container" style={{ textAlign: 'center', padding: '4rem 0' }}>
-        <div className="spinner" style={{ width: '36px', height: '36px', margin: '0 auto' }} />
-        <p style={{ color: 'var(--text-secondary)', marginTop: '1rem' }}>
+      <div className="container" style={{ textAlign: 'center', padding: '5rem 0' }}>
+        <div
+          className="btn-spinner"
+          style={{
+            width: '36px',
+            height: '36px',
+            margin: '0 auto 1rem auto',
+            borderColor: 'var(--primary)',
+            borderTopColor: 'transparent',
+          }}
+        />
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
           Loading practitioner profile...
         </p>
       </div>
@@ -66,12 +80,24 @@ export const DoctorDetails: React.FC = () => {
 
   if (error || !doctor) {
     return (
-      <div className="container dashboard-container">
-        <Link to="/patient/doctors" className="back-link">
+      <div className="container" style={{ maxWidth: '900px', padding: '2rem 1.5rem' }}>
+        <Link
+          to="/patient/doctors"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.45rem',
+            color: 'var(--primary)',
+            textDecoration: 'none',
+            fontWeight: 600,
+            fontSize: '0.9rem',
+            marginBottom: '1.5rem',
+          }}
+        >
           <ArrowLeft size={16} />
-          <span>Back to Doctor Search</span>
+          <span>Back to Doctor Directory</span>
         </Link>
-        <div className="alert alert-error" style={{ marginTop: '1.5rem' }}>
+        <div className="alert-inline alert-inline-error">
           <AlertCircle size={18} />
           <span>{error || 'Doctor profile not found'}</span>
         </div>
@@ -79,138 +105,350 @@ export const DoctorDetails: React.FC = () => {
     );
   }
 
+  const cleanName = doctor.name.startsWith('Dr.') ? doctor.name : `Dr. ${doctor.name}`;
+
   return (
-    <div className="container dashboard-container" style={{ maxWidth: '900px' }}>
-      <div style={{ marginBottom: '1.5rem' }}>
-        <Link to="/patient/doctors" className="back-link">
+    <div className="container" style={{ maxWidth: '960px', padding: '2rem 1.5rem 4rem 1.5rem' }}>
+      {/* Back Breadcrumb */}
+      <div style={{ marginBottom: '1.25rem' }}>
+        <Link
+          to="/patient/doctors"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.45rem',
+            color: 'var(--primary)',
+            textDecoration: 'none',
+            fontWeight: 600,
+            fontSize: '0.875rem',
+            transition: 'gap 0.15s ease',
+          }}
+        >
           <ArrowLeft size={16} />
           <span>Back to Doctor Search</span>
         </Link>
       </div>
 
-      {/* Doctor Header Card */}
-      <div className="glass-card info-card" style={{ marginBottom: '1.5rem' }}>
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1.5rem', flexWrap: 'wrap' }}>
-          <div className="doctor-avatar" style={{ width: '68px', height: '68px' }}>
-            <Stethoscope size={36} color="#10b981" />
+      {/* Hero Profile Card */}
+      <Card style={{ padding: '2rem', marginBottom: '1.75rem', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1.75rem', flexWrap: 'wrap' }}>
+          {/* Avatar Icon */}
+          <div
+            style={{
+              width: '80px',
+              height: '80px',
+              borderRadius: 'var(--radius-lg)',
+              background: 'linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%)',
+              color: 'var(--white)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 8px 16px rgba(0, 98, 204, 0.25)',
+              flexShrink: 0,
+            }}
+          >
+            <Stethoscope size={40} />
           </div>
-          <div style={{ flex: 1 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-                <h1 style={{ fontSize: '1.85rem', fontWeight: 800 }}>{doctor.name}</h1>
-                <span className="specialization-badge" style={{ fontSize: '0.85rem', padding: '0.3rem 0.8rem' }}>
-                  {doctor.specialization}
-                </span>
-                {doctor.qualifications && doctor.qualifications.length > 0 && (
-                  <span className="qualification-badge">
-                    {doctor.qualifications.join(', ')}
+
+          {/* Profile Main Info */}
+          <div style={{ flex: 1, minWidth: '280px' }}>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '0.75rem',
+                marginBottom: '0.5rem',
+              }}
+            >
+              <div>
+                <h1 style={{ fontSize: '1.85rem', fontWeight: 800, color: 'var(--text-primary)', margin: '0 0 0.35rem 0' }}>
+                  {cleanName}
+                </h1>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  <span
+                    style={{
+                      background: 'rgba(0, 98, 204, 0.1)',
+                      color: 'var(--primary)',
+                      padding: '3px 10px',
+                      borderRadius: 'var(--radius-full)',
+                      fontWeight: 600,
+                      fontSize: '0.8125rem',
+                    }}
+                  >
+                    {doctor.specialization}
                   </span>
-                )}
+                  {doctor.qualifications && doctor.qualifications.length > 0 && (
+                    <span
+                      style={{
+                        background: 'var(--surface-alt)',
+                        color: 'var(--text-secondary)',
+                        padding: '3px 10px',
+                        borderRadius: 'var(--radius-full)',
+                        fontSize: '0.8125rem',
+                        border: '1px solid var(--border)',
+                      }}
+                    >
+                      {doctor.qualifications.join(', ')}
+                    </span>
+                  )}
+                </div>
               </div>
 
-              {doctor.isAvailable ? (
-                <span className="status-pill status-pill-active">Available</span>
-              ) : (
-                <span className="status-pill status-pill-unavailable">Unavailable</span>
-              )}
+              <div>
+                <StatusBadge
+                  status={doctor.isAvailable ? 'AVAILABLE' : 'OFF_DUTY'}
+                  label={doctor.isAvailable ? 'Available for Booking' : 'Currently Unavailable'}
+                />
+              </div>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginTop: '0.75rem', color: 'var(--text-secondary)', fontSize: '0.875rem', flexWrap: 'wrap' }}>
+            {/* Quick Metadata Bar */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: '1.25rem',
+                marginTop: '1rem',
+                padding: '0.85rem 1.15rem',
+                background: 'var(--surface)',
+                borderRadius: 'var(--radius-md)',
+                border: '1px solid var(--border-light)',
+                fontSize: '0.85rem',
+                color: 'var(--text-secondary)',
+              }}
+            >
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <Mail size={15} />
+                <Mail size={15} color="var(--primary)" />
                 <span>{doctor.email}</span>
               </div>
               {doctor.phone && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                  <Phone size={15} />
+                  <Phone size={15} color="var(--primary)" />
                   <span>{doctor.phone}</span>
                 </div>
               )}
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <Award size={15} color="var(--accent-teal)" />
-                <span>{doctor.experienceYears || 0} yrs experience</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#10b981', fontWeight: 600 }}>
-                <DollarSign size={15} />
-                <span>${doctor.consultationFee || 0} / visit</span>
+                <Award size={15} color="var(--primary)" />
+                <span><strong>{doctor.experienceYears || 0} yrs</strong> experience</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                 <Clock size={15} color="var(--primary)" />
-                <span>{doctor.slotDuration} min consultation slots</span>
+                <span><strong>{doctor.slotDuration || 30} min</strong> slots</span>
+              </div>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  color: '#059669',
+                  fontWeight: 700,
+                  marginLeft: 'auto',
+                }}
+              >
+                <DollarSign size={16} />
+                <span>${doctor.consultationFee || 75} / consultation</span>
               </div>
             </div>
 
+            {/* Clinic Address */}
             {doctor.clinicName && (
-              <div style={{ marginTop: '0.65rem', fontSize: '0.85rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <Building size={15} />
+              <div
+                style={{
+                  marginTop: '0.85rem',
+                  fontSize: '0.85rem',
+                  color: 'var(--text-secondary)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.45rem',
+                }}
+              >
+                <Building size={15} color="var(--text-muted)" />
                 <span>
-                  {doctor.clinicName}
+                  <strong>{doctor.clinicName}</strong>
                   {doctor.clinicAddress ? ` — ${doctor.clinicAddress}` : ''}
                 </span>
               </div>
             )}
 
+            {/* Biography */}
             {doctor.bio && (
-              <p style={{ marginTop: '1rem', color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: 1.6, borderTop: '1px solid var(--border-color)', paddingTop: '0.75rem' }}>
-                {doctor.bio}
-              </p>
+              <div
+                style={{
+                  marginTop: '1.25rem',
+                  padding: '1rem 1.25rem',
+                  borderLeft: '3px solid var(--primary)',
+                  background: 'rgba(0, 98, 204, 0.03)',
+                  borderRadius: '0 var(--radius-md) var(--radius-md) 0',
+                }}
+              >
+                <p style={{ margin: 0, color: 'var(--text-primary)', fontSize: '0.875rem', lineHeight: 1.6 }}>
+                  {doctor.bio}
+                </p>
+              </div>
             )}
           </div>
         </div>
-      </div>
+      </Card>
 
-      {/* Working Hours Schedule */}
-      <div className="glass-card info-card" style={{ marginBottom: '1.5rem' }}>
-        <h2 style={{ fontSize: '1.25rem', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <CalendarDays size={20} color="var(--primary)" />
-          <span>Weekly Consultation Schedule</span>
-        </h2>
+      {/* Weekly Working Hours Card */}
+      <Card style={{ padding: '1.75rem', marginBottom: '1.75rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '1.25rem' }}>
+          <div
+            style={{
+              width: '36px',
+              height: '36px',
+              borderRadius: 'var(--radius-md)',
+              background: 'rgba(0, 98, 204, 0.1)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <CalendarDays size={18} color="var(--primary)" />
+          </div>
+          <div>
+            <h2 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+              Weekly Consultation Schedule
+            </h2>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+              Standard operating hours and available consultation shifts.
+            </p>
+          </div>
+        </div>
 
-        <div className="schedule-table-card">
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
+            gap: '0.65rem',
+          }}
+        >
           {DAYS_ORDER.map(({ key, label }) => {
             const config = doctor.workingHours[key];
             const isEnabled = config && config.enabled;
 
             return (
-              <div key={key} className="schedule-row">
-                <span className="schedule-day-name">{label}</span>
+              <div
+                key={key}
+                style={{
+                  padding: '0.85rem 0.65rem',
+                  borderRadius: 'var(--radius-md)',
+                  border: isEnabled ? '1px solid var(--border)' : '1px dashed var(--border-light)',
+                  background: isEnabled ? 'var(--white)' : 'var(--surface)',
+                  textAlign: 'center',
+                  boxShadow: isEnabled ? 'var(--shadow-sm)' : 'none',
+                }}
+              >
+                <div style={{ fontSize: '0.8125rem', fontWeight: 700, color: isEnabled ? 'var(--text-primary)' : 'var(--text-muted)', marginBottom: '0.35rem' }}>
+                  {label}
+                </div>
+
                 {isEnabled ? (
-                  <span className="schedule-hours-active">
+                  <div
+                    style={{
+                      fontSize: '0.775rem',
+                      fontWeight: 600,
+                      color: 'var(--primary)',
+                      background: 'rgba(0, 98, 204, 0.08)',
+                      padding: '3px 6px',
+                      borderRadius: 'var(--radius-sm)',
+                      display: 'inline-block',
+                    }}
+                  >
                     {config.start} – {config.end}
-                  </span>
+                  </div>
                 ) : (
-                  <span className="schedule-hours-off">Unavailable / Off</span>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                    Off Duty
+                  </div>
                 )}
               </div>
             );
           })}
         </div>
-      </div>
+      </Card>
 
       {/* Upcoming Scheduled Leaves */}
-      <div className="glass-card info-card" style={{ marginBottom: '2rem' }}>
-        <h2 style={{ fontSize: '1.25rem', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <Calendar size={20} color="#f59e0b" />
-          <span>Upcoming Practitioner Leaves</span>
-        </h2>
-        <LeaveList leaves={doctor.leaves || []} />
-      </div>
-
-      {/* Booking Action */}
-      <div className="glass-card" style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', border: '1px solid var(--primary-glow)', background: 'rgba(14, 165, 233, 0.06)' }}>
-        <div>
-          <h3 style={{ fontSize: '1.1rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Sparkles size={18} color="var(--primary)" />
-            <span>Ready to book a consultation?</span>
-          </h3>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginTop: '0.25rem' }}>
-            Select an available date and choose your preferred time slot with real-time double-booking protection.
-          </p>
+      <Card style={{ padding: '1.75rem', marginBottom: '1.75rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '1.25rem' }}>
+          <div
+            style={{
+              width: '36px',
+              height: '36px',
+              borderRadius: 'var(--radius-md)',
+              background: 'var(--warning-bg)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Calendar size={18} color="#D97706" />
+          </div>
+          <div>
+            <h2 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+              Upcoming Practitioner Leaves
+            </h2>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+              Confirmed out-of-office periods and leave records.
+            </p>
+          </div>
         </div>
-        <Link to={`/patient/book/${doctor.id}`} className="btn btn-primary">
-          <Calendar size={16} />
-          <span>Book Appointment</span>
-        </Link>
+
+        <LeaveList leaves={doctor.leaves || []} />
+      </Card>
+
+      {/* Booking Callout Banner */}
+      <div
+        style={{
+          background: 'linear-gradient(135deg, rgba(57, 49, 175, 0.04) 0%, rgba(0, 198, 255, 0.06) 100%)',
+          border: '1.5px solid rgba(0, 98, 204, 0.2)',
+          borderRadius: 'var(--radius-lg)',
+          padding: '1.75rem 2rem',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '1.5rem',
+          boxShadow: 'var(--shadow-card)',
+        }}
+      >
+        <div style={{ flex: 1, minWidth: '280px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginBottom: '0.35rem' }}>
+            <Sparkles size={18} color="var(--primary)" />
+            <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+              Ready to schedule your visit?
+            </h3>
+          </div>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', margin: '0 0 0.75rem 0', lineHeight: 1.5 }}>
+            Book in real-time with verified slot availability, AI pre-visit questionnaire, and automated Google Calendar synchronization.
+          </p>
+
+          <div style={{ display: 'flex', gap: '1.25rem', flexWrap: 'wrap', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+              <ShieldCheck size={14} color="#10B981" />
+              <span>Real-Time Collision Protection</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+              <CheckCircle2 size={14} color="#10B981" />
+              <span>Instant Confirmation Email</span>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <Link to={`/patient/book/${doctor.id}`} style={{ textDecoration: 'none' }}>
+            <Button
+              variant="primary"
+              size="lg"
+              leftIcon={<Calendar size={18} />}
+            >
+              Book Appointment
+            </Button>
+          </Link>
+        </div>
       </div>
     </div>
   );

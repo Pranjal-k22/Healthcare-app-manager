@@ -1,6 +1,7 @@
 import React from 'react';
 import { Leave } from '../../types/doctor';
-import { CalendarOff, Trash2 } from 'lucide-react';
+import { CalendarOff, Trash2, Calendar } from 'lucide-react';
+import Button from '../ui/Button';
 
 interface LeaveListProps {
   leaves: Leave[];
@@ -15,37 +16,93 @@ export const LeaveList: React.FC<LeaveListProps> = ({
 }) => {
   if (!leaves || leaves.length === 0) {
     return (
-      <div className="empty-leaves-state">
-        <CalendarOff size={32} color="var(--text-muted)" />
-        <p style={{ color: 'var(--text-secondary)', marginTop: '0.5rem', fontSize: '0.9rem' }}>
-          No scheduled leaves on record. Doctor is available on normal working days.
+      <div
+        style={{
+          textAlign: 'center',
+          padding: '2rem 1.5rem',
+          background: 'var(--surface)',
+          borderRadius: 'var(--radius-md)',
+          border: '1px solid var(--border)',
+        }}
+      >
+        <div
+          style={{
+            width: '44px',
+            height: '44px',
+            borderRadius: 'var(--radius-full)',
+            background: 'var(--surface-subtle)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            margin: '0 auto 0.75rem auto',
+          }}
+        >
+          <CalendarOff size={22} color="var(--text-muted)" />
+        </div>
+        <p style={{ fontWeight: 600, fontSize: '0.925rem', color: 'var(--text-primary)', margin: '0 0 0.25rem 0' }}>
+          No Scheduled Leaves
+        </p>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', margin: 0 }}>
+          Doctor is available on all regular working days.
         </p>
       </div>
     );
   }
 
   return (
-    <div className="leave-list-grid">
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '0.85rem' }}>
       {leaves.map((leave) => (
-        <div key={leave.date} className="glass-card leave-item-card">
-          <div className="leave-info">
-            <span className="leave-date-badge">{leave.date}</span>
-            <span className="leave-reason-text">
-              {leave.reason || 'Personal Leave'}
-            </span>
+        <div
+          key={leave.date}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '0.875rem 1.15rem',
+            background: 'var(--surface)',
+            border: '1px solid var(--border)',
+            borderRadius: 'var(--radius-md)',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+            <div
+              style={{
+                width: '32px',
+                height: '32px',
+                borderRadius: 'var(--radius-md)',
+                background: 'var(--warning-bg)',
+                color: '#D97706',
+                border: '1px solid var(--warning-border)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}
+            >
+              <Calendar size={16} />
+            </div>
+            <div>
+              <div style={{ fontWeight: 700, fontSize: '0.875rem', color: 'var(--text-primary)' }}>
+                {leave.date}
+              </div>
+              <div style={{ fontSize: '0.775rem', color: 'var(--text-muted)' }}>
+                {leave.reason || 'Approved Leave'}
+              </div>
+            </div>
           </div>
 
           {onDelete && (
-            <button
+            <Button
               type="button"
-              className="btn btn-danger-outline btn-sm"
+              variant="danger"
+              size="sm"
               onClick={() => onDelete(leave.date)}
               disabled={isDeleting === leave.date}
-              title="Remove this scheduled leave"
+              isLoading={isDeleting === leave.date}
+              leftIcon={<Trash2 size={13} />}
             >
-              <Trash2 size={14} />
-              <span>{isDeleting === leave.date ? 'Removing...' : 'Remove'}</span>
-            </button>
+              Remove
+            </Button>
           )}
         </div>
       ))}
