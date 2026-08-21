@@ -13,6 +13,9 @@ import { DoctorDetails } from './pages/patient/DoctorDetails';
 import { BookAppointment } from './pages/patient/BookAppointment';
 import { MyAppointments } from './pages/patient/MyAppointments';
 import { AppointmentDetails } from './pages/patient/AppointmentDetails';
+import { PatientPrescriptions } from './pages/patient/PatientPrescriptions';
+import { PatientBilling } from './pages/patient/PatientBilling';
+import { PatientProfile } from './pages/patient/PatientProfile';
 import { DoctorProfile } from './pages/doctor/DoctorProfile';
 import { DoctorAppointments } from './pages/doctor/DoctorAppointments';
 import { DoctorConsultation } from './pages/doctor/DoctorConsultation';
@@ -111,6 +114,30 @@ export const App: React.FC = () => {
             element={
               <ProtectedRoute allowedRoles={['PATIENT', 'ADMIN']}>
                 <AppointmentDetails />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/patient/prescriptions"
+            element={
+              <ProtectedRoute allowedRoles={['PATIENT']}>
+                <PatientPrescriptions />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/patient/billing"
+            element={
+              <ProtectedRoute allowedRoles={['PATIENT']}>
+                <PatientBilling />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/patient/profile"
+            element={
+              <ProtectedRoute allowedRoles={['PATIENT']}>
+                <PatientProfile />
               </ProtectedRoute>
             }
           />

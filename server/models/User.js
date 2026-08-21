@@ -34,6 +34,46 @@ const userSchema = new mongoose.Schema(
       },
       default: 'PATIENT',
     },
+    phone: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    dateOfBirth: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    gender: {
+      type: String,
+      enum: ['Female', 'Male', 'Non-Binary', 'Prefer not to say', 'Other', ''],
+      default: '',
+    },
+    address: {
+      line1: { type: String, trim: true, default: '' },
+      line2: { type: String, trim: true, default: '' },
+      city: { type: String, trim: true, default: '' },
+      state: { type: String, trim: true, default: '' },
+      postalCode: { type: String, trim: true, default: '' },
+      country: { type: String, trim: true, default: 'US' },
+    },
+    emergencyContact: {
+      name: { type: String, trim: true, default: '' },
+      relationship: { type: String, trim: true, default: '' },
+      phone: { type: String, trim: true, default: '' },
+    },
+    avatarUrl: {
+      type: String,
+      default: '',
+    },
+    memberSince: {
+      type: Date,
+      default: Date.now,
+    },
+    tokenVersion: {
+      type: Number,
+      default: 0,
+    },
   },
   {
     timestamps: true,

@@ -50,9 +50,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { label: 'Dashboard', to: '/patient/dashboard', icon: <LayoutDashboard size={18} /> },
     { label: 'Book Appointment', to: '/patient/doctors', icon: <CalendarPlus size={18} /> },
     { label: 'Appointment History', to: '/patient/appointments', icon: <History size={18} /> },
-    { label: 'Prescriptions', to: '/patient/dashboard#prescriptions', icon: <Pill size={18} /> },
-    { label: 'Billing', to: '/patient/dashboard#billing', icon: <CreditCard size={18} /> },
-    { label: 'Profile', to: '/patient/dashboard#profile', icon: <User size={18} /> },
+    { label: 'Prescriptions', to: '/patient/prescriptions', icon: <Pill size={18} /> },
+    { label: 'Billing', to: '/patient/billing', icon: <CreditCard size={18} /> },
+    { label: 'Profile', to: '/patient/profile', icon: <User size={18} /> },
   ];
 
   const getDoctorNavItems = (): NavItem[] => [

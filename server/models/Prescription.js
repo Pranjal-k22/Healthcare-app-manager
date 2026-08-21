@@ -58,6 +58,17 @@ const prescriptionSchema = new mongoose.Schema(
       required: [true, 'Doctor ID is required'],
       index: true,
     },
+    status: {
+      type: String,
+      enum: ['active', 'completed', 'expired'],
+      default: 'active',
+      index: true,
+    },
+    durationDays: {
+      type: Number,
+      default: 14,
+      min: 1,
+    },
     medicines: {
       type: [medicineItemSchema],
       default: [],
@@ -80,7 +91,7 @@ const prescriptionSchema = new mongoose.Schema(
   }
 );
 
-prescriptionSchema.index({ patientId: 1, createdAt: -1 });
+prescriptionSchema.index({ patientId: 1, status: 1, createdAt: -1 });
 prescriptionSchema.index({ doctorId: 1, createdAt: -1 });
 
 const Prescription = mongoose.model('Prescription', prescriptionSchema);

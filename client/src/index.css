@@ -2171,3 +2171,291 @@
     width: 100%;
   }
 }
+
+/* ==========================================================================
+   6. Professional Print Styles & Document Templates
+   ========================================================================== */
+
+.print-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(20, 45, 80, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 250;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  overflow-y: auto;
+}
+
+.print-modal-sheet {
+  background-color: var(--white);
+  border-radius: var(--radius-md);
+  max-width: 800px;
+  width: 100%;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-lg);
+  position: relative;
+  overflow: hidden;
+}
+
+.print-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border);
+  background-color: var(--surface);
+}
+
+.print-modal-body {
+  padding: 32px;
+  overflow-y: auto;
+  flex: 1;
+  background-color: #ffffff;
+}
+
+.printable-document {
+  background-color: #ffffff;
+  color: #212529;
+  font-family: var(--font-family);
+  line-height: 1.5;
+}
+
+.doc-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-bottom: 20px;
+  border-bottom: 2px solid var(--primary);
+  margin-bottom: 24px;
+}
+
+.doc-brand-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--primary-dark);
+}
+
+.doc-brand-subtitle {
+  font-size: 13px;
+  color: #6c757d;
+}
+
+.doc-type-badge {
+  text-align: right;
+}
+
+.doc-type-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--primary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.doc-meta-text {
+  font-size: 13px;
+  color: #495057;
+}
+
+.doc-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  padding: 16px;
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  margin-bottom: 24px;
+}
+
+.doc-info-block h4 {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+  border-bottom: 1px solid #ced4da;
+  padding-bottom: 3px;
+}
+
+.doc-info-row {
+  display: flex;
+  font-size: 13px;
+  margin-bottom: 3px;
+}
+
+.doc-info-label {
+  width: 110px;
+  color: #6c757d;
+  font-weight: 500;
+}
+
+.doc-info-val {
+  flex: 1;
+  color: #212529;
+  font-weight: 600;
+}
+
+.doc-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 24px;
+}
+
+.doc-table th,
+.doc-table td {
+  border: 1px solid #dee2e6;
+  padding: 10px 12px;
+  text-align: left;
+  font-size: 13px;
+}
+
+.doc-table th {
+  background-color: #e9ecef;
+  font-weight: 700;
+  color: #343a40;
+  text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: 0.03em;
+}
+
+.doc-table tr:nth-child(even) {
+  background-color: #fdfdfd;
+}
+
+.doc-table-totals {
+  width: 100%;
+  margin-top: 10px;
+}
+
+.doc-table-totals tr td {
+  border: none;
+  padding: 4px 12px;
+  text-align: right;
+  font-size: 14px;
+}
+
+.doc-table-totals tr.grand-total td {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--primary);
+  border-top: 2px solid #343a40;
+  padding-top: 8px;
+}
+
+.doc-notes-box {
+  background-color: #f8f9fa;
+  border-left: 4px solid var(--primary);
+  padding: 12px 16px;
+  border-radius: 0 6px 6px 0;
+  margin-bottom: 24px;
+  font-size: 13px;
+}
+
+.doc-footer {
+  margin-top: 32px;
+  padding-top: 16px;
+  border-top: 1px solid #dee2e6;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  font-size: 12px;
+  color: #6c757d;
+}
+
+.doc-signature-line {
+  width: 180px;
+  border-top: 1px solid #343a40;
+  text-align: center;
+  padding-top: 4px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* Print Media Override: Strips all UI chrome and prints only clean sheet */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-size: 12pt;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .print-hidden,
+  .navbar,
+  .sidebar-ui,
+  .dashboard-mobile-bottom-nav,
+  .segmented-tab-group,
+  .datatable-toolbar,
+  .datatable-pagination,
+  .dialog-close-btn,
+  .print-modal-header,
+  .dialog-actions,
+  button,
+  .btn-ui {
+    display: none !important;
+  }
+
+  .dashboard-layout-container,
+  .dashboard-main-viewport,
+  .dashboard-content-scroll {
+    padding: 0 !important;
+    margin: 0 !important;
+    display: block !important;
+    width: 100% !important;
+    min-height: auto !important;
+    background: #ffffff !important;
+  }
+
+  .print-modal-backdrop {
+    position: static !important;
+    background: transparent !important;
+    padding: 0 !important;
+    display: block !important;
+    z-index: auto !important;
+  }
+
+  .print-modal-sheet {
+    box-shadow: none !important;
+    border: none !important;
+    max-width: 100% !important;
+    max-height: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .print-modal-body {
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  .print-area {
+    display: block !important;
+    position: static !important;
+    width: 100% !important;
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: #ffffff !important;
+  }
+
+  .printable-document {
+    padding: 0 !important;
+  }
+
+  .doc-table th,
+  .doc-table td {
+    border: 1px solid #000000 !important;
+  }
+
+  .doc-header {
+    border-bottom: 2px solid #000000 !important;
+  }
+}
