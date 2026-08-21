@@ -283,6 +283,51 @@ const getAllAppointmentsForAdmin = async (req, res, next) => {
   }
 };
 
+/**
+ * @desc    Generate or retry AI Pre-Visit summary on-demand
+ * @route   POST /api/appointments/:id/generate-ai-summary
+ * @access  Private (Assigned Doctor or Admin)
+ */
+const generateAiSummaryHandler = async (req, res, next) => {
+  try {
+    const Appointment = require('../models/Appointment');
+    const llmService = require('../services/llm/llmService');
+
+    const appointment = await Appointment.findById(req.params.id);
+    if (!appointment) {
+      return res.status(404).json({ success: false, message: 'Appointment not found' });
+    }
+
+    const symptoms = (appointment.symptoms || appointment.reason || '').trim();
+    if (!symptoms) {
+      return res.status(400).json({ success: false, message: 'No symptoms recorded for this appointment' });
+    }
+
+    const result = await llmService.generatePreVisitSummary(symptoms);
+    if (result.status === 'READY') {
+      appointment.preVisitSummary = result.data;
+      appointment.aiStatus = 'READY';
+      appointment.aiPromptVersion = result.promptVersion;
+      await appointment.save();
+
+      return res.status(200).json({
+        success: true,
+        message: 'AI Pre-Visit summary generated successfully',
+        data: appointment,
+      });
+    } else {
+      appointment.aiStatus = 'FAILED';
+      await appointment.save();
+      return res.status(502).json({
+        success: false,
+        message: 'Local LLM was unable to generate a summary. Please ensure Ollama is running.',
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getAvailableSlots,
   holdAppointmentSlot,
@@ -294,4 +339,6 @@ module.exports = {
   rescheduleAppointmentHandler,
   completeAppointmentHandler,
   getAllAppointmentsForAdmin,
+  generateAiSummaryHandler,
 };
+

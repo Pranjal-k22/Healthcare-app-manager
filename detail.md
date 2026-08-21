@@ -2,8 +2,9 @@
 
 **Document:** `detail.md`  
 **Project:** HealthPulse — Healthcare Appointment & Follow-up Manager  
-**Version:** Phase 9 Complete / Pre-Phase 10  
-**Stack:** React 18, TypeScript, Vite, Node.js, Express.js, MongoDB, Mongoose, JWT, Nodemailer, Google Calendar API  
+**Version:** Phase 10 Complete (Local LLM + Summaries Verified)  
+**Stack:** React 18, TypeScript, Vite, Node.js, Express.js, MongoDB, Mongoose, JWT, Nodemailer, Google Calendar API, Ollama LLM  
+
 
 ---
 

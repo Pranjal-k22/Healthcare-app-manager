@@ -134,6 +134,16 @@ export const completeAppointment = async (id: string): Promise<Appointment> => {
 };
 
 /**
+ * Trigger or retry AI Pre-Visit summary synthesis
+ */
+export const generateAiSummary = async (id: string): Promise<Appointment> => {
+  const response = await apiClient.post<{ success: boolean; data: Appointment }>(
+    `/appointments/${id}/generate-ai-summary`
+  );
+  return response.data.data;
+};
+
+/**
  * Admin: Get all appointments
  */
 export const getAllAppointmentsForAdmin = async (filters?: {

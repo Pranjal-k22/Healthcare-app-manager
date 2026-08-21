@@ -5,9 +5,13 @@
 
 const { LLMConnectionError, LLMTimeoutError, LLMProviderError } = require('./llmErrors');
 
-const OLLAMA_HOST = process.env.OLLAMA_HOST || 'http://localhost:11434';
-const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'llama3';
+const OLLAMA_HOST =
+  process.env.OLLAMA_BASE_URL ||
+  process.env.OLLAMA_HOST ||
+  'http://localhost:11434';
+const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'qwen2.5-coder:7b';
 const DEFAULT_TIMEOUT_MS = Number(process.env.OLLAMA_TIMEOUT_MS || 28000); // 25-30s per spec
+
 
 /**
  * Sends a single chat completion request to Ollama and returns the raw text.

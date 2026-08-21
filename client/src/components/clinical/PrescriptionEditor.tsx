@@ -2,6 +2,7 @@ import React from 'react';
 import { MedicineItem } from '../../types/clinical';
 import { Pill, Plus, Trash2 } from 'lucide-react';
 
+
 interface PrescriptionEditorProps {
   medicines: MedicineItem[];
   onChangeMedicines: (medicines: MedicineItem[]) => void;
@@ -47,87 +48,206 @@ export const PrescriptionEditor: React.FC<PrescriptionEditorProps> = ({
   };
 
   return (
-    <div className="prescription-editor-container">
-      <div className="prescription-editor-header">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+      {/* Header & Add Button */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <Pill size={18} color="#10b981" />
-          <h4 style={{ fontSize: '1rem', fontWeight: 700 }}>Prescribed Medications</h4>
+          <div style={{ width: '28px', height: '28px', borderRadius: '6px', background: 'rgba(16, 185, 129, 0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#059669' }}>
+            <Pill size={16} />
+          </div>
+          <h4 style={{ fontSize: '1rem', fontWeight: 700, color: '#0f172a', margin: 0 }}>
+            Prescribed Medications ({medicines.length})
+          </h4>
         </div>
+
         <button
           type="button"
-          className="btn btn-outline btn-sm"
           onClick={handleAddMedicine}
           disabled={disabled}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.4rem',
+            padding: '0.45rem 0.9rem',
+            borderRadius: '8px',
+            border: '1.5px solid #0062cc',
+            background: '#ffffff',
+            color: '#0062cc',
+            fontSize: '0.85rem',
+            fontWeight: 700,
+            cursor: disabled ? 'not-allowed' : 'pointer',
+            transition: 'all 0.15s ease',
+          }}
         >
-          <Plus size={14} />
+          <Plus size={15} />
           <span>Add Medication</span>
         </button>
       </div>
 
+      {/* Empty State */}
       {medicines.length === 0 ? (
-        <div className="empty-medicines-box">
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>
-            No medications prescribed yet. Click <strong>"Add Medication"</strong> to add structured prescriptions.
+        <div
+          style={{
+            padding: '2rem 1.5rem',
+            textAlign: 'center',
+            borderRadius: '10px',
+            background: '#f8fafc',
+            border: '1.5px dashed #cbd5e1',
+          }}
+        >
+          <Pill size={28} color="#94a3b8" style={{ margin: '0 auto 0.5rem' }} />
+          <p style={{ margin: 0, color: '#64748b', fontSize: '0.9rem', fontWeight: 500 }}>
+            No medications added to this prescription yet.
           </p>
+          <button
+            type="button"
+            onClick={handleAddMedicine}
+            disabled={disabled}
+            style={{
+              marginTop: '0.75rem',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.35rem',
+              padding: '0.35rem 0.75rem',
+              borderRadius: '6px',
+              border: 'none',
+              background: '#0062cc',
+              color: '#ffffff',
+              fontSize: '0.82rem',
+              fontWeight: 600,
+              cursor: disabled ? 'not-allowed' : 'pointer',
+            }}
+          >
+            <Plus size={14} />
+            <span>Add First Medication</span>
+          </button>
         </div>
       ) : (
-        <div className="medicines-editor-list">
+        /* Medicines List */
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
           {medicines.map((med, index) => (
-            <div key={index} className="medicine-editor-row glass-card">
-              <div className="medicine-row-header">
-                <span className="medicine-num-badge">#{index + 1}</span>
+            <div
+              key={index}
+              style={{
+                padding: '1.15rem',
+                borderRadius: '12px',
+                background: '#ffffff',
+                border: '1px solid #e2e8f0',
+                boxShadow: '0 2px 8px rgba(15, 23, 42, 0.04)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.85rem',
+              }}
+            >
+              {/* Row Header */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span
+                  style={{
+                    fontSize: '0.75rem',
+                    fontWeight: 800,
+                    padding: '0.2rem 0.6rem',
+                    borderRadius: '6px',
+                    background: '#eff6ff',
+                    color: '#0062cc',
+                    letterSpacing: '0.04em',
+                  }}
+                >
+                  MEDICATION #{index + 1}
+                </span>
+
                 <button
                   type="button"
-                  className="btn btn-danger-outline btn-sm"
-                  style={{ padding: '0.25rem 0.5rem' }}
                   onClick={() => handleRemoveMedicine(index)}
                   disabled={disabled}
                   title="Remove medication"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.3rem',
+                    padding: '0.25rem 0.55rem',
+                    borderRadius: '6px',
+                    border: '1px solid #fecaca',
+                    background: '#fef2f2',
+                    color: '#dc2626',
+                    fontSize: '0.78rem',
+                    fontWeight: 600,
+                    cursor: disabled ? 'not-allowed' : 'pointer',
+                  }}
                 >
                   <Trash2 size={13} />
+                  <span>Remove</span>
                 </button>
               </div>
 
-              <div className="medicine-fields-grid">
-                <div className="form-group" style={{ marginBottom: 0 }}>
-                  <label className="form-sublabel">Medicine Name *</label>
+              {/* 4-Column Fields Grid */}
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+                  gap: '0.85rem',
+                }}
+              >
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#334155', marginBottom: '0.3rem' }}>
+                    Drug / Medicine Name <span style={{ color: '#ef4444' }}>*</span>
+                  </label>
                   <input
                     type="text"
-                    className="form-input form-input-sm"
-                    placeholder="e.g. Amoxicillin, Paracetamol"
+                    placeholder="e.g. Amoxicillin, Metoprolol"
                     value={med.name}
-                    onChange={(e) =>
-                      handleUpdateField(index, 'name', e.target.value)
-                    }
+                    onChange={(e) => handleUpdateField(index, 'name', e.target.value)}
                     disabled={disabled}
                     required
+                    style={{
+                      width: '100%',
+                      padding: '0.55rem 0.75rem',
+                      borderRadius: '6px',
+                      border: '1px solid #cbd5e1',
+                      fontSize: '0.9rem',
+                      color: '#0f172a',
+                    }}
                   />
                 </div>
 
-                <div className="form-group" style={{ marginBottom: 0 }}>
-                  <label className="form-sublabel">Dosage *</label>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#334155', marginBottom: '0.3rem' }}>
+                    Dosage / Strength <span style={{ color: '#ef4444' }}>*</span>
+                  </label>
                   <input
                     type="text"
-                    className="form-input form-input-sm"
-                    placeholder="e.g. 500 mg, 10 ml"
+                    placeholder="e.g. 500mg, 10ml, 1 tablet"
                     value={med.dosage}
-                    onChange={(e) =>
-                      handleUpdateField(index, 'dosage', e.target.value)
-                    }
+                    onChange={(e) => handleUpdateField(index, 'dosage', e.target.value)}
                     disabled={disabled}
                     required
+                    style={{
+                      width: '100%',
+                      padding: '0.55rem 0.75rem',
+                      borderRadius: '6px',
+                      border: '1px solid #cbd5e1',
+                      fontSize: '0.9rem',
+                      color: '#0f172a',
+                    }}
                   />
                 </div>
 
-                <div className="form-group" style={{ marginBottom: 0 }}>
-                  <label className="form-sublabel">Frequency *</label>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#334155', marginBottom: '0.3rem' }}>
+                    Frequency <span style={{ color: '#ef4444' }}>*</span>
+                  </label>
                   <select
-                    className="form-input form-input-sm"
                     value={med.frequency}
-                    onChange={(e) =>
-                      handleUpdateField(index, 'frequency', e.target.value)
-                    }
+                    onChange={(e) => handleUpdateField(index, 'frequency', e.target.value)}
                     disabled={disabled}
+                    style={{
+                      width: '100%',
+                      padding: '0.55rem 0.75rem',
+                      borderRadius: '6px',
+                      border: '1px solid #cbd5e1',
+                      fontSize: '0.9rem',
+                      color: '#0f172a',
+                      background: '#ffffff',
+                    }}
                   >
                     <option value="Once daily">Once daily (OD)</option>
                     <option value="Twice daily">Twice daily (BD)</option>
@@ -138,33 +258,49 @@ export const PrescriptionEditor: React.FC<PrescriptionEditorProps> = ({
                   </select>
                 </div>
 
-                <div className="form-group" style={{ marginBottom: 0 }}>
-                  <label className="form-sublabel">Duration *</label>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#334155', marginBottom: '0.3rem' }}>
+                    Duration <span style={{ color: '#ef4444' }}>*</span>
+                  </label>
                   <input
                     type="text"
-                    className="form-input form-input-sm"
-                    placeholder="e.g. 5 days, 2 weeks"
+                    placeholder="e.g. 5 days, 30 days, 2 weeks"
                     value={med.duration}
-                    onChange={(e) =>
-                      handleUpdateField(index, 'duration', e.target.value)
-                    }
+                    onChange={(e) => handleUpdateField(index, 'duration', e.target.value)}
                     disabled={disabled}
                     required
+                    style={{
+                      width: '100%',
+                      padding: '0.55rem 0.75rem',
+                      borderRadius: '6px',
+                      border: '1px solid #cbd5e1',
+                      fontSize: '0.9rem',
+                      color: '#0f172a',
+                    }}
                   />
                 </div>
               </div>
 
-              <div className="form-group" style={{ marginTop: '0.65rem', marginBottom: 0 }}>
-                <label className="form-sublabel">Special Instructions</label>
+              {/* Special Instructions */}
+              <div>
+                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#475569', marginBottom: '0.3rem' }}>
+                  Specific Patient Instructions (Optional)
+                </label>
                 <input
                   type="text"
-                  className="form-input form-input-sm"
-                  placeholder="e.g. Take with water after meals, avoid alcohol"
+                  placeholder="e.g. Take with food, avoid driving, drink plenty of water"
                   value={med.instructions}
-                  onChange={(e) =>
-                    handleUpdateField(index, 'instructions', e.target.value)
-                  }
+                  onChange={(e) => handleUpdateField(index, 'instructions', e.target.value)}
                   disabled={disabled}
+                  style={{
+                    width: '100%',
+                    padding: '0.5rem 0.75rem',
+                    borderRadius: '6px',
+                    border: '1px solid #e2e8f0',
+                    fontSize: '0.85rem',
+                    color: '#334155',
+                    background: '#f8fafc',
+                  }}
                 />
               </div>
             </div>
@@ -172,16 +308,28 @@ export const PrescriptionEditor: React.FC<PrescriptionEditorProps> = ({
         </div>
       )}
 
-      <div className="form-group" style={{ marginTop: '1.25rem' }}>
-        <label className="form-label">General Advice & Dietary Instructions</label>
+      {/* General Advice & Dietary Instructions Textarea */}
+      <div style={{ marginTop: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+        <label style={{ display: 'block', fontWeight: 700, color: '#334155', fontSize: '0.88rem' }}>
+          General Advice & Dietary Instructions
+        </label>
         <textarea
-          className="form-input"
           rows={3}
           placeholder="Additional notes for the patient (e.g. Drink plenty of fluids, rest for 3 days, avoid strenuous exercise)..."
           value={additionalInstructions}
           onChange={(e) => onChangeAdditionalInstructions(e.target.value)}
           disabled={disabled}
           maxLength={2000}
+          style={{
+            width: '100%',
+            padding: '0.75rem 1rem',
+            borderRadius: '8px',
+            border: '1px solid #cbd5e1',
+            fontSize: '0.92rem',
+            color: '#0f172a',
+            fontFamily: 'inherit',
+            lineHeight: 1.5,
+          }}
         />
       </div>
     </div>

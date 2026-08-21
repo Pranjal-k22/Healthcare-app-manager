@@ -5,30 +5,27 @@ import {
   Calendar,
   CalendarPlus,
   History,
-  FileText,
   CreditCard,
   User,
-  Users,
   Stethoscope,
-  Clock,
-  Search,
-  MessageSquare,
-  BarChart3,
-  Settings,
   LogOut,
   ChevronLeft,
   ChevronRight,
   Shield,
   Pill,
+  CalendarDays,
+  UserPlus,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import ConfirmDialog from './ConfirmDialog';
+
 
 export interface NavItem {
   label: string;
   to: string;
   icon: React.ReactNode;
   badge?: string | number;
+  exact?: boolean;
 }
 
 export interface SidebarProps {
@@ -47,33 +44,26 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const getPatientNavItems = (): NavItem[] => [
-    { label: 'Dashboard', to: '/patient/dashboard', icon: <LayoutDashboard size={18} /> },
+    { label: 'Dashboard', to: '/patient/dashboard', icon: <LayoutDashboard size={18} />, exact: true },
     { label: 'Book Appointment', to: '/patient/doctors', icon: <CalendarPlus size={18} /> },
-    { label: 'Appointment History', to: '/patient/appointments', icon: <History size={18} /> },
+    { label: 'My Appointments', to: '/patient/appointments', icon: <History size={18} /> },
     { label: 'Prescriptions', to: '/patient/prescriptions', icon: <Pill size={18} /> },
-    { label: 'Billing', to: '/patient/billing', icon: <CreditCard size={18} /> },
-    { label: 'Profile', to: '/patient/profile', icon: <User size={18} /> },
+    { label: 'Billing & Invoices', to: '/patient/billing', icon: <CreditCard size={18} /> },
+    { label: 'My Profile', to: '/patient/profile', icon: <User size={18} /> },
   ];
 
   const getDoctorNavItems = (): NavItem[] => [
-    { label: 'Dashboard', to: '/doctor/dashboard', icon: <LayoutDashboard size={18} /> },
-    { label: "Today's Appointments", to: '/doctor/appointments', icon: <Calendar size={18} /> },
-    { label: 'All Appointments', to: '/doctor/appointments', icon: <History size={18} /> },
-    { label: 'Patient Search', to: '/doctor/appointments', icon: <Search size={18} /> },
-    { label: 'Prescriptions', to: '/doctor/appointments', icon: <FileText size={18} /> },
-    { label: 'Availability', to: '/doctor/profile', icon: <Clock size={18} /> },
-    { label: 'Profile', to: '/doctor/profile', icon: <User size={18} /> },
+    { label: 'Dashboard', to: '/doctor/dashboard', icon: <LayoutDashboard size={18} />, exact: true },
+    { label: 'Consultation Queue', to: '/doctor/appointments', icon: <Calendar size={18} /> },
+    { label: 'Clinical Profile & Hours', to: '/doctor/profile', icon: <User size={18} /> },
   ];
 
   const getAdminNavItems = (): NavItem[] => [
-    { label: 'Dashboard', to: '/admin/dashboard', icon: <LayoutDashboard size={18} /> },
-    { label: 'Patients', to: '/admin/appointments', icon: <Users size={18} /> },
-    { label: 'Doctors', to: '/admin/doctors', icon: <Stethoscope size={18} /> },
-    { label: 'Appointments', to: '/admin/appointments', icon: <Calendar size={18} /> },
-    { label: 'Prescriptions', to: '/admin/appointments', icon: <FileText size={18} /> },
-    { label: 'Feedback', to: '/admin/dashboard#feedback', icon: <MessageSquare size={18} /> },
-    { label: 'Reports', to: '/admin/dashboard#reports', icon: <BarChart3 size={18} /> },
-    { label: 'Settings', to: '/admin/dashboard#settings', icon: <Settings size={18} /> },
+    { label: 'Dashboard', to: '/admin/dashboard', icon: <LayoutDashboard size={18} />, exact: true },
+    { label: 'Manage Doctors', to: '/admin/doctors', icon: <Stethoscope size={18} />, exact: true },
+    { label: 'Add New Doctor', to: '/admin/doctors/new', icon: <UserPlus size={18} /> },
+    { label: 'Clinic Appointments', to: '/admin/appointments', icon: <Calendar size={18} /> },
+    { label: 'Doctor Leaves', to: '/admin/doctor-leaves', icon: <CalendarDays size={18} /> },
   ];
 
   const navItems =
@@ -90,61 +80,169 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <>
-      <aside className={`sidebar-ui ${isCollapsed ? 'is-collapsed' : ''}`}>
+      <aside
+        style={{
+          width: isCollapsed ? '72px' : '260px',
+          background: '#ffffff',
+          borderRight: '1px solid #e2e8f0',
+          display: 'flex',
+          flexDirection: 'column',
+          height: '100%',
+          minHeight: '100vh',
+          transition: 'width 0.2s ease',
+          flexShrink: 0,
+        }}
+      >
         {/* Sidebar Header / User Card */}
-        <div className="sidebar-user-block">
-          <div className="sidebar-avatar">
+        <div
+          style={{
+            padding: '1.25rem 1rem',
+            borderBottom: '1px solid #f1f5f9',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.75rem',
+          }}
+        >
+          <div
+            style={{
+              width: '40px',
+              height: '40px',
+              borderRadius: '10px',
+              background:
+                role === 'ADMIN'
+                  ? 'linear-gradient(135deg, rgba(57, 49, 175, 0.12), rgba(0, 98, 204, 0.12))'
+                  : 'linear-gradient(135deg, rgba(0, 98, 204, 0.12), rgba(0, 198, 255, 0.12))',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: role === 'ADMIN' ? '#3931af' : '#0062cc',
+              flexShrink: 0,
+            }}
+          >
             {role === 'ADMIN' ? (
-              <Shield size={20} color="var(--primary-dark)" />
+              <Shield size={20} />
             ) : role === 'DOCTOR' ? (
-              <Stethoscope size={20} color="var(--primary)" />
+              <Stethoscope size={20} />
             ) : (
-              <User size={20} color="var(--primary)" />
+              <User size={20} />
             )}
           </div>
+
           {!isCollapsed && (
-            <div className="sidebar-user-meta">
-              <div className="sidebar-user-name button-text">{user?.name || 'User'}</div>
-              <div className="sidebar-user-role helper-text">{role} Portal</div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: '0.92rem', fontWeight: 800, color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {user?.name || 'User'}
+              </div>
+              <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>
+                {role} Portal
+              </div>
             </div>
           )}
+
           {onToggleCollapse && (
             <button
-              className="sidebar-collapse-toggle"
               onClick={onToggleCollapse}
               aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              style={{
+                background: '#f8fafc',
+                border: '1px solid #e2e8f0',
+                borderRadius: '6px',
+                padding: '4px',
+                color: '#64748b',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
             >
-              {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+              {isCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
             </button>
           )}
         </div>
 
         {/* Navigation Link List */}
-        <nav className="sidebar-nav-list">
+        <nav
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '4px',
+            padding: '12px 10px',
+            flex: 1,
+            overflowY: 'auto',
+          }}
+        >
           {navItems.map((item) => (
             <NavLink
               key={item.label + item.to}
               to={item.to}
-              className={({ isActive }) =>
-                `sidebar-nav-item ${isActive ? 'is-active' : ''}`
-              }
+              end={item.exact}
+              style={({ isActive }) => ({
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem',
+                padding: '10px 14px',
+                borderRadius: '8px',
+                textDecoration: 'none',
+                fontSize: '0.88rem',
+                fontWeight: isActive ? 700 : 500,
+                color: isActive ? '#0062cc' : '#475569',
+                background: isActive ? '#eff6ff' : 'transparent',
+                borderLeft: isActive ? '3.5px solid #0062cc' : '3.5px solid transparent',
+                transition: 'all 0.15s ease',
+              })}
               title={isCollapsed ? item.label : undefined}
             >
-              <span className="sidebar-nav-icon">{item.icon}</span>
-              {!isCollapsed && <span className="sidebar-nav-label">{item.label}</span>}
+              <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                {item.icon}
+              </span>
+              {!isCollapsed && <span style={{ whiteSpace: 'nowrap' }}>{item.label}</span>}
               {!isCollapsed && item.badge && (
-                <span className="sidebar-nav-badge">{item.badge}</span>
+                <span
+                  style={{
+                    marginLeft: 'auto',
+                    fontSize: '0.72rem',
+                    fontWeight: 700,
+                    padding: '2px 7px',
+                    borderRadius: '999px',
+                    background: '#0062cc',
+                    color: '#ffffff',
+                  }}
+                >
+                  {item.badge}
+                </span>
               )}
             </NavLink>
           ))}
         </nav>
 
         {/* Sidebar Footer with Logout */}
-        <div className="sidebar-footer">
+        <div style={{ padding: '14px 16px', borderTop: '1px solid #f1f5f9' }}>
           <button
-            className="sidebar-logout-btn"
             onClick={() => setShowLogoutConfirm(true)}
             title={isCollapsed ? 'Sign out' : undefined}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.75rem',
+              width: '100%',
+              padding: '10px 14px',
+              borderRadius: '8px',
+              border: '1px solid transparent',
+              background: 'transparent',
+              color: '#dc2626',
+              fontSize: '0.88rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              transition: 'all 0.15s ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = '#fef2f2';
+              e.currentTarget.style.borderColor = '#fecaca';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'transparent';
+              e.currentTarget.style.borderColor = 'transparent';
+            }}
           >
             <LogOut size={18} />
             {!isCollapsed && <span>Logout</span>}

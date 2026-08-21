@@ -13,6 +13,7 @@ const {
   rescheduleAppointmentHandler,
   completeAppointmentHandler,
   getAllAppointmentsForAdmin,
+  generateAiSummaryHandler,
 } = require('../controllers/appointmentController');
 
 // All appointment routes require authenticated sessions
@@ -35,9 +36,14 @@ router.get('/admin/all', requireRole('ADMIN'), getAllAppointmentsForAdmin);
 // 5. Single Appointment Ownership View
 router.get('/:id', getAppointmentDetails);
 
-// 6. Explicit State Transitions
+// 6. Explicit State Transitions & AI Synthesis
 router.patch('/:id/cancel', cancelAppointmentHandler);
 router.patch('/:id/reschedule', rescheduleAppointmentHandler);
+router.post(
+  '/:id/generate-ai-summary',
+  requireRole('DOCTOR', 'ADMIN'),
+  generateAiSummaryHandler
+);
 router.patch(
   '/:id/complete',
   requireRole('DOCTOR', 'ADMIN'),
@@ -45,3 +51,4 @@ router.patch(
 );
 
 module.exports = router;
+

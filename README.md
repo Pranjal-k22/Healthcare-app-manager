@@ -39,6 +39,8 @@ Background Cron Workers    LLM Service Layer     Google Calendar & Email
 - **Node.js**: `v18+`
 - **MongoDB**: Running locally at `mongodb://localhost:27017`
 - **Ollama**: Installed from [ollama.com](https://ollama.com)
+  > **Note**: Requires Ollama running locally with `ollama pull qwen2.5-coder:7b` (or `ollama pull qwen2.5:7b-instruct`) before AI features work.
+
 
 ### 2. Installation
 ```bash
@@ -65,8 +67,13 @@ NODE_ENV=development
 MONGO_URI=mongodb://localhost:27017/healthcare_appointment_db
 JWT_SECRET=super_secret_healthcare_jwt_key_phase1_2026_change_in_production
 CLIENT_URL=http://localhost:5173
+
+# Local Ollama LLM Configuration (Phase 10)
 OLLAMA_HOST=http://localhost:11434
-OLLAMA_MODEL=llama3
+OLLAMA_MODEL=qwen2.5-coder:7b
+OLLAMA_TIMEOUT_MS=28000
+LLM_MAX_ATTEMPTS=2
+LLM_BACKOFF_BASE_MS=300
 ```
 
 ### 4. Database Seeders
@@ -79,16 +86,33 @@ npm run seed:doctors --prefix server
 ```
 
 ### 5. Running the Application
-```bash
-# Start Ollama (in a separate terminal)
-ollama run llama3
 
-# Start Backend Server (Port 5000)
+Open 3 separate terminals to start the full system:
+
+```bash
+# Terminal 1: Start Local Ollama Daemon & Model
+# Option A: Start daemon service
+ollama serve
+
+# Option B: Run model directly
+ollama run qwen2.5-coder:7b
+# (or if using llama3: ollama run llama3)
+
+# Terminal 2: Start Backend Server (Port 5000)
 npm run dev:server
 
-# Start Frontend Client (Port 5173)
+# Terminal 3: Start Frontend Client (Port 5173)
 npm run dev:client
 ```
+
+Access the application in your browser at **`http://localhost:5173`**.
+
+#### 🔑 Demo Accounts for Quick Login
+- **Admin**: `admin@healthcare.com` / `AdminPassword123!`
+- **Cardiologist**: `dr.jenkins@healthpulse.com` / `DoctorPassword123!`
+- **Neurologist**: `dr.vance@healthpulse.com` / `DoctorPassword123!`
+- **Patient**: Register a new account at `/register` or login with your patient credentials.
+
 
 ---
 
