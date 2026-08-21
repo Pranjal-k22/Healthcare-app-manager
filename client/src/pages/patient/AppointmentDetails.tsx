@@ -13,7 +13,10 @@ import {
   Calendar,
   Clock,
   FileText,
+  HelpCircle,
   Mail,
+  ShieldAlert,
+  ShieldCheck,
   Sparkles,
   Stethoscope,
 } from 'lucide-react';
@@ -64,10 +67,10 @@ export const AppointmentDetails: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="container dashboard-container" style={{ textAlign: 'center', padding: '4rem 0' }}>
-        <div className="spinner" style={{ width: '36px', height: '36px', margin: '0 auto' }} />
-        <p style={{ color: 'var(--text-secondary)', marginTop: '1rem' }}>
-          Loading appointment record & clinical summary...
+      <div className="container dashboard-container" style={{ textAlign: 'center', padding: '5rem 0' }}>
+        <div className="spinner" style={{ width: '40px', height: '40px', margin: '0 auto', borderWidth: '3px' }} />
+        <p style={{ color: '#64748b', marginTop: '1.25rem', fontWeight: 500 }}>
+          Loading appointment record & clinical summaries...
         </p>
       </div>
     );
@@ -75,12 +78,35 @@ export const AppointmentDetails: React.FC = () => {
 
   if (error || !appointment) {
     return (
-      <div className="container dashboard-container">
-        <Link to="/patient/appointments" className="back-link">
+      <div className="container dashboard-container" style={{ maxWidth: '920px', padding: '2rem 1.5rem', margin: '0 auto' }}>
+        <Link
+          to="/patient/appointments"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.45rem',
+            color: '#0284c7',
+            textDecoration: 'none',
+            fontWeight: 600,
+            fontSize: '0.9rem',
+          }}
+        >
           <ArrowLeft size={16} />
           <span>Back to My Appointments</span>
         </Link>
-        <div className="alert alert-error" style={{ marginTop: '1.5rem' }}>
+        <div
+          style={{
+            marginTop: '1.5rem',
+            padding: '1rem 1.25rem',
+            borderRadius: '10px',
+            background: '#fef2f2',
+            border: '1px solid #fecaca',
+            color: '#b91c1c',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.65rem',
+          }}
+        >
           <AlertCircle size={18} />
           <span>{error || 'Appointment record not found.'}</span>
         </div>
@@ -88,62 +114,118 @@ export const AppointmentDetails: React.FC = () => {
     );
   }
 
+  const preSummary = appointment.preVisitSummary;
+  const postSummary = clinicalRecord?.postVisitSummary || appointment.postVisitSummary;
+
   return (
-    <div className="container dashboard-container" style={{ maxWidth: '880px' }}>
-      <div style={{ marginBottom: '1.5rem' }}>
-        <Link to="/patient/appointments" className="back-link">
+    <div className="container dashboard-container" style={{ maxWidth: '960px', padding: '2rem 1.5rem', margin: '0 auto' }}>
+      {/* Top Breadcrumb & Title Header */}
+      <div style={{ marginBottom: '1.75rem' }}>
+        <Link
+          to="/patient/appointments"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.45rem',
+            color: '#0284c7',
+            textDecoration: 'none',
+            fontSize: '0.88rem',
+            fontWeight: 600,
+            marginBottom: '0.75rem',
+            transition: 'color 0.15s ease',
+          }}
+        >
           <ArrowLeft size={16} />
           <span>Back to My Appointments</span>
         </Link>
 
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', marginTop: '0.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
-            <h1 className="welcome-title" style={{ fontSize: '1.85rem' }}>
+            <h1 style={{ fontSize: '1.85rem', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em', margin: 0 }}>
               Consultation Record
             </h1>
-            <p className="welcome-subtitle">
-              Appointment summary, practitioner findings, and verified prescription.
+            <p style={{ color: '#64748b', fontSize: '0.92rem', marginTop: '0.35rem', marginBottom: 0 }}>
+              Complete clinical timeline, AI intake synthesis, practitioner findings, and care plan.
             </p>
           </div>
           <AppointmentStatusBadge status={appointment.status} />
         </div>
       </div>
 
-      {/* Doctor & Appointment Meta Card */}
-      <div className="glass-card info-card" style={{ marginBottom: '1.5rem' }}>
+      {/* Practitioner & Appointment Details Meta Card */}
+      <div
+        style={{
+          marginBottom: '1.75rem',
+          padding: '1.5rem',
+          background: '#ffffff',
+          borderRadius: '14px',
+          border: '1px solid #e2e8f0',
+          boxShadow: '0 4px 16px rgba(15, 23, 42, 0.04)',
+        }}
+      >
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
+          {/* Practitioner Column */}
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '0.75rem' }}>
-              <div className="doctor-avatar" style={{ width: '42px', height: '42px' }}>
-                <Stethoscope size={22} color="#10b981" />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.65rem' }}>
+              <div
+                style={{
+                  width: '44px',
+                  height: '44px',
+                  borderRadius: '12px',
+                  background: 'linear-gradient(135deg, #0284c7, #0ea5e9)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#ffffff',
+                  boxShadow: '0 4px 10px rgba(2, 132, 199, 0.25)',
+                }}
+              >
+                <Stethoscope size={22} />
               </div>
               <div>
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                <span style={{ fontSize: '0.72rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>
                   Practitioner
                 </span>
-                <h3 style={{ fontSize: '1.15rem', fontWeight: 700 }}>{appointment.doctorName}</h3>
+                <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+                  Dr. {appointment.doctorName}
+                </h3>
               </div>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
-              <Mail size={14} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', color: '#64748b', fontSize: '0.85rem', paddingLeft: '0.25rem' }}>
+              <Mail size={14} color="#94a3b8" />
               <span>{appointment.doctorEmail}</span>
             </div>
           </div>
 
+          {/* Schedule Date & Time Column */}
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '0.75rem' }}>
-              <div className="doctor-avatar" style={{ width: '42px', height: '42px', background: 'rgba(14, 165, 233, 0.12)' }}>
-                <Calendar size={22} color="var(--primary)" />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.65rem' }}>
+              <div
+                style={{
+                  width: '44px',
+                  height: '44px',
+                  borderRadius: '12px',
+                  background: 'linear-gradient(135deg, #059669, #10b981)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#ffffff',
+                  boxShadow: '0 4px 10px rgba(16, 185, 129, 0.25)',
+                }}
+              >
+                <Calendar size={22} />
               </div>
               <div>
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  Consultation Date & Time
+                <span style={{ fontSize: '0.72rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>
+                  Consultation Date
                 </span>
-                <h3 style={{ fontSize: '1.15rem', fontWeight: 700 }}>{appointment.date}</h3>
+                <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+                  {appointment.date}
+                </h3>
               </div>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
-              <Clock size={14} color="var(--primary)" />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', color: '#64748b', fontSize: '0.85rem', paddingLeft: '0.25rem' }}>
+              <Clock size={14} color="#94a3b8" />
               <span>
                 {appointment.startTime} – {appointment.endTime}
               </span>
@@ -152,157 +234,450 @@ export const AppointmentDetails: React.FC = () => {
         </div>
 
         {/* Reported Symptoms & Reason for Visit */}
-        <div style={{ marginTop: '1.25rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
-          <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
-            Reported Symptoms & Intake Reason
-          </span>
-          <p style={{ marginTop: '0.25rem', fontSize: '0.9rem', color: 'var(--text-primary)' }}>
+        <div
+          style={{
+            marginTop: '1.25rem',
+            paddingTop: '1.25rem',
+            borderTop: '1px solid #f1f5f9',
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: '0.75rem',
+          }}
+        >
+          <div
+            style={{
+              padding: '0.35rem 0.65rem',
+              borderRadius: '6px',
+              background: '#f8fafc',
+              border: '1px solid #e2e8f0',
+              fontSize: '0.75rem',
+              fontWeight: 700,
+              color: '#475569',
+              textTransform: 'uppercase',
+              letterSpacing: '0.04em',
+              whiteSpace: 'nowrap',
+              marginTop: '0.15rem',
+            }}
+          >
+            Reported Intake
+          </div>
+          <p style={{ margin: 0, fontSize: '0.95rem', color: '#334155', lineHeight: 1.5, fontWeight: 500 }}>
             {appointment.symptoms || appointment.reason || 'No specific symptoms entered.'}
           </p>
         </div>
       </div>
 
-      {/* Post-Visit AI Patient Summary */}
-      {/* Post-Visit AI Patient Summary */}
-      {clinicalRecord?.aiStatus === 'READY' && clinicalRecord.postVisitSummary ? (
+      {/* ======================================================== */}
+      {/* 1. Pre-Visit AI Symptom Summary Card */}
+      {/* ======================================================== */}
+      {preSummary && (
         <div
-          className="glass-card info-card"
           style={{
-            marginBottom: '1.5rem',
-            border: '1px solid rgba(16, 185, 129, 0.3)',
-            background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.06) 0%, rgba(15, 23, 42, 0.7) 100%)',
+            marginBottom: '1.75rem',
+            borderRadius: '14px',
+            background: '#ffffff',
+            border: '1.5px solid #bae6fd',
+            boxShadow: '0 4px 18px rgba(2, 132, 199, 0.06)',
+            overflow: 'hidden',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '1rem' }}>
-            <div className="doctor-avatar" style={{ width: '38px', height: '38px', background: 'rgba(16, 185, 129, 0.18)' }}>
-              <Sparkles size={20} color="#10b981" />
-            </div>
-            <div>
-              <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-                Post-Visit Patient Summary
-              </h3>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                AI-synthesized care guidance & medication schedule
-              </span>
-            </div>
-          </div>
-
+          {/* Card Header */}
           <div
             style={{
-              padding: '1.15rem',
-              background: 'rgba(15, 23, 42, 0.5)',
-              borderRadius: 'var(--radius-sm)',
-              border: '1px solid var(--border-color)',
-              color: 'var(--text-primary)',
-              fontSize: '0.92rem',
-              lineHeight: 1.65,
+              padding: '1.15rem 1.5rem',
+              background: 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)',
+              borderBottom: '1px solid #bae6fd',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '0.75rem',
             }}
           >
-            {typeof (clinicalRecord.postVisitSummary || appointment?.postVisitSummary) === 'string' ? (
-              <div style={{ whiteSpace: 'pre-line' }}>{String(clinicalRecord.postVisitSummary || appointment?.postVisitSummary)}</div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-                <div>
-                  <h4 style={{ fontSize: '0.82rem', fontWeight: 700, color: '#10b981', textTransform: 'uppercase', marginBottom: '0.25rem' }}>
-                    Visit Summary & Care Explanation
-                  </h4>
-                  <p style={{ margin: 0, color: 'var(--text-primary)' }}>
-                    {(clinicalRecord.postVisitSummary as any)?.patientSummary || (clinicalRecord.postVisitSummary as any)?.summary || (appointment?.postVisitSummary as any)?.patientSummary || (appointment?.postVisitSummary as any)?.summary}
-                  </p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+              <div
+                style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '10px',
+                  background: 'linear-gradient(135deg, #0284c7, #0ea5e9)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#ffffff',
+                  boxShadow: '0 2px 8px rgba(2, 132, 199, 0.3)',
+                }}
+              >
+                <Sparkles size={18} />
+              </div>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0369a1', margin: 0 }}>
+                    Pre-Visit AI Symptom Summary
+                  </h3>
+                  <span style={{ fontSize: '0.7rem', padding: '0.15rem 0.5rem', borderRadius: '999px', background: '#ffffff', color: '#0284c7', fontWeight: 800, border: '1px solid #bae6fd' }}>
+                    Google Gemini
+                  </span>
                 </div>
-                {((clinicalRecord.postVisitSummary as any)?.medicationSchedule || (appointment?.postVisitSummary as any)?.medicationSchedule) && (
-                  <div>
-                    <h4 style={{ fontSize: '0.82rem', fontWeight: 700, color: '#38bdf8', textTransform: 'uppercase', marginBottom: '0.25rem' }}>
-                      Medication Instructions & Schedule
-                    </h4>
-                    {Array.isArray((clinicalRecord.postVisitSummary as any)?.medicationSchedule || (appointment?.postVisitSummary as any)?.medicationSchedule) ? (
-                      <ul style={{ margin: 0, paddingLeft: '1.25rem', color: 'var(--text-secondary)' }}>
-                        {(((clinicalRecord.postVisitSummary as any)?.medicationSchedule || (appointment?.postVisitSummary as any)?.medicationSchedule) as string[]).map((item: string, i: number) => (
-                          <li key={i}>{item}</li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <p style={{ margin: 0, color: 'var(--text-secondary)' }}>
-                        {String((clinicalRecord.postVisitSummary as any)?.medicationSchedule || (appointment?.postVisitSummary as any)?.medicationSchedule)}
-                      </p>
-                    )}
-                  </div>
+                <span style={{ fontSize: '0.76rem', color: '#0369a1', opacity: 0.85 }}>
+                  AI-synthesized symptom analysis and suggested consultation questions
+                </span>
+              </div>
+            </div>
+
+            {/* Urgency Badge */}
+            {preSummary.urgency && (
+              <div
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  padding: '0.4rem 0.95rem',
+                  borderRadius: '999px',
+                  fontWeight: 800,
+                  fontSize: '0.82rem',
+                  letterSpacing: '0.02em',
+                  background:
+                    preSummary.urgency === 'High'
+                      ? '#fee2e2'
+                      : preSummary.urgency === 'Medium'
+                      ? '#fef3c7'
+                      : '#dcfce7',
+                  color:
+                    preSummary.urgency === 'High'
+                      ? '#b91c1c'
+                      : preSummary.urgency === 'Medium'
+                      ? '#b45309'
+                      : '#15803d',
+                  border: `1px solid ${
+                    preSummary.urgency === 'High'
+                      ? '#fca5a5'
+                      : preSummary.urgency === 'Medium'
+                      ? '#fcd34d'
+                      : '#86efac'
+                  }`,
+                }}
+              >
+                {preSummary.urgency === 'High' ? (
+                  <ShieldAlert size={15} />
+                ) : (
+                  <ShieldCheck size={15} />
                 )}
-                {((clinicalRecord.postVisitSummary as any)?.followUpSteps || (appointment?.postVisitSummary as any)?.followUpSteps) && (
-                  <div>
-                    <h4 style={{ fontSize: '0.82rem', fontWeight: 700, color: '#f59e0b', textTransform: 'uppercase', marginBottom: '0.25rem' }}>
-                      Next Steps & Follow-Up
-                    </h4>
-                    {Array.isArray((clinicalRecord.postVisitSummary as any)?.followUpSteps || (appointment?.postVisitSummary as any)?.followUpSteps) ? (
-                      <ul style={{ margin: 0, paddingLeft: '1.25rem', color: 'var(--text-secondary)' }}>
-                        {(((clinicalRecord.postVisitSummary as any)?.followUpSteps || (appointment?.postVisitSummary as any)?.followUpSteps) as string[]).map((item: string, i: number) => (
-                          <li key={i}>{item}</li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <p style={{ margin: 0, color: 'var(--text-secondary)' }}>
-                        {String((clinicalRecord.postVisitSummary as any)?.followUpSteps || (appointment?.postVisitSummary as any)?.followUpSteps)}
-                      </p>
-                    )}
-                  </div>
-                )}
+                <span>Urgency: {preSummary.urgency}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Card Body */}
+          <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            {/* Chief Complaint */}
+            {preSummary.chiefComplaint && (
+              <div>
+                <h4 style={{ fontSize: '0.78rem', fontWeight: 800, color: '#0284c7', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 0.35rem 0' }}>
+                  Chief Complaint / Symptom Synopsis
+                </h4>
+                <div
+                  style={{
+                    padding: '0.9rem 1.15rem',
+                    background: '#f8fafc',
+                    borderRadius: '10px',
+                    border: '1px solid #e2e8f0',
+                    color: '#1e293b',
+                    fontSize: '0.95rem',
+                    lineHeight: 1.6,
+                    fontWeight: 500,
+                  }}
+                >
+                  {preSummary.chiefComplaint}
+                </div>
+              </div>
+            )}
+
+            {/* Suggested Questions */}
+            {preSummary.suggestedQuestions && preSummary.suggestedQuestions.length > 0 && (
+              <div>
+                <h4 style={{ fontSize: '0.78rem', fontWeight: 800, color: '#6366f1', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 0.5rem 0' }}>
+                  Suggested Questions to Ask Your Doctor
+                </h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  {preSummary.suggestedQuestions.map((q: string, idx: number) => (
+                    <div
+                      key={idx}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        gap: '0.65rem',
+                        padding: '0.75rem 1rem',
+                        borderRadius: '8px',
+                        background: '#f5f3ff',
+                        border: '1px solid #e0e7ff',
+                        color: '#312e81',
+                        fontSize: '0.9rem',
+                        lineHeight: 1.5,
+                        fontWeight: 500,
+                      }}
+                    >
+                      <HelpCircle size={17} color="#6366f1" style={{ flexShrink: 0, marginTop: '2px' }} />
+                      <span>{q}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>
         </div>
-      ) : clinicalRecord?.aiStatus === 'FAILED' ? (
+      )}
+
+      {/* ======================================================== */}
+      {/* 2. Post-Visit AI Patient Summary Card */}
+      {/* ======================================================== */}
+      {postSummary ? (
         <div
-          className="glass-card info-card"
           style={{
-            marginBottom: '1.5rem',
-            padding: '0.85rem 1.25rem',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.65rem',
-            color: 'var(--text-muted)',
-            fontSize: '0.85rem',
-            background: 'rgba(15, 23, 42, 0.4)',
+            marginBottom: '1.75rem',
+            borderRadius: '14px',
+            background: '#ffffff',
+            border: '1.5px solid #a7f3d0',
+            boxShadow: '0 4px 18px rgba(16, 185, 129, 0.06)',
+            overflow: 'hidden',
           }}
         >
-          <Sparkles size={16} color="var(--text-muted)" />
-          <span>AI summary unavailable</span>
+          {/* Card Header */}
+          <div
+            style={{
+              padding: '1.15rem 1.5rem',
+              background: 'linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%)',
+              borderBottom: '1px solid #a7f3d0',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '0.75rem',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+              <div
+                style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '10px',
+                  background: 'linear-gradient(135deg, #059669, #10b981)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#ffffff',
+                  boxShadow: '0 2px 8px rgba(16, 185, 129, 0.3)',
+                }}
+              >
+                <Sparkles size={18} />
+              </div>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#065f46', margin: 0 }}>
+                    Post-Visit Patient Summary & Care Plan
+                  </h3>
+                  <span style={{ fontSize: '0.7rem', padding: '0.15rem 0.5rem', borderRadius: '999px', background: '#ffffff', color: '#059669', fontWeight: 800, border: '1px solid #a7f3d0' }}>
+                    Google Gemini
+                  </span>
+                </div>
+                <span style={{ fontSize: '0.76rem', color: '#047857', opacity: 0.85 }}>
+                  AI-synthesized diagnosis explanation, verified medication schedule, and follow-up guidance
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Card Body */}
+          <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            {/* Visit Summary / Care Explanation */}
+            <div>
+              <h4 style={{ fontSize: '0.78rem', fontWeight: 800, color: '#059669', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 0.35rem 0' }}>
+                Visit Summary & Care Explanation
+              </h4>
+              <div
+                style={{
+                  padding: '1rem 1.25rem',
+                  background: '#f8fafc',
+                  borderRadius: '10px',
+                  border: '1px solid #e2e8f0',
+                  color: '#1e293b',
+                  fontSize: '0.95rem',
+                  lineHeight: 1.65,
+                }}
+              >
+                {typeof postSummary === 'string'
+                  ? postSummary
+                  : postSummary.patientSummary || postSummary.summary || 'Summary unavailable.'}
+              </div>
+            </div>
+
+            {/* Medication Instructions & Schedule */}
+            {typeof postSummary !== 'string' && postSummary.medicationSchedule && (
+              <div>
+                <h4 style={{ fontSize: '0.78rem', fontWeight: 800, color: '#0284c7', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 0.45rem 0' }}>
+                  Prescribed Medication Instructions & Schedule
+                </h4>
+                <div
+                  style={{
+                    padding: '1rem 1.25rem',
+                    background: '#f0fdf4',
+                    borderRadius: '10px',
+                    border: '1px solid #bbf7d0',
+                  }}
+                >
+                  {Array.isArray(postSummary.medicationSchedule) ? (
+                    <ul style={{ margin: 0, paddingLeft: '1.25rem', color: '#166534', fontSize: '0.92rem', lineHeight: 1.6 }}>
+                      {postSummary.medicationSchedule.map((item: string, idx: number) => (
+                        <li key={idx} style={{ marginBottom: '0.35rem' }}>
+                          <strong>{item}</strong>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p style={{ margin: 0, color: '#166534', fontSize: '0.92rem', lineHeight: 1.6, fontWeight: 500 }}>
+                      {String(postSummary.medicationSchedule)}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Next Steps & Follow-up Guidance */}
+            {typeof postSummary !== 'string' && postSummary.followUpSteps && (
+              <div>
+                <h4 style={{ fontSize: '0.78rem', fontWeight: 800, color: '#b45309', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 0.45rem 0' }}>
+                  Next Steps & Follow-Up Instructions
+                </h4>
+                <div
+                  style={{
+                    padding: '1rem 1.25rem',
+                    background: '#fffbeb',
+                    borderRadius: '10px',
+                    border: '1px solid #fde68a',
+                  }}
+                >
+                  {Array.isArray(postSummary.followUpSteps) ? (
+                    <ul style={{ margin: 0, paddingLeft: '1.25rem', color: '#92400e', fontSize: '0.92rem', lineHeight: 1.6 }}>
+                      {postSummary.followUpSteps.map((step: string, idx: number) => (
+                        <li key={idx} style={{ marginBottom: '0.35rem' }}>
+                          {step}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p style={{ margin: 0, color: '#92400e', fontSize: '0.92rem', lineHeight: 1.6, fontWeight: 500 }}>
+                      {String(postSummary.followUpSteps)}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       ) : null}
 
-      {/* Doctor Clinical Advice & Instructions */}
+      {/* ======================================================== */}
+      {/* 3. Doctor's Clinical Findings & Examination Notes */}
+      {/* ======================================================== */}
       {clinicalRecord && (
-        <div className="glass-card info-card" style={{ marginBottom: '1.5rem' }}>
+        <div
+          style={{
+            marginBottom: '1.75rem',
+            padding: '1.5rem',
+            background: '#ffffff',
+            borderRadius: '14px',
+            border: '1px solid #e2e8f0',
+            boxShadow: '0 4px 16px rgba(15, 23, 42, 0.04)',
+          }}
+        >
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '1.25rem' }}>
-            <Activity size={20} color="var(--primary)" />
-            <h3 style={{ fontSize: '1.2rem', fontWeight: 800 }}>Clinical Findings & Advice</h3>
+            <div
+              style={{
+                width: '34px',
+                height: '34px',
+                borderRadius: '8px',
+                background: 'rgba(2, 132, 199, 0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#0284c7',
+              }}
+            >
+              <Activity size={18} />
+            </div>
+            <div>
+              <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+                Clinical Examination & Advice
+              </h3>
+              <span style={{ fontSize: '0.78rem', color: '#64748b' }}>
+                Physician observations, diagnostic impressions, and clinical guidance
+              </span>
+            </div>
           </div>
 
           {clinicalRecord.diagnosisNotes && (
-            <div style={{ marginBottom: '1rem' }}>
-              <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+            <div style={{ marginBottom: '1.25rem' }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                 Primary Diagnosis
               </span>
-              <p style={{ fontSize: '1.05rem', fontWeight: 700, color: '#38bdf8', marginTop: '0.2rem' }}>
+              <div
+                style={{
+                  marginTop: '0.35rem',
+                  display: 'inline-block',
+                  padding: '0.45rem 1rem',
+                  borderRadius: '8px',
+                  background: '#f0f9ff',
+                  border: '1px solid #bae6fd',
+                  fontSize: '1rem',
+                  fontWeight: 700,
+                  color: '#0369a1',
+                }}
+              >
                 {clinicalRecord.diagnosisNotes}
+              </div>
+            </div>
+          )}
+
+          {clinicalRecord.clinicalNotes && (
+            <div style={{ marginBottom: '1.25rem' }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                Physician Examination Observations
+              </span>
+              <p style={{ marginTop: '0.35rem', fontSize: '0.92rem', color: '#334155', lineHeight: 1.65, background: '#f8fafc', padding: '0.85rem 1rem', borderRadius: '8px', border: '1px solid #f1f5f9' }}>
+                {clinicalRecord.clinicalNotes}
               </p>
             </div>
           )}
 
           {clinicalRecord.patientInstructions && (
-            <div style={{ marginBottom: '1rem' }}>
-              <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
-                Doctor's Instructions & Care Guidance
+            <div style={{ marginBottom: '1.25rem' }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                Doctor's Direct Lifestyle & Care Advice
               </span>
-              <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginTop: '0.25rem', lineHeight: 1.6 }}>
+              <p style={{ marginTop: '0.35rem', fontSize: '0.92rem', color: '#334155', lineHeight: 1.65, background: '#f8fafc', padding: '0.85rem 1rem', borderRadius: '8px', border: '1px solid #f1f5f9' }}>
                 {clinicalRecord.patientInstructions}
               </p>
             </div>
           )}
 
           {clinicalRecord.followUpDate && (
-            <div style={{ marginTop: '1rem', padding: '0.75rem 1rem', background: 'rgba(14, 165, 233, 0.08)', borderRadius: 'var(--radius-sm)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Calendar size={16} color="var(--primary)" />
-              <span style={{ fontSize: '0.85rem' }}>
+            <div
+              style={{
+                marginTop: '1rem',
+                padding: '0.75rem 1.15rem',
+                background: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)',
+                borderRadius: '8px',
+                border: '1px solid #bbf7d0',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.65rem',
+                color: '#166534',
+                fontSize: '0.9rem',
+                fontWeight: 600,
+              }}
+            >
+              <Calendar size={16} color="#15803d" />
+              <span>
                 Recommended Follow-up Date: <strong>{clinicalRecord.followUpDate}</strong>
               </span>
             </div>
@@ -310,17 +685,30 @@ export const AppointmentDetails: React.FC = () => {
         </div>
       )}
 
-      {/* Structured Prescription Display */}
+      {/* ======================================================== */}
+      {/* 4. Structured Prescription Card */}
+      {/* ======================================================== */}
       {prescription && prescription.medicines && prescription.medicines.length > 0 ? (
         <div style={{ marginBottom: '2rem' }}>
           <PrescriptionCard prescription={prescription} />
         </div>
       ) : appointment.status === 'COMPLETED' ? (
-        <div className="glass-card info-card" style={{ textAlign: 'center', color: 'var(--text-muted)', marginBottom: '2rem' }}>
-          <FileText size={32} style={{ margin: '0 auto 0.5rem' }} />
-          <p>No medications were prescribed during this consultation.</p>
+        <div
+          style={{
+            padding: '2rem',
+            background: '#ffffff',
+            borderRadius: '14px',
+            border: '1px solid #e2e8f0',
+            textAlign: 'center',
+            color: '#64748b',
+            marginBottom: '2rem',
+          }}
+        >
+          <FileText size={32} color="#94a3b8" style={{ margin: '0 auto 0.5rem' }} />
+          <p style={{ margin: 0, fontWeight: 500 }}>No prescription was issued during this consultation.</p>
         </div>
       ) : null}
     </div>
   );
 };
+export default AppointmentDetails;

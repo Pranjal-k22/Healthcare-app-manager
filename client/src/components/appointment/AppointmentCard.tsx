@@ -165,6 +165,31 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({
             )}
           </div>
         )}
+
+        {/* Admin Actions */}
+        {viewRole === 'ADMIN' && (
+          <div style={{ display: 'flex', gap: '0.5rem', width: '100%' }}>
+            <Link
+              to={`/patient/appointments/${appointment.id}`}
+              style={{ flex: 1 }}
+            >
+              <Button variant="outline" size="sm" fullWidth leftIcon={<ExternalLink size={13} />}>
+                View Details & AI Summaries
+              </Button>
+            </Link>
+            {isBooked && onCancel && (
+              <Button
+                variant="danger"
+                size="sm"
+                onClick={() => onCancel(appointment)}
+                disabled={isActionLoading}
+                leftIcon={<XCircle size={13} />}
+              >
+                Cancel
+              </Button>
+            )}
+          </div>
+        )}
       </div>
     </Card>
   );
