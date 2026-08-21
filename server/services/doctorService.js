@@ -140,6 +140,15 @@ const createDoctor = async (data) => {
       'name email role createdAt'
     );
 
+    // Asynchronously dispatch credentials email to Doctor and alert to Admins
+    notificationService
+      .dispatchDoctorWelcome(createdUser, password, specialization)
+      .catch((err) => console.error('[DoctorService] Failed to dispatch welcome email:', err.message));
+
+    notificationService
+      .dispatchDoctorProvisionedAdminAlert(createdUser, specialization, 'Admin Staff')
+      .catch((err) => console.error('[DoctorService] Failed to dispatch admin alert:', err.message));
+
     return await formatDoctorResponse(populated);
   } catch (error) {
     if (createdUser && createdUser._id) {
@@ -589,6 +598,70 @@ const setDoctorActiveStatus = async (id, isActive) => {
   return updateDoctor(id, { isActive });
 };
 
+/**
+ * Permanently delete a doctor from the system and database (Admin only)
+ * @param {string} id - DoctorProfile _id or User _id
+ * @returns {Promise<{ deletedId: string, name: string, email: string, message: string }>}
+ */
+const deleteDoctorCompletely = async (id) => {
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    const error = new Error('Invalid Doctor ID format');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  // 1. Locate DoctorProfile
+  let profile = await DoctorProfile.findById(id).populate('userId');
+  if (!profile) {
+    profile = await DoctorProfile.findOne({ userId: id }).populate('userId');
+  }
+
+  if (!profile) {
+    const error = new Error('Doctor profile not found in database');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const doctorUserId = profile.userId?._id || profile.userId;
+  const doctorProfileId = profile._id;
+  const doctorName = profile.userId?.name || 'Doctor';
+  const doctorEmail = profile.userId?.email || '';
+
+  // 2. Cascade delete related entities:
+  // a) Cancel any pending / booked appointments
+  await Appointment.updateMany(
+    { doctorId: doctorUserId, status: { $in: ['BOOKED', 'PENDING', 'RESCHEDULED'] } },
+    { $set: { status: 'CANCELLED', reason: 'Doctor profile removed by hospital administration' } }
+  );
+
+  // b) Delete doctor leaves
+  await DoctorLeave.deleteMany({ doctorId: doctorUserId });
+
+  // c) Delete DoctorProfile
+  await DoctorProfile.findByIdAndDelete(doctorProfileId);
+
+  // d) Delete User entity
+  if (doctorUserId) {
+    await User.findByIdAndDelete(doctorUserId);
+  }
+
+  // e) Delete CalendarConnection if any
+  try {
+    const { CalendarConnection } = require('../models/CalendarConnection');
+    if (CalendarConnection) {
+      await CalendarConnection.deleteMany({ userId: doctorUserId });
+    }
+  } catch (err) {}
+
+  return {
+    deletedId: doctorProfileId.toString(),
+    doctorUserId: doctorUserId ? doctorUserId.toString() : null,
+    name: doctorName,
+    email: doctorEmail,
+    message: `Dr. ${doctorName} has been completely removed from the system and database.`,
+  };
+};
+
 module.exports = {
   createDoctor,
   getAllDoctors,
@@ -600,5 +673,6 @@ module.exports = {
   removeDoctorLeave,
   getDoctorLeaves,
   setDoctorActiveStatus,
+  deleteDoctorCompletely,
   formatDoctorResponse,
 };

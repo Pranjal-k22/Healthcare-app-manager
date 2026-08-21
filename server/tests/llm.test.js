@@ -130,7 +130,7 @@ const runLLMTests = async () => {
       throw new Error('Gemini API service unavailable 503');
     };
     try {
-      const result = await llmService.generatePreVisitSummary('Persistent fever');
+      const result = await llmService.generatePreVisitSummary('Persistent fever', 'gemini');
       assert.strictEqual(result.status, AI_STATUS.FAILED);
       assert.ok(result.error);
       assert.strictEqual(result.promptVersion, PRE_VISIT_PROMPT_VERSION);
@@ -156,7 +156,7 @@ const runLLMTests = async () => {
     const originalGen = geminiProvider.generate;
     geminiProvider.generate = async () => 'Malformed text with no json';
     try {
-      const result = await llmService.generatePreVisitSummary('Skin rash');
+      const result = await llmService.generatePreVisitSummary('Skin rash', 'gemini');
       assert.strictEqual(result.status, AI_STATUS.FAILED);
     } finally {
       geminiProvider.generate = originalGen;
@@ -240,7 +240,7 @@ const runLLMTests = async () => {
       throw new Error('Gemini request timeout');
     };
     try {
-      const result = await llmService.generatePreVisitSummary('Chronic fatigue');
+      const result = await llmService.generatePreVisitSummary('Chronic fatigue', 'gemini');
       assert.strictEqual(result.status, AI_STATUS.FAILED);
     } finally {
       geminiProvider.generate = originalGen;
@@ -263,7 +263,7 @@ const runLLMTests = async () => {
       });
     };
     try {
-      const result = await llmService.generatePreVisitSummary('Sneezing and runny nose');
+      const result = await llmService.generatePreVisitSummary('Sneezing and runny nose', 'gemini');
       assert.strictEqual(result.status, AI_STATUS.READY);
       assert.strictEqual(result.data.urgency, 'Low');
       assert.strictEqual(result.data.chiefComplaint, 'Mild seasonal allergies');
@@ -280,17 +280,19 @@ const runLLMTests = async () => {
     const originalGen = geminiProvider.generate;
     geminiProvider.generate = async () => {
       return JSON.stringify({
-        patientSummary: 'Diagnosis of mild pharyngitis.',
-        medicationSchedule: ['Amoxicillin 500mg three times daily for 7 days'],
-        followUpSteps: ['Rest and hydrate'],
+        summary: 'Diagnosis of mild pharyngitis.',
+        medicationSchedule: 'Amoxicillin 500mg three times daily for 7 days',
+        followUpSteps: 'Rest and hydrate',
       });
     };
     try {
-      const result = await llmService.generatePostVisitSummary('Mild throat inflammation', [
-        { name: 'Amoxicillin', dosage: '500mg', frequency: 'TID', duration: '7 days' },
-      ]);
+      const result = await llmService.generatePostVisitSummary(
+        'Mild throat inflammation',
+        [{ name: 'Amoxicillin', dosage: '500mg', frequency: 'TID', duration: '7 days' }],
+        'gemini'
+      );
       assert.strictEqual(result.status, AI_STATUS.READY);
-      assert.strictEqual(result.data.medicationSchedule.length, 1);
+      assert.ok(result.data.medicationSchedule);
     } finally {
       geminiProvider.generate = originalGen;
     }

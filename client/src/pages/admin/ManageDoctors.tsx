@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Doctor } from '../../types/doctor';
-import { getDoctors, toggleDoctorActiveStatus } from '../../services/doctorApi';
+import { getDoctors, toggleDoctorActiveStatus, deleteDoctor } from '../../services/doctorApi';
 import { DoctorCard } from '../../components/doctor/DoctorCard';
 import { DoctorSearchBar } from '../../components/doctor/DoctorSearchBar';
 import {
@@ -20,6 +20,7 @@ export const ManageDoctors: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [isStatusUpdating, setIsStatusUpdating] = useState(false);
+  const [isDeletingDoctor, setIsDeletingDoctor] = useState(false);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSpecialization, setSelectedSpecialization] = useState('');
@@ -66,6 +67,31 @@ export const ManageDoctors: React.FC = () => {
       );
     } finally {
       setIsStatusUpdating(false);
+    }
+  };
+
+  const handleDeleteDoctor = async (doctorId: string, doctorName: string) => {
+    const confirmed = window.confirm(
+      `⚠️ PERMANENT ACTION\n\nYou are about to permanently delete Dr. ${doctorName} from the system.\n\nThis will:\n• Delete their user account\n• Cancel all active appointments\n• Remove all leave records\n\nThis action CANNOT be undone. Continue?`
+    );
+    if (!confirmed) return;
+
+    try {
+      setIsDeletingDoctor(true);
+      setError(null);
+      setSuccessMsg(null);
+      const result = await deleteDoctor(doctorId);
+      setSuccessMsg(result.message);
+      // Optimistic removal — no need to refetch
+      setDoctors((prev) => prev.filter((d) => d.id !== doctorId));
+    } catch (err: any) {
+      setError(
+        err.response?.data?.message ||
+          err.message ||
+          'Failed to delete doctor. Please try again.'
+      );
+    } finally {
+      setIsDeletingDoctor(false);
     }
   };
 
@@ -267,6 +293,8 @@ export const ManageDoctors: React.FC = () => {
               isAdminView={true}
               onToggleStatus={(docId, newStatus) => handleToggleStatus(docId, newStatus)}
               isStatusUpdating={isStatusUpdating}
+              onDeleteDoctor={handleDeleteDoctor}
+              isDeletingDoctor={isDeletingDoctor}
             />
           ))}
         </div>

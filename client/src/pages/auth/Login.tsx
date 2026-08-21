@@ -306,10 +306,20 @@ export const Login: React.FC = () => {
             </div>
           </div>
 
-          <p className="auth-switch-link">
-            Don't have an account?{' '}
-            <Link to="/register">Create Patient Account</Link>
-          </p>
+          <div style={{ marginTop: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', textAlign: 'center', fontSize: '14px' }}>
+            <p style={{ margin: 0, color: 'var(--text-secondary)' }}>
+              Don't have an account?{' '}
+              <Link to="/register" style={{ fontWeight: 600, color: 'var(--primary)' }}>
+                Create Patient Account
+              </Link>
+            </p>
+            <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-muted)' }}>
+              Hospital Administrator?{' '}
+              <Link to="/register?role=admin" style={{ fontWeight: 600, color: '#3931af' }}>
+                Register as Administrator
+              </Link>
+            </p>
+          </div>
         </div>
       </div>
     </div>

@@ -142,3 +142,18 @@ export const getDoctorLeaves = async (id: string): Promise<Leave[]> => {
   );
   return response.data.data;
 };
+
+/**
+ * Permanently delete a doctor and all related data (Admin only)
+ * Cascades: DoctorProfile, User account, Appointments (cancelled), DoctorLeaves, CalendarConnections
+ */
+export const deleteDoctor = async (
+  id: string
+): Promise<{ deletedId: string; name: string; email: string; message: string }> => {
+  const response = await apiClient.delete<{
+    success: boolean;
+    message: string;
+    data: { deletedId: string; name: string; email: string };
+  }>(`/doctors/${id}`);
+  return { ...response.data.data, message: response.data.message };
+};

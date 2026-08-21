@@ -477,6 +477,111 @@ const passwordChanged = (data) => {
   return { subject, html, text };
 };
 
+/**
+ * 7. Welcome Doctor: Account Credentials & Password Change Guide
+ */
+const doctorWelcome = (data) => {
+  const { doctorName, email, temporaryPassword, specialization } = data;
+  const subject = 'Welcome to HealthPulse: Doctor Portal Access Credentials';
+
+  const contentHtml = `
+    <h2 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 700; color: ${BRAND.primaryDark};">Welcome to HealthPulse Clinical Staff</h2>
+    <p style="margin: 0 0 16px 0;">Dear <strong>Dr. ${doctorName}</strong>,</p>
+    <p style="margin: 0 0 20px 0;">Your official physician profile has been provisioned on the HealthPulse Hospital Management Platform. Below are your initial login credentials:</p>
+
+    <div style="background-color: ${BRAND.bgLight}; border: 1.5px solid ${BRAND.borderColor}; border-radius: 10px; padding: 20px; margin-bottom: 24px;">
+      <table border="0" cellpadding="6" cellspacing="0" width="100%" style="font-size: 14px;">
+        <tr>
+          <td style="color: ${BRAND.textMuted}; width: 140px;"><strong>Specialization:</strong></td>
+          <td style="color: ${BRAND.textDark};"><strong>${specialization || 'Clinical Specialist'}</strong></td>
+        </tr>
+        <tr>
+          <td style="color: ${BRAND.textMuted};"><strong>Login Email:</strong></td>
+          <td style="color: ${BRAND.primary}; font-weight: 700;">${email}</td>
+        </tr>
+        <tr>
+          <td style="color: ${BRAND.textMuted};"><strong>Assigned Password:</strong></td>
+          <td style="color: #b91c1c; font-family: monospace; font-size: 15px; font-weight: 700; background: #fee2e2; padding: 4px 8px; border-radius: 4px; display: inline-block;">${temporaryPassword}</td>
+        </tr>
+      </table>
+    </div>
+
+    <div style="background-color: #FEF3C7; border: 1px solid #FCD34D; border-radius: 8px; padding: 14px 18px; margin-bottom: 20px; color: #92400E; font-size: 13.5px; line-height: 20px;">
+      <strong>⚠️ Action Required:</strong> For security compliance, please log in and change your temporary password immediately in your <strong>Doctor Profile Settings</strong>.
+    </div>
+  `;
+
+  const html = renderEmailLayout({
+    title: subject,
+    preheader: `Welcome Dr. ${doctorName}, here are your physician portal login credentials.`,
+    contentHtml,
+    ctaText: 'Log In to Doctor Portal',
+    ctaUrl: '/login',
+  });
+
+  const text = `Dear Dr. ${doctorName},\n\nWelcome to HealthPulse. Your doctor portal account has been created.\n\nLogin Email: ${email}\nAssigned Password: ${temporaryPassword}\nSpecialization: ${specialization}\n\nPlease sign in at ${config.FRONTEND_URL || 'http://localhost:5173'}/login and update your password in Profile Settings.\n\nHealthPulse Hospital`;
+
+  return { subject, html, text };
+};
+
+/**
+ * 8. Welcome Administrator: Admin Account Created
+ */
+const adminWelcome = (data) => {
+  const { adminName, email } = data;
+  const subject = 'HealthPulse Administrator Account Activated';
+
+  const contentHtml = `
+    <h2 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 700; color: ${BRAND.primaryDark};">System Administrator Access Activated</h2>
+    <p style="margin: 0 0 16px 0;">Hello <strong>${adminName}</strong>,</p>
+    <p style="margin: 0 0 20px 0;">Your administrator privileges on the HealthPulse Hospital Management System are active with email <strong>${email}</strong>.</p>
+    <p style="margin: 0 0 20px 0;">You can now manage clinic schedules, provision doctors, audit appointments, and configure system integrations.</p>
+  `;
+
+  const html = renderEmailLayout({
+    title: subject,
+    preheader: 'Your HealthPulse Administrator Account is ready.',
+    contentHtml,
+    ctaText: 'Open Admin Dashboard',
+    ctaUrl: '/admin/dashboard',
+  });
+
+  const text = `Hello ${adminName},\n\nYour HealthPulse administrator account (${email}) is active.\n\nHealthPulse Clinical Systems`;
+
+  return { subject, html, text };
+};
+
+/**
+ * 9. Admin Notification: New Doctor Provisioned
+ */
+const doctorProvisionedAdminAlert = (data) => {
+  const { doctorName, email, specialization, provisionedByName } = data;
+  const subject = `Admin Alert: New Doctor Profile Provisioned (Dr. ${doctorName})`;
+
+  const contentHtml = `
+    <h2 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 700; color: ${BRAND.textDark};">New Doctor Profile Created</h2>
+    <p style="margin: 0 0 16px 0;">A new physician was provisioned on HealthPulse by <strong>${provisionedByName || 'Admin'}</strong>:</p>
+
+    <div style="background-color: ${BRAND.bgLight}; border: 1px solid ${BRAND.borderColor}; border-radius: 8px; padding: 16px 20px; margin-bottom: 20px;">
+      <p style="margin: 4px 0;"><strong>Doctor Name:</strong> Dr. ${doctorName}</p>
+      <p style="margin: 4px 0;"><strong>Email:</strong> ${email}</p>
+      <p style="margin: 4px 0;"><strong>Specialization:</strong> ${specialization}</p>
+    </div>
+  `;
+
+  const html = renderEmailLayout({
+    title: subject,
+    preheader: `New physician profile Dr. ${doctorName} provisioned.`,
+    contentHtml,
+    ctaText: 'View Doctors Directory',
+    ctaUrl: '/admin/doctors',
+  });
+
+  const text = `New Doctor Provisioned:\nDr. ${doctorName}\nEmail: ${email}\nSpecialty: ${specialization}\nProvisioned By: ${provisionedByName}\n\nHealthPulse Hospital`;
+
+  return { subject, html, text };
+};
+
 module.exports = {
   renderEmailLayout,
   bookingConfirmation,
@@ -485,4 +590,7 @@ module.exports = {
   doctorLeaveConflict,
   medicationReminder,
   passwordChanged,
+  doctorWelcome,
+  adminWelcome,
+  doctorProvisionedAdminAlert,
 };

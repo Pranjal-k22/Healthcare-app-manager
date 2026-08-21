@@ -14,6 +14,7 @@ const {
   removeDoctorLeave,
   getDoctorLeaves,
   setDoctorActiveStatus,
+  deleteDoctorCompletely,
 } = require('../services/doctorService');
 
 /**
@@ -255,6 +256,28 @@ const removeDoctorLeaveHandler = async (req, res, next) => {
   }
 };
 
+/**
+ * @desc    Permanently delete a doctor and all related data (Admin only)
+ * @route   DELETE /api/doctors/:id
+ * @access  Private (ADMIN)
+ */
+const deleteDoctorHandler = async (req, res, next) => {
+  try {
+    const result = await deleteDoctorCompletely(req.params.id);
+    return res.status(200).json({
+      success: true,
+      message: result.message,
+      data: {
+        deletedId: result.deletedId,
+        name: result.name,
+        email: result.email,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   createDoctorHandler,
   getDoctorsHandler,
@@ -266,4 +289,5 @@ module.exports = {
   addDoctorLeaveHandler,
   getDoctorLeavesHandler,
   removeDoctorLeaveHandler,
+  deleteDoctorHandler,
 };

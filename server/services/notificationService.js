@@ -568,6 +568,104 @@ const dispatchPasswordChangedAlert = async (user) => {
   }
 };
 
+/**
+ * Dispatch Welcome email with login credentials to newly provisioned Doctor
+ * @param {object} doctorUser - { _id, name, email }
+ * @param {string} temporaryPassword
+ * @param {string} specialization
+ */
+const dispatchDoctorWelcome = async (doctorUser, temporaryPassword, specialization = 'General Medicine') => {
+  try {
+    const payload = {
+      doctorName: doctorUser.name,
+      email: doctorUser.email,
+      temporaryPassword,
+      specialization,
+    };
+
+    const mail = emailTemplates.doctorWelcome(payload);
+
+    // 1. Send branded credential email
+    await emailService.sendEmail({
+      to: doctorUser.email,
+      ...mail,
+      notificationType: 'doctorWelcome',
+      payload,
+    });
+
+    // 2. In-app notification
+    await createNotification({
+      userId: doctorUser._id,
+      type: 'ACCOUNT_PROVISIONED',
+      title: 'Welcome to HealthPulse Clinical Staff',
+      message: `Your doctor account has been activated. Please update your temporary password in profile settings.`,
+      metadata: { email: doctorUser.email, specialization },
+    });
+  } catch (err) {
+    console.error('[NotificationService] Error in dispatchDoctorWelcome:', err.message);
+  }
+};
+
+/**
+ * Dispatch Welcome email to newly registered Admin
+ * @param {object} adminUser - { _id, name, email }
+ */
+const dispatchAdminWelcome = async (adminUser) => {
+  try {
+    const payload = {
+      adminName: adminUser.name,
+      email: adminUser.email,
+    };
+    const mail = emailTemplates.adminWelcome(payload);
+    await emailService.sendEmail({
+      to: adminUser.email,
+      ...mail,
+      notificationType: 'adminWelcome',
+      payload,
+    });
+  } catch (err) {
+    console.error('[NotificationService] Error in dispatchAdminWelcome:', err.message);
+  }
+};
+
+/**
+ * Dispatch alert to all system Admins when a new Doctor is provisioned
+ * @param {object} doctorUser
+ * @param {string} specialization
+ * @param {string} provisionedByName
+ */
+const dispatchDoctorProvisionedAdminAlert = async (doctorUser, specialization, provisionedByName = 'Admin') => {
+  try {
+    const admins = await User.find({ role: 'ADMIN' }).select('email name');
+    const payload = {
+      doctorName: doctorUser.name,
+      email: doctorUser.email,
+      specialization,
+      provisionedByName,
+    };
+    const mail = emailTemplates.doctorProvisionedAdminAlert(payload);
+
+    for (const admin of admins) {
+      emailService.sendEmail({
+        to: admin.email,
+        ...mail,
+        notificationType: 'doctorProvisionedAdminAlert',
+        payload,
+      }).catch(() => {});
+
+      createNotification({
+        userId: admin._id,
+        type: 'DOCTOR_PROVISIONED',
+        title: 'New Doctor Profile Provisioned',
+        message: `Dr. ${doctorUser.name} (${specialization}) was added to the clinic by ${provisionedByName}.`,
+        metadata: { doctorId: doctorUser._id, email: doctorUser.email },
+      }).catch(() => {});
+    }
+  } catch (err) {
+    console.error('[NotificationService] Error in dispatchDoctorProvisionedAdminAlert:', err.message);
+  }
+};
+
 module.exports = {
   createNotification,
   getUserNotifications,
@@ -583,4 +681,7 @@ module.exports = {
   dispatchDoctorLeaveConflict,
   dispatchMedicationReminder,
   dispatchPasswordChangedAlert,
+  dispatchDoctorWelcome,
+  dispatchAdminWelcome,
+  dispatchDoctorProvisionedAdminAlert,
 };

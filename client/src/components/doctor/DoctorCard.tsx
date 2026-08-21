@@ -14,6 +14,7 @@ import {
   Mail,
   Power,
   CalendarDays,
+  Trash2,
 } from 'lucide-react';
 
 interface DoctorCardProps {
@@ -21,6 +22,8 @@ interface DoctorCardProps {
   isAdminView?: boolean;
   onToggleStatus?: (id: string, newStatus: boolean) => void;
   isStatusUpdating?: boolean;
+  onDeleteDoctor?: (id: string, name: string) => void;
+  isDeletingDoctor?: boolean;
 }
 
 export const DoctorCard: React.FC<DoctorCardProps> = ({
@@ -28,6 +31,8 @@ export const DoctorCard: React.FC<DoctorCardProps> = ({
   isAdminView = false,
   onToggleStatus,
   isStatusUpdating = false,
+  onDeleteDoctor,
+  isDeletingDoctor = false,
 }) => {
   // Format days cleanly: e.g. "Mon, Tue, Wed, Thu"
   const activeDaysList = Object.entries(doctor.workingHours || {})
@@ -117,7 +122,7 @@ export const DoctorCard: React.FC<DoctorCardProps> = ({
           {/* Action Buttons */}
           <div className="doctor-card-action-btn-wrap">
             {isAdminView ? (
-              <div style={{ display: 'flex', gap: '0.5rem', width: '100%' }}>
+              <div style={{ display: 'flex', gap: '0.5rem', width: '100%', flexWrap: 'wrap' }}>
                 <Link to={`/admin/doctors/${doctor.id}/edit`} style={{ flex: 1 }}>
                   <Button variant="outline" size="sm" fullWidth leftIcon={<Edit size={14} />}>
                     Edit
@@ -137,6 +142,18 @@ export const DoctorCard: React.FC<DoctorCardProps> = ({
                     title={doctor.isActive ? 'Deactivate' : 'Activate'}
                   >
                     <Power size={14} />
+                  </Button>
+                )}
+                {onDeleteDoctor && (
+                  <Button
+                    variant="danger"
+                    size="sm"
+                    onClick={() => onDeleteDoctor(doctor.id, doctor.name)}
+                    disabled={isDeletingDoctor}
+                    title="Permanently delete this doctor"
+                    style={{ background: '#dc2626', borderColor: '#dc2626' }}
+                  >
+                    <Trash2 size={14} />
                   </Button>
                 )}
               </div>

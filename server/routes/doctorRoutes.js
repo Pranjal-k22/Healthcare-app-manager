@@ -13,6 +13,7 @@ const {
   addDoctorLeaveHandler,
   getDoctorLeavesHandler,
   removeDoctorLeaveHandler,
+  deleteDoctorHandler,
 } = require('../controllers/doctorController');
 const { getAvailableSlots } = require('../controllers/appointmentController');
 
@@ -39,5 +40,8 @@ router.patch('/:id/status', requireRole('ADMIN'), toggleDoctorStatusHandler);
 router.post('/:id/leave', requireRole('ADMIN'), addDoctorLeaveHandler);
 router.get('/:id/leaves', getDoctorLeavesHandler);
 router.delete('/:id/leave/:date', requireRole('ADMIN'), removeDoctorLeaveHandler);
+
+// 6. Permanent Deletion — cascade-deletes DoctorProfile, User, Appointments, Leaves, CalendarConnections
+router.delete('/:id', requireRole('ADMIN'), deleteDoctorHandler);
 
 module.exports = router;

@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { getDoctorById, updateDoctor } from '../../services/doctorApi';
+import { getDoctorById, updateDoctor, deleteDoctor } from '../../services/doctorApi';
 import { WorkingHours } from '../../types/doctor';
 import { WorkingHoursForm } from '../../components/doctor/WorkingHoursForm';
 import {
   AlertCircle,
+  AlertTriangle,
   ArrowLeft,
   Clock,
   Save,
   ShieldCheck,
   Stethoscope,
+  Trash2,
   User,
 } from 'lucide-react';
 
@@ -35,6 +37,8 @@ export const EditDoctor: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDeletingDoctor, setIsDeletingDoctor] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   useEffect(() => {
     const loadDoctor = async () => {
@@ -109,6 +113,29 @@ export const EditDoctor: React.FC = () => {
       );
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteDoctor = async () => {
+    if (!id) return;
+    const confirmed = window.confirm(
+      `⚠️ PERMANENT ACTION\n\nYou are about to permanently delete Dr. ${name} from the system.\n\nThis will:\n• Delete their user account\n• Cancel all active appointments\n• Remove all leave records\n\nThis action CANNOT be undone. Type OK to confirm.`
+    );
+    if (!confirmed) return;
+
+    try {
+      setIsDeletingDoctor(true);
+      setDeleteError(null);
+      await deleteDoctor(id);
+      navigate('/admin/doctors', { replace: true });
+    } catch (err: any) {
+      setDeleteError(
+        err.response?.data?.message ||
+          err.message ||
+          'Failed to delete doctor. Please try again.'
+      );
+    } finally {
+      setIsDeletingDoctor(false);
     }
   };
 
@@ -445,6 +472,61 @@ export const EditDoctor: React.FC = () => {
           </button>
         </div>
       </form>
+
+      {/* Danger Zone */}
+      <div
+        style={{
+          marginTop: '0.5rem',
+          padding: '1.5rem',
+          background: '#fff5f5',
+          borderRadius: '14px',
+          border: '1.5px solid #fecaca',
+          boxShadow: '0 4px 16px rgba(220, 38, 38, 0.06)',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem', marginBottom: '0.75rem' }}>
+          <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#fee2e2', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#dc2626' }}>
+            <AlertTriangle size={18} />
+          </div>
+          <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#b91c1c', margin: 0 }}>Danger Zone</h3>
+        </div>
+        <p style={{ color: '#7f1d1d', fontSize: '0.88rem', marginBottom: '1.25rem', lineHeight: 1.6 }}>
+          Permanently remove <strong>Dr. {name}</strong> from the system. This will delete their user
+          account, cancel all pending/booked appointments, and erase all leave records.
+          <strong> This action cannot be undone.</strong>
+        </p>
+
+        {deleteError && (
+          <div style={{ marginBottom: '1rem', padding: '0.75rem 1rem', borderRadius: '8px', background: '#fef2f2', border: '1px solid #fecaca', color: '#b91c1c', fontSize: '0.88rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <AlertCircle size={16} />
+            <span>{deleteError}</span>
+          </div>
+        )}
+
+        <button
+          type="button"
+          id="btn-delete-doctor"
+          onClick={handleDeleteDoctor}
+          disabled={isDeletingDoctor || isSubmitting}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            padding: '0.6rem 1.5rem',
+            borderRadius: '8px',
+            border: '1.5px solid #dc2626',
+            background: isDeletingDoctor ? '#fca5a5' : '#dc2626',
+            color: '#ffffff',
+            fontSize: '0.9rem',
+            fontWeight: 700,
+            cursor: isDeletingDoctor ? 'not-allowed' : 'pointer',
+            transition: 'background 0.2s',
+          }}
+        >
+          <Trash2 size={15} />
+          <span>{isDeletingDoctor ? 'Deleting Doctor...' : 'Permanently Delete Doctor'}</span>
+        </button>
+      </div>
     </div>
   );
 };

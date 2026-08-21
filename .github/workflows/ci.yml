@@ -10,25 +10,42 @@ jobs:
   test-and-build:
     runs-on: ubuntu-latest
 
+    services:
+      mongodb:
+        image: mongo:6.0
+        ports:
+          - 27017:27017
+
+    env:
+      NODE_ENV: test
+      MONGO_URI: mongodb://127.0.0.1:27017/healthpulse-test
+      JWT_SECRET: test_jwt_secret_key_healthpulse_ci_pipeline_2026
+      CLIENT_ORIGIN: http://localhost:5173
+      PORT: 5000
+      ADMIN_SECRET_KEY: HealthPulseAdmin2026!
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js 18.x
+      - name: Setup Node.js 20.x
         uses: actions/setup-node@v4
         with:
-          node-version: 18.x
-          cache: 'npm'
+          node-version: 20.x
 
-      - name: Install Root & Server Dependencies
-        run: |
-          npm install --prefix server
-          npm install --prefix client
+      - name: Install Server Dependencies
+        run: npm install
+        working-directory: server
 
-      - name: Run Backend Automated Tests
-        run: |
-          npm test --prefix server
+      - name: Install Client Dependencies
+        run: npm install
+        working-directory: client
+
+      - name: Run Backend Automated Tests (All 13 Suites)
+        run: npm test
+        working-directory: server
 
       - name: Build Frontend Application
-        run: |
-          npm run build --prefix client
+        run: npm run build
+        working-directory: client
+

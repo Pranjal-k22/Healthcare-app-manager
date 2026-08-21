@@ -1,14 +1,16 @@
+const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 const generateToken = require('../utils/generateToken');
+const notificationService = require('../services/notificationService');
 
 /**
- * @desc    Register a new patient
+ * @desc    Register a new user (Patient or Administrator with Secret Key)
  * @route   POST /api/auth/register
  * @access  Public
  */
 const register = async (req, res, next) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, role = 'PATIENT', adminSecretKey } = req.body;
 
     // Validate presence of required fields
     if (!name || !email || !password) {
@@ -36,19 +38,36 @@ const register = async (req, res, next) => {
       });
     }
 
-    // Enforce role: Public registration creates PATIENT accounts only
+    let finalRole = 'PATIENT';
+    if (role === 'ADMIN') {
+      const validSecret = process.env.ADMIN_SECRET_KEY || 'HealthPulseAdmin2026!';
+      if (!adminSecretKey || adminSecretKey.trim() !== validSecret.trim()) {
+        return res.status(403).json({
+          success: false,
+          message: 'Invalid Admin Secret Key. Please provide the authorized admin passcode.',
+        });
+      }
+      finalRole = 'ADMIN';
+    }
+
+    // Create user entity
     const user = await User.create({
       name: name.trim(),
       email: normalizedEmail,
       password,
-      role: 'PATIENT',
+      role: finalRole,
     });
+
+    // Send welcome email
+    if (finalRole === 'ADMIN') {
+      notificationService.dispatchAdminWelcome(user).catch(() => {});
+    }
 
     const token = generateToken(user._id, user.role);
 
     return res.status(201).json({
       success: true,
-      message: 'Registration successful',
+      message: `${finalRole === 'ADMIN' ? 'Administrator' : 'Patient'} account registered successfully`,
       token,
       user: {
         _id: user._id,
@@ -138,8 +157,64 @@ const getMe = async (req, res, next) => {
   }
 };
 
+/**
+ * @desc    Change password for authenticated user (Patient, Doctor, Admin)
+ * @route   POST /api/auth/change-password
+ * @access  Private
+ */
+const changePassword = async (req, res, next) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide both current password and new password',
+      });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: 'New password must be at least 6 characters long',
+      });
+    }
+
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User account not found',
+      });
+    }
+
+    const isMatch = await user.comparePassword(currentPassword);
+    if (!isMatch) {
+      return res.status(400).json({
+        success: false,
+        message: 'Current password is incorrect',
+      });
+    }
+
+    // Set new password (triggers bcrypt hashing in User pre-save hook)
+    user.password = newPassword;
+    await user.save();
+
+    // Send security notification email
+    notificationService.dispatchPasswordChangedAlert(user).catch(() => {});
+
+    return res.status(200).json({
+      success: true,
+      message: 'Password changed successfully',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   register,
   login,
   getMe,
+  changePassword,
 };

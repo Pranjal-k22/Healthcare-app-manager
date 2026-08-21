@@ -33,3 +33,17 @@ export const fetchCurrentUser = async (): Promise<MeResponse> => {
   const response = await apiClient.get<MeResponse>('/auth/me');
   return response.data;
 };
+
+/**
+ * Change password for authenticated user
+ */
+export const changePasswordApi = async (
+  currentPassword: string,
+  newPassword: string
+): Promise<{ success: boolean; message: string }> => {
+  const response = await apiClient.post<{ success: boolean; message: string }>(
+    '/auth/change-password',
+    { currentPassword, newPassword }
+  );
+  return response.data;
+};

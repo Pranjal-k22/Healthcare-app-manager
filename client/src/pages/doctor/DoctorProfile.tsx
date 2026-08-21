@@ -3,6 +3,7 @@ import {
   getMyDoctorProfile,
   updateMyDoctorProfile,
 } from '../../services/doctorApi';
+import { changePasswordApi } from '../../services/authApi';
 import { Doctor } from '../../types/doctor';
 import {
   AlertCircle,
@@ -18,8 +19,10 @@ import {
   Stethoscope,
   X,
   Clock,
+  Lock,
+  KeyRound,
+  ShieldCheck,
 } from 'lucide-react';
-
 
 import { CalendarSettingsCard } from '../../components/calendar/CalendarSettingsCard';
 import { DoctorLeaveManager } from '../../components/doctor/DoctorLeaveManager';
@@ -53,6 +56,48 @@ export const DoctorProfile: React.FC = () => {
   const [phone, setPhone] = useState('');
   const [bio, setBio] = useState('');
   const [isAvailable, setIsAvailable] = useState(true);
+
+  // Password change state
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [passwordUpdating, setPasswordUpdating] = useState(false);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null);
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPasswordError(null);
+    setPasswordSuccess(null);
+
+    if (!currentPassword || !newPassword) {
+      setPasswordError('Please enter both current and new password.');
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      setPasswordError('New password must be at least 6 characters long.');
+      return;
+    }
+
+    if (newPassword !== confirmNewPassword) {
+      setPasswordError('New passwords do not match.');
+      return;
+    }
+
+    try {
+      setPasswordUpdating(true);
+      const res = await changePasswordApi(currentPassword, newPassword);
+      setPasswordSuccess(res.message || 'Password changed successfully! A security confirmation was sent to your email.');
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmNewPassword('');
+    } catch (err: any) {
+      setPasswordError(err.message || 'Failed to update password. Please check your current password.');
+    } finally {
+      setPasswordUpdating(false);
+    }
+  };
 
   const fetchSelfProfile = async () => {
     try {
@@ -600,6 +645,7 @@ export const DoctorProfile: React.FC = () => {
           borderRadius: '14px',
           border: '1px solid #e2e8f0',
           boxShadow: '0 4px 16px rgba(15, 23, 42, 0.04)',
+          marginBottom: '1.75rem',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1.25rem' }}>
@@ -611,6 +657,130 @@ export const DoctorProfile: React.FC = () => {
           </h3>
         </div>
         <DoctorLeaveManager />
+      </div>
+
+      {/* Security & Password Change */}
+      <div
+        style={{
+          padding: '1.75rem',
+          background: '#ffffff',
+          borderRadius: '14px',
+          border: '1px solid #e2e8f0',
+          boxShadow: '0 4px 16px rgba(15, 23, 42, 0.04)',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1rem' }}>
+          <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(239, 68, 68, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#dc2626' }}>
+            <Lock size={18} />
+          </div>
+          <div>
+            <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+              Account Security & Password
+            </h3>
+            <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b' }}>
+              Update your account password. If you were recently provisioned, update your temporary password here.
+            </p>
+          </div>
+        </div>
+
+        {passwordSuccess && (
+          <div style={{ padding: '0.75rem 1rem', background: '#ecfdf5', border: '1px solid #a7f3d0', borderRadius: '8px', color: '#065f46', fontSize: '0.9rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <ShieldCheck size={16} />
+            <span>{passwordSuccess}</span>
+          </div>
+        )}
+
+        {passwordError && (
+          <div style={{ padding: '0.75rem 1rem', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', color: '#991b1b', fontSize: '0.9rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <AlertCircle size={16} />
+            <span>{passwordError}</span>
+          </div>
+        )}
+
+        <form onSubmit={handleChangePassword} style={{ maxWidth: '600px' }}>
+          <div style={{ marginBottom: '1rem' }}>
+            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#334155', marginBottom: '0.35rem' }}>
+              Current / Temporary Password
+            </label>
+            <input
+              type="password"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              placeholder="Enter current password"
+              style={{
+                width: '100%',
+                padding: '0.65rem 0.85rem',
+                border: '1px solid #cbd5e1',
+                borderRadius: '8px',
+                fontSize: '0.9rem',
+              }}
+              required
+            />
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.25rem' }}>
+            <div>
+              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#334155', marginBottom: '0.35rem' }}>
+                New Password
+              </label>
+              <input
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="Min 6 characters"
+                style={{
+                  width: '100%',
+                  padding: '0.65rem 0.85rem',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: '8px',
+                  fontSize: '0.9rem',
+                }}
+                required
+              />
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#334155', marginBottom: '0.35rem' }}>
+                Confirm New Password
+              </label>
+              <input
+                type="password"
+                value={confirmNewPassword}
+                onChange={(e) => setConfirmNewPassword(e.target.value)}
+                placeholder="Repeat new password"
+                style={{
+                  width: '100%',
+                  padding: '0.65rem 0.85rem',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: '8px',
+                  fontSize: '0.9rem',
+                }}
+                required
+              />
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={passwordUpdating}
+            style={{
+              padding: '0.65rem 1.25rem',
+              background: '#0f172a',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: '8px',
+              fontWeight: 700,
+              fontSize: '0.9rem',
+              cursor: passwordUpdating ? 'not-allowed' : 'pointer',
+              opacity: passwordUpdating ? 0.7 : 1,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+            }}
+          >
+            <KeyRound size={15} />
+            <span>{passwordUpdating ? 'Updating Password...' : 'Update Password'}</span>
+          </button>
+        </form>
       </div>
     </div>
   );
