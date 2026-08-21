@@ -14,11 +14,15 @@ User (PATIENT / DOCTOR / ADMIN)
   ├── Appointment (N:1 Patient, N:1 Doctor)
   │     ├── ClinicalRecord (1:1 via appointmentId)
   │     │     └── Prescription (1:1 via clinicalRecordId)
+  │     ├── ClinicalRecord (1:1 via appointmentId)
+  │     │     └── Prescription (1:1 via clinicalRecordId)
   │     │           └── MedicationReminder (1:N via prescriptionId)
   │     │
-  │     └── GoogleCalendarEvent (1:1 mapped via googleCalendarEventId)
+  │     └── GoogleCalendarEvent (1:N mapped via calendarEvents array)
   │
+  ├── SlotHold (Advisory Concurrency Lock, TTL-indexed)
   ├── Notification (1:N via userId)
+  ├── DoctorLeave (Single Source of Truth for Leaves)
   └── CalendarConnection (1:1 via userId)
 ```
 
@@ -44,12 +48,22 @@ User (PATIENT / DOCTOR / ADMIN)
   - `specialization`: `String` (Required)
   - `experienceYears`: `Number` (Required, min: 0)
   - `consultationFee`: `Number` (Required, min: 0)
-  - `slotDurationMinutes`: `Number` (Enum: `[15, 30, 45, 60]`, Default: `30`)
-  - `workingHours`: `Array` of `{ dayOfWeek, isWorkingDay, startTime, endTime }`
-  - `leaves`: `Array` of `{ date, reason }`
+  - `slotDuration`: `Number` (Default: `30`)
+  - `workingHours`: Object with daily schedule configs (`monday` to `sunday`)
+  - `leaves`: `Array` (DEPRECATED: superseded by `DoctorLeave` collection)
 - **Indexes**: `{ userId: 1 }` (Unique).
 
-### 3. `appointments` (`Appointment.js`)
+### 3. `slotholds` (`SlotHold.js`)
+- **Purpose**: Short-lived 5-minute advisory reservations during patient checkout.
+- **Fields**:
+  - `doctorId`: `ObjectId` ➔ `User` (Required, indexed)
+  - `patientId`: `ObjectId` ➔ `User` (Required)
+  - `date`: `String` (`YYYY-MM-DD`, Required)
+  - `startTime`: `String` (`HH:mm`, Required)
+  - `expiresAt`: `Date` (Required, TTL index with `expireAfterSeconds: 0`)
+- **Indexes**: Compound Unique `{ doctorId: 1, date: 1, startTime: 1 }`, TTL `{ expiresAt: 1 }`.
+
+### 4. `appointments` (`Appointment.js`)
 - **Purpose**: Booking transactions between patients and doctors.
 - **Fields**:
   - `patientId`: `ObjectId` ➔ `User` (Required)
@@ -58,14 +72,15 @@ User (PATIENT / DOCTOR / ADMIN)
   - `startTime`: `String` (Format: `HH:mm`, Required)
   - `endTime`: `String` (Format: `HH:mm`, Required)
   - `status`: `String` (Enum: `['BOOKED', 'COMPLETED', 'CANCELLED']`, Default: `'BOOKED'`)
+  - `cancellationReason`: `String` (Enum: `['PATIENT_REQUEST', 'DOCTOR_LEAVE', 'ADMIN_ACTION', 'OTHER']`)
   - `symptoms`: `String` (Required at booking intake)
   - `preVisitSummary`: `Object` (`{ urgency, chiefComplaint, suggestedQuestions, meta }`)
   - `aiStatus`: `String` (Enum: `['PENDING', 'READY', 'FAILED']`, Default: `'PENDING'`)
-  - `googleCalendarEventId`: `String` (Optional)
-  - `calendarSyncStatus`: `String` (Enum: `['SYNCED', 'FAILED', 'PENDING', 'NOT_CONNECTED']`)
+  - `calendarEvents`: `Array` of `{ userId, eventId, syncStatus }`
+  - `calendarSyncStatus`: `String` (Enum: `['NOT_REQUIRED', 'PENDING', 'SYNCED', 'FAILED']`)
   - `reminderSent`: `Boolean` (Default: `false`)
 - **Compound Partial Unique Index**:
-  `{ doctorId: 1, date: 1, startTime: 1 }` where `{ status: { $ne: 'CANCELLED' } }`.
+  `{ doctorId: 1, date: 1, startTime: 1 }` where `{ status: 'BOOKED' }`.
   Guarantees atomic double-booking prevention.
 
 ### 4. `clinicalrecords` (`ClinicalRecord.js`)

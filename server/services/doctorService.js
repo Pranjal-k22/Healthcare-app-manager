@@ -6,6 +6,21 @@ const Appointment = require('../models/Appointment');
 const notificationService = require('./notificationService');
 
 /**
+ * Format DoctorLeave document into client-compatible leave object
+ * @param {object} leaveDoc
+ * @returns {object}
+ */
+const formatDoctorLeave = (leaveDoc) => ({
+  id: leaveDoc._id.toString(),
+  _id: leaveDoc._id,
+  date: leaveDoc.startDate,
+  startDate: leaveDoc.startDate,
+  endDate: leaveDoc.endDate,
+  reason: leaveDoc.reason,
+  status: leaveDoc.status,
+});
+
+/**
  * Format populated doctor entity into clean, safe API response object
  * @param {object} profileDoc - Mongoose DoctorProfile document with populated userId
  * @returns {Promise<object>}
@@ -21,15 +36,7 @@ const formatDoctorResponse = async (profileDoc) => {
       status: 'APPROVED',
     }).sort({ startDate: 1 });
 
-    leaves = doctorLeaves.map((l) => ({
-      id: l._id.toString(),
-      _id: l._id,
-      date: l.startDate,
-      startDate: l.startDate,
-      endDate: l.endDate,
-      reason: l.reason,
-      status: l.status,
-    }));
+    leaves = doctorLeaves.map(formatDoctorLeave);
   }
 
   return {
@@ -509,26 +516,10 @@ const addDoctorLeave = async (id, leaveData) => {
     status: 'APPROVED',
   }).sort({ startDate: 1 });
 
-  const formattedLeaves = allLeaves.map((l) => ({
-    id: l._id.toString(),
-    _id: l._id,
-    date: l.startDate,
-    startDate: l.startDate,
-    endDate: l.endDate,
-    reason: l.reason,
-    status: l.status,
-  }));
+  const formattedLeaves = allLeaves.map(formatDoctorLeave);
 
   return {
-    leave: {
-      id: newLeave._id.toString(),
-      _id: newLeave._id,
-      date: newLeave.startDate,
-      startDate: newLeave.startDate,
-      endDate: newLeave.endDate,
-      reason: newLeave.reason,
-      status: newLeave.status,
-    },
+    leave: formatDoctorLeave(newLeave),
     leaves: formattedLeaves,
     cancelledAppointmentsCount: conflictingAppointments.length,
     affectedPatientIds,
@@ -579,15 +570,7 @@ const removeDoctorLeave = async (id, dateStr) => {
     status: 'APPROVED',
   }).sort({ startDate: 1 });
 
-  return allLeaves.map((l) => ({
-    id: l._id.toString(),
-    _id: l._id,
-    date: l.startDate,
-    startDate: l.startDate,
-    endDate: l.endDate,
-    reason: l.reason,
-    status: l.status,
-  }));
+  return allLeaves.map(formatDoctorLeave);
 };
 
 /**
@@ -620,15 +603,7 @@ const getDoctorLeaves = async (id) => {
     status: 'APPROVED',
   }).sort({ startDate: 1 });
 
-  return leaves.map((l) => ({
-    id: l._id.toString(),
-    _id: l._id,
-    date: l.startDate,
-    startDate: l.startDate,
-    endDate: l.endDate,
-    reason: l.reason,
-    status: l.status,
-  }));
+  return leaves.map(formatDoctorLeave);
 };
 
 /**

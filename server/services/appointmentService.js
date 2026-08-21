@@ -52,35 +52,21 @@ const formatAppointmentResponse = (appDoc) => {
 };
 
 /**
- * Hold a slot temporarily for 5 minutes (Idempotent for same patient)
- * @param {object} payload - { patientId, doctorId, date, startTime }
- * @returns {Promise<object>}
+ * Shared validation for doctor slot eligibility (availability, leave, working hours)
+ * @param {object} doctorProfile
+ * @param {object} doctorUser
+ * @param {string} date - YYYY-MM-DD
+ * @param {string} startTime - HH:mm
+ * @param {object} [options] - { actionVerb: 'hold' | 'book' }
+ * @returns {Promise<{ weekday: string, daySchedule: object, slotDuration: number }>}
  */
-const holdSlot = async (payload) => {
-  const { patientId, doctorId, date: rawDate, appointmentDate, startTime } = payload;
-  const date = rawDate || appointmentDate;
-
-  // 1. Verify Patient Existence & Role
-  const patient = await User.findById(patientId);
-  if (!patient || patient.role !== 'PATIENT') {
-    const error = new Error('Invalid patient account for slot hold');
-    error.statusCode = 400;
-    throw error;
-  }
-
-  // 2. Resolve Doctor User & DoctorProfile
-  let doctorUser = await User.findById(doctorId);
-  let doctorProfile = null;
-
-  if (doctorUser && doctorUser.role === 'DOCTOR') {
-    doctorProfile = await DoctorProfile.findOne({ userId: doctorUser._id });
-  } else {
-    doctorProfile = await DoctorProfile.findById(doctorId);
-    if (doctorProfile) {
-      doctorUser = await User.findById(doctorProfile.userId);
-    }
-  }
-
+const validateSlotEligibility = async (
+  doctorProfile,
+  doctorUser,
+  date,
+  startTime,
+  { actionVerb = 'book' } = {}
+) => {
   if (!doctorUser || !doctorProfile) {
     const error = new Error('Doctor profile not found or invalid provider ID');
     error.statusCode = 404;
@@ -95,20 +81,26 @@ const holdSlot = async (payload) => {
 
   const doctorUserId = doctorUser._id;
 
-  // 3. Verify Date & Time Validity
   if (isDateInPast(date)) {
-    const error = new Error('Cannot hold a slot for past dates');
+    const error = new Error(
+      actionVerb === 'hold'
+        ? 'Cannot hold a slot for past dates'
+        : 'Appointments cannot be booked for past dates'
+    );
     error.statusCode = 400;
     throw error;
   }
 
   if (isSlotInPast(date, startTime)) {
-    const error = new Error('Cannot hold a time slot that has already passed');
+    const error = new Error(
+      actionVerb === 'hold'
+        ? 'Cannot hold a time slot that has already passed'
+        : 'Cannot book a time slot that has already passed'
+    );
     error.statusCode = 400;
     throw error;
   }
 
-  // 4. Verify Doctor Leave Status (DoctorLeave collection)
   const isOnDoctorLeave = await isDoctorOnLeave(doctorUserId, date);
   if (isOnDoctorLeave) {
     const error = new Error(`Doctor is on scheduled leave on ${date}`);
@@ -116,7 +108,6 @@ const holdSlot = async (payload) => {
     throw error;
   }
 
-  // 5. Verify Working Hours on the Requested Weekday
   const weekday = getWeekdayFromDate(date);
   const daySchedule = doctorProfile.workingHours
     ? doctorProfile.workingHours[weekday]
@@ -146,6 +137,48 @@ const holdSlot = async (payload) => {
     throw error;
   }
 
+  return { weekday, daySchedule, slotDuration };
+};
+
+/**
+ * Hold a slot temporarily for 5 minutes (Idempotent for same patient)
+ * @param {object} payload - { patientId, doctorId, date, startTime }
+ * @returns {Promise<object>}
+ */
+const holdSlot = async (payload) => {
+  const { doctorId, patientId, date, startTime } = payload;
+
+  // 1. Validate ObjectIDs
+  if (!mongoose.Types.ObjectId.isValid(doctorId)) {
+    const error = new Error('Invalid Doctor ID format');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  if (!mongoose.Types.ObjectId.isValid(patientId)) {
+    const error = new Error('Invalid Patient ID format');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  // 2. Resolve Doctor User & Doctor Profile
+  let doctorUser = await User.findById(doctorId);
+  let doctorProfile = null;
+
+  if (doctorUser && doctorUser.role === 'DOCTOR') {
+    doctorProfile = await DoctorProfile.findOne({ userId: doctorUser._id });
+  } else {
+    doctorProfile = await DoctorProfile.findById(doctorId);
+    if (doctorProfile) {
+      doctorUser = await User.findById(doctorProfile.userId);
+    }
+  }
+
+  await validateSlotEligibility(doctorProfile, doctorUser, date, startTime, {
+    actionVerb: 'hold',
+  });
+
+  const doctorUserId = doctorUser._id;
   const now = new Date();
 
   // Check 1: Existing Appointment with status BOOKED or COMPLETED
@@ -279,72 +312,15 @@ const bookAppointment = async (payload) => {
     }
   }
 
-  if (!doctorUser || !doctorProfile) {
-    const error = new Error('Doctor profile not found or invalid provider ID');
-    error.statusCode = 404;
-    throw error;
-  }
-
-  // Verify doctor active and available status
-  if (doctorProfile.isActive === false || doctorProfile.isAvailable === false) {
-    const error = new Error('This doctor is currently not accepting appointments');
-    error.statusCode = 400;
-    throw error;
-  }
+  const { slotDuration } = await validateSlotEligibility(
+    doctorProfile,
+    doctorUser,
+    date,
+    startTime,
+    { actionVerb: 'book' }
+  );
 
   const doctorUserId = doctorUser._id;
-
-  // 3. Verify Date & Time Validity
-  if (isDateInPast(date)) {
-    const error = new Error('Appointments cannot be booked for past dates');
-    error.statusCode = 400;
-    throw error;
-  }
-
-  if (isSlotInPast(date, startTime)) {
-    const error = new Error('Cannot book a time slot that has already passed');
-    error.statusCode = 400;
-    throw error;
-  }
-
-  // 4. Verify Doctor Leave Status (DoctorLeave collection)
-  const isOnDoctorLeave = await isDoctorOnLeave(doctorUserId, date);
-  if (isOnDoctorLeave) {
-    const error = new Error(`Doctor is on scheduled leave on ${date}`);
-    error.statusCode = 400;
-    throw error;
-  }
-
-  // 5. Verify Working Hours on the Requested Weekday
-  const weekday = getWeekdayFromDate(date);
-  const daySchedule = doctorProfile.workingHours
-    ? doctorProfile.workingHours[weekday]
-    : null;
-
-  if (!daySchedule || !daySchedule.enabled || !daySchedule.start || !daySchedule.end) {
-    const error = new Error(`Doctor does not take consultations on ${weekday}s`);
-    error.statusCode = 400;
-    throw error;
-  }
-
-  const slotDuration = doctorProfile.slotDuration || 30;
-  const requestedStartMinutes = timeToMinutes(startTime);
-  const requestedEndMinutes = requestedStartMinutes + slotDuration;
-
-  const workStartMinutes = timeToMinutes(daySchedule.start);
-  const workEndMinutes = timeToMinutes(daySchedule.end);
-
-  if (
-    requestedStartMinutes < workStartMinutes ||
-    requestedEndMinutes > workEndMinutes
-  ) {
-    const error = new Error(
-      `Requested slot (${startTime}) falls outside doctor's consultation hours (${daySchedule.start} - ${daySchedule.end})`
-    );
-    error.statusCode = 400;
-    throw error;
-  }
-
   // Calculate strict server-side endTime
   const endTime = addMinutesToTime(startTime, slotDuration);
 

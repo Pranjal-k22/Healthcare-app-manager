@@ -86,10 +86,24 @@ Phase 6 implements the **Google Calendar Synchronization Engine** for HealthPuls
 ```javascript
 // Additions to server/models/Appointment.js
 {
-  googleCalendarEventId: {
-    type: String,
-    default: null
-  },
+  calendarEvents: [
+    {
+      userId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true,
+      },
+      eventId: {
+        type: String,
+        required: true,
+      },
+      syncStatus: {
+        type: String,
+        enum: ['PENDING', 'SYNCED', 'FAILED', 'DELETED'],
+        default: 'PENDING',
+      },
+    },
+  ],
   calendarSyncStatus: {
     type: String,
     enum: ['NOT_REQUIRED', 'PENDING', 'SYNCED', 'FAILED'],
@@ -119,7 +133,7 @@ To ensure complete patient confidentiality and HIPAA/privacy compliance when com
 1. **Non-Blocking Execution**: Appointment booking, cancellation, and rescheduling are committed to MongoDB first. Calendar jobs execute asynchronously via `queueCalendarJob`.
 2. **Failure Resilience**: If Google APIs return an error or are unreachable, the appointment remains completely valid and booked. The appointment's `calendarSyncStatus` is flagged as `FAILED`.
 3. **Exponential Backoff**: Background sync attempts retry up to 3 times before entering a failed state.
-4. **Duplicate Prevention**: Before creating an event, the service checks if `googleCalendarEventId` is already present. If present, it executes an update rather than creating duplicates.
+4. **Duplicate Prevention**: Before creating an event, the service checks if a `calendarEvents` entry for that `userId` is already present. If present, it executes an update rather than creating duplicates.
 
 ---
 
