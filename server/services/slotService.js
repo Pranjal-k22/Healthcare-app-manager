@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const DoctorProfile = require('../models/DoctorProfile');
 const Appointment = require('../models/Appointment');
+const SlotHold = require('../models/SlotHold');
 const {
   isDateInPast,
   isSlotInPast,
@@ -14,9 +15,10 @@ const { isDoctorOnLeave } = require('./leaveService');
  * Generate discrete appointment slots for a given doctor and date
  * @param {string} doctorId - Doctor User ID or DoctorProfile ID
  * @param {string} dateStr - YYYY-MM-DD
+ * @param {string|object} [requestingPatientId] - Authenticated patient ID
  * @returns {Promise<Array<{ startTime: string, endTime: string, available: boolean }>>}
  */
-const generateAvailableSlots = async (doctorId, dateStr) => {
+const generateAvailableSlots = async (doctorId, dateStr, requestingPatientId = null) => {
   if (!mongoose.Types.ObjectId.isValid(doctorId)) {
     const error = new Error('Invalid Doctor ID');
     error.statusCode = 400;
@@ -84,7 +86,22 @@ const generateAvailableSlots = async (doctorId, dateStr) => {
     endMin: timeToMinutes(app.endTime),
   }));
 
-  // 6. Generate Discrete Time Intervals
+  // 6. Query Active Unexpired Slot Holds for other patients
+  const now = new Date();
+  const holdQuery = {
+    doctorId: doctorUserId,
+    date: dateStr,
+    expiresAt: { $gt: now },
+  };
+
+  if (requestingPatientId) {
+    holdQuery.patientId = { $ne: requestingPatientId };
+  }
+
+  const activeHolds = await SlotHold.find(holdQuery).select('startTime');
+  const heldStartTimes = new Set(activeHolds.map((h) => h.startTime));
+
+  // 7. Generate Discrete Time Intervals
   const slots = [];
   let currentMinutes = workStartMinutes;
 
@@ -103,7 +120,9 @@ const generateAvailableSlots = async (doctorId, dateStr) => {
       (intv) => intv.startMin < endMinutes && intv.endMin > currentMinutes
     );
 
-    const available = !isPast && !hasConflict;
+    const isHeldByOther = heldStartTimes.has(startTime);
+
+    const available = !isPast && !hasConflict && !isHeldByOther;
 
     slots.push({
       startTime,

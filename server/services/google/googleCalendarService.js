@@ -146,7 +146,7 @@ const getAuthenticatedClientForUser = async (userId) => {
 };
 
 /**
- * Create or sync appointment event in Google Calendar
+ * Synchronize newly created or active appointment to Google Calendar
  * @param {string} appointmentId
  * @param {string} [triggeringUserId]
  * @returns {Promise<boolean>}
@@ -161,7 +161,11 @@ const syncAppointmentCreated = async (appointmentId, triggeringUserId) => {
       return false;
     }
 
-    // Determine candidate users for synchronization (Doctor or Patient)
+    if (!Array.isArray(appointment.calendarEvents)) {
+      appointment.calendarEvents = [];
+    }
+
+    // Determine candidate users for synchronization (Doctor and/or Patient)
     const candidateUserIds = [
       appointment.doctorId._id.toString(),
       appointment.patientId._id.toString(),
@@ -204,34 +208,65 @@ const syncAppointmentCreated = async (appointmentId, triggeringUserId) => {
         },
       };
 
-      // Check if event already exists (Idempotency / duplicate prevention)
-      if (appointment.googleCalendarEventId) {
+      // Check if user already has an existing calendarEvents entry
+      const existingEntryIndex = appointment.calendarEvents.findIndex(
+        (e) => e.userId.toString() === userId
+      );
+
+      const eventId =
+        existingEntryIndex >= 0
+          ? appointment.calendarEvents[existingEntryIndex].eventId
+          : null;
+
+      if (eventId) {
         try {
           await calendar.events.update({
             calendarId: 'primary',
-            eventId: appointment.googleCalendarEventId,
+            eventId,
             resource: eventPayload,
           });
+
+          appointment.calendarEvents[existingEntryIndex].syncStatus = 'SYNCED';
           anySynced = true;
           continue;
         } catch (updateErr) {
-          // If 404, insert new event below
+          // If 404 or failed update, insert new event below
         }
       }
 
-      const response = await calendar.events.insert({
-        calendarId: 'primary',
-        resource: eventPayload,
-      });
+      try {
+        const response = await calendar.events.insert({
+          calendarId: 'primary',
+          resource: eventPayload,
+        });
 
-      if (response.data && response.data.id) {
-        appointment.googleCalendarEventId = response.data.id;
-        appointment.calendarSyncStatus = 'SYNCED';
-        await appointment.save();
-        anySynced = true;
-        console.log(`[GoogleCalendar] Event created (${response.data.id}) for Appointment ${appointment._id}`);
+        if (response.data && response.data.id) {
+          const newEventId = response.data.id;
+          if (existingEntryIndex >= 0) {
+            appointment.calendarEvents[existingEntryIndex].eventId = newEventId;
+            appointment.calendarEvents[existingEntryIndex].syncStatus = 'SYNCED';
+          } else {
+            appointment.calendarEvents.push({
+              userId,
+              eventId: newEventId,
+              syncStatus: 'SYNCED',
+            });
+          }
+          anySynced = true;
+          console.log(`[GoogleCalendar] Event created (${newEventId}) for User ${userId} on Appointment ${appointment._id}`);
+        }
+      } catch (insertErr) {
+        console.error(`[GoogleCalendar] Insert error for user ${userId}:`, insertErr.message);
+        if (existingEntryIndex >= 0) {
+          appointment.calendarEvents[existingEntryIndex].syncStatus = 'FAILED';
+        }
       }
     }
+
+    if (anySynced) {
+      appointment.calendarSyncStatus = 'SYNCED';
+    }
+    await appointment.save();
 
     return anySynced;
   } catch (error) {
@@ -271,43 +306,49 @@ const syncAppointmentRescheduled = async (newAppointmentId, oldAppointmentId) =>
 };
 
 /**
- * Delete / cancel Google Calendar event for a cancelled appointment
+ * Delete / cancel Google Calendar events for a cancelled appointment
  * @param {string} appointmentId
  * @returns {Promise<boolean>}
  */
 const syncAppointmentCancelled = async (appointmentId) => {
   try {
     const appointment = await Appointment.findById(appointmentId);
-    if (!appointment || !appointment.googleCalendarEventId) {
-      return true; // No Google event to delete
+    if (!appointment || !appointment.calendarEvents || appointment.calendarEvents.length === 0) {
+      return true; // No Google events to delete
     }
 
-    const candidateUserIds = [
-      appointment.doctorId.toString(),
-      appointment.patientId.toString(),
-    ];
-
-    for (const userId of candidateUserIds) {
-      const authClient = await getAuthenticatedClientForUser(userId);
-      if (!authClient) continue;
-
-      const calendar = google.calendar({ version: 'v3', auth: authClient });
+    for (const entry of appointment.calendarEvents) {
+      if (entry.syncStatus === 'DELETED') {
+        continue;
+      }
 
       try {
+        const authClient = await getAuthenticatedClientForUser(entry.userId.toString());
+        if (!authClient) {
+          entry.syncStatus = 'FAILED';
+          continue;
+        }
+
+        const calendar = google.calendar({ version: 'v3', auth: authClient });
+
         await calendar.events.delete({
           calendarId: 'primary',
-          eventId: appointment.googleCalendarEventId,
+          eventId: entry.eventId,
         });
-        console.log(`[GoogleCalendar] Event ${appointment.googleCalendarEventId} deleted for cancelled appointment.`);
+
+        entry.syncStatus = 'DELETED';
+        console.log(`[GoogleCalendar] Event ${entry.eventId} deleted for User ${entry.userId}`);
       } catch (err) {
-        // Ignore 404/410 if already deleted
-        if (![404, 410].includes(err.code || err.status)) {
-          console.warn('[GoogleCalendar] Error deleting calendar event:', err.message);
+        if ([404, 410].includes(err.code || err.status)) {
+          // If already deleted in Google Calendar, mark DELETED
+          entry.syncStatus = 'DELETED';
+        } else {
+          console.warn(`[GoogleCalendar] Error deleting calendar event ${entry.eventId} for user ${entry.userId}:`, err.message);
+          entry.syncStatus = 'FAILED';
         }
       }
     }
 
-    appointment.googleCalendarEventId = null;
     appointment.calendarSyncStatus = 'SYNCED';
     await appointment.save();
 

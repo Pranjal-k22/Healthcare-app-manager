@@ -68,12 +68,18 @@ export const ManageDoctorLeave: React.FC = () => {
 
     try {
       setIsAdding(true);
-      const updatedLeaves = await addDoctorLeave(id, {
+      const res = await addDoctorLeave(id, {
         date: leaveDate,
         reason: leaveReason.trim() || 'Unavailable',
       });
-      setLeaves(updatedLeaves);
-      setSuccessMessage(`Scheduled leave on ${leaveDate} successfully.`);
+      setLeaves(res.data);
+      if (res.cancelledAppointmentsCount && res.cancelledAppointmentsCount > 0) {
+        setSuccessMessage(
+          `Leave scheduled on ${leaveDate}. Notice: ${res.cancelledAppointmentsCount} existing appointment(s) were cancelled and affected patients have been notified.`
+        );
+      } else {
+        setSuccessMessage(`Scheduled leave on ${leaveDate} successfully.`);
+      }
       setLeaveDate('');
       setLeaveReason('');
     } catch (err: any) {

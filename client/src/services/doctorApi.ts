@@ -97,18 +97,27 @@ export const toggleDoctorActiveStatus = async (
   return response.data.data;
 };
 
+export interface AddDoctorLeaveResponse {
+  success: boolean;
+  message: string;
+  data: Leave[];
+  leave?: Leave;
+  cancelledAppointmentsCount?: number;
+  affectedPatientIds?: string[];
+}
+
 /**
  * Schedule a leave date for a doctor
  */
 export const addDoctorLeave = async (
   id: string,
   data: LeaveRequest
-): Promise<Leave[]> => {
-  const response = await apiClient.post<{ success: boolean; data: Leave[] }>(
+): Promise<AddDoctorLeaveResponse> => {
+  const response = await apiClient.post<AddDoctorLeaveResponse>(
     `/doctors/${id}/leave`,
     data
   );
-  return response.data.data;
+  return response.data;
 };
 
 /**

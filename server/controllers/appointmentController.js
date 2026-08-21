@@ -4,6 +4,7 @@ const {
 } = require('../validators/appointmentValidator');
 const { generateAvailableSlots } = require('../services/slotService');
 const {
+  holdSlot,
   bookAppointment,
   getPatientAppointments,
   getDoctorAppointments,
@@ -31,11 +32,50 @@ const getAvailableSlots = async (req, res, next) => {
       });
     }
 
-    const slots = await generateAvailableSlots(doctorId, date);
+    const requestingPatientId = req.user?._id;
+    const slots = await generateAvailableSlots(doctorId, date, requestingPatientId);
 
     res.status(200).json({
       success: true,
       data: slots,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Hold a slot temporarily for 5 minutes
+ * @route   POST /api/appointments/hold-slot
+ * @access  Private (PATIENT only)
+ */
+const holdAppointmentSlot = async (req, res, next) => {
+  try {
+    const targetDate = req.body.date || req.body.appointmentDate;
+    const validation = validateBookingInput({
+      doctorId: req.body.doctorId,
+      date: targetDate,
+      startTime: req.body.startTime,
+    });
+
+    if (!validation.valid) {
+      return res.status(400).json({
+        success: false,
+        message: validation.error,
+      });
+    }
+
+    const hold = await holdSlot({
+      patientId: req.user._id,
+      doctorId: req.body.doctorId,
+      date: targetDate,
+      startTime: req.body.startTime,
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Slot held successfully for 5 minutes',
+      data: hold,
     });
   } catch (error) {
     next(error);
@@ -245,6 +285,7 @@ const getAllAppointmentsForAdmin = async (req, res, next) => {
 
 module.exports = {
   getAvailableSlots,
+  holdAppointmentSlot,
   createAppointment,
   getMyAppointments,
   getDoctorAppointmentsList,

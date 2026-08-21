@@ -50,7 +50,7 @@ const runAppointmentTests = async () => {
   assert.ok(Appointment.schema.paths.startTime, 'Must have startTime');
   assert.ok(Appointment.schema.paths.endTime, 'Must have endTime');
   assert.ok(Appointment.schema.paths.status, 'Must have status');
-  assert.ok(Appointment.schema.paths.googleCalendarEventId, 'Must have googleCalendarEventId');
+  assert.ok(Appointment.schema.paths.calendarEvents, 'Must have calendarEvents');
   assert.ok(Appointment.schema.paths.calendarSyncStatus, 'Must have calendarSyncStatus');
 
   const allowedStatuses = Appointment.schema.paths.status.enumValues;

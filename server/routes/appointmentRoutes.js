@@ -4,6 +4,7 @@ const { protect } = require('../middleware/authMiddleware');
 const { requireRole } = require('../middleware/roleMiddleware');
 const {
   getAvailableSlots,
+  holdAppointmentSlot,
   createAppointment,
   getMyAppointments,
   getDoctorAppointmentsList,
@@ -20,7 +21,8 @@ router.use(protect);
 // 1. Dynamic Slot Availability (All Authenticated Users)
 router.get('/slots/:doctorId/:date', getAvailableSlots);
 
-// 2. Patient Booking & My Appointments (PATIENT Only)
+// 2. Patient Booking, Slot Hold & My Appointments (PATIENT Only)
+router.post('/hold-slot', requireRole('PATIENT'), holdAppointmentSlot);
 router.post('/', requireRole('PATIENT'), createAppointment);
 router.get('/my', requireRole('PATIENT'), getMyAppointments);
 

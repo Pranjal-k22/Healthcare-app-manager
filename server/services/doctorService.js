@@ -1,6 +1,8 @@
 const mongoose = require('mongoose');
 const User = require('../models/User');
 const DoctorProfile = require('../models/DoctorProfile');
+const Appointment = require('../models/Appointment');
+const notificationService = require('./notificationService');
 
 /**
  * Format populated doctor entity into clean, safe API response object
@@ -396,10 +398,11 @@ const updateDoctorSelf = async (doctorUserId, updateData) => {
 };
 
 /**
- * Add a leave date for a doctor
- * @param {string} id
+ * Add a leave date for a doctor (Admin Override Flow)
+ * Automatically cancels conflicting BOOKED appointments and dispatches cancellation notifications.
+ * @param {string} id - Doctor Profile ID or Doctor User ID
  * @param {object} leaveData - { date: 'YYYY-MM-DD', reason?: string }
- * @returns {Promise<Array>}
+ * @returns {Promise<object>} - { leave, leaves, cancelledAppointmentsCount, affectedPatientIds }
  */
 const addDoctorLeave = async (id, leaveData) => {
   if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -420,6 +423,7 @@ const addDoctorLeave = async (id, leaveData) => {
   }
 
   const { date, reason = 'Unavailable' } = leaveData;
+  const doctorUserId = profile.userId;
 
   // Duplicate leave date prevention
   const dateExists = profile.leaves.some((l) => l.date === date);
@@ -429,10 +433,49 @@ const addDoctorLeave = async (id, leaveData) => {
     throw error;
   }
 
-  profile.leaves.push({ date, reason: reason.trim() });
+  // 1. Query all Appointment documents for this doctor on this date with status BOOKED
+  const conflictingAppointments = await Appointment.find({
+    doctorId: doctorUserId,
+    date,
+    status: 'BOOKED',
+  });
+
+  const affectedPatientIds = [];
+
+  // 2. Cancel conflicting appointments & dispatch notifications
+  if (conflictingAppointments.length > 0) {
+    for (const appointment of conflictingAppointments) {
+      appointment.status = 'CANCELLED';
+      appointment.cancellationReason = 'DOCTOR_LEAVE';
+      await appointment.save();
+
+      if (appointment.patientId) {
+        affectedPatientIds.push(appointment.patientId.toString());
+      }
+
+      // Dispatch notification & email to patient (and doctor)
+      try {
+        await notificationService.dispatchAppointmentCancelled(appointment, { role: 'ADMIN' });
+      } catch (dispatchErr) {
+        console.error(
+          `[DoctorService] Failed to dispatch cancellation notification for appointment ${appointment._id}:`,
+          dispatchErr.message
+        );
+      }
+    }
+  }
+
+  // 3. Save leave to doctor's profile
+  const newLeave = { date, reason: reason.trim() };
+  profile.leaves.push(newLeave);
   await profile.save();
 
-  return profile.leaves;
+  return {
+    leave: newLeave,
+    leaves: profile.leaves,
+    cancelledAppointmentsCount: conflictingAppointments.length,
+    affectedPatientIds,
+  };
 };
 
 /**

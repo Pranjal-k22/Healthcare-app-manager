@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const Appointment = require('../models/Appointment');
 const User = require('../models/User');
 const DoctorProfile = require('../models/DoctorProfile');
+const SlotHold = require('../models/SlotHold');
 const {
   isDateInPast,
   isSlotInPast,
@@ -48,6 +49,199 @@ const formatAppointmentResponse = (appDoc) => {
     createdAt: appDoc.createdAt,
     updatedAt: appDoc.updatedAt,
   };
+};
+
+/**
+ * Hold a slot temporarily for 5 minutes (Idempotent for same patient)
+ * @param {object} payload - { patientId, doctorId, date, startTime }
+ * @returns {Promise<object>}
+ */
+const holdSlot = async (payload) => {
+  const { patientId, doctorId, date: rawDate, appointmentDate, startTime } = payload;
+  const date = rawDate || appointmentDate;
+
+  // 1. Verify Patient Existence & Role
+  const patient = await User.findById(patientId);
+  if (!patient || patient.role !== 'PATIENT') {
+    const error = new Error('Invalid patient account for slot hold');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  // 2. Resolve Doctor User & DoctorProfile
+  let doctorUser = await User.findById(doctorId);
+  let doctorProfile = null;
+
+  if (doctorUser && doctorUser.role === 'DOCTOR') {
+    doctorProfile = await DoctorProfile.findOne({ userId: doctorUser._id });
+  } else {
+    doctorProfile = await DoctorProfile.findById(doctorId);
+    if (doctorProfile) {
+      doctorUser = await User.findById(doctorProfile.userId);
+    }
+  }
+
+  if (!doctorUser || !doctorProfile) {
+    const error = new Error('Doctor profile not found or invalid provider ID');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  if (doctorProfile.isActive === false || doctorProfile.isAvailable === false) {
+    const error = new Error('This doctor is currently not accepting appointments');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const doctorUserId = doctorUser._id;
+
+  // 3. Verify Date & Time Validity
+  if (isDateInPast(date)) {
+    const error = new Error('Cannot hold a slot for past dates');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  if (isSlotInPast(date, startTime)) {
+    const error = new Error('Cannot hold a time slot that has already passed');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  // 4. Verify Doctor Leave Status
+  const isOnLeave = (doctorProfile.leaves || []).some((l) => l.date === date);
+  if (isOnLeave) {
+    const error = new Error(`Doctor is on scheduled leave on ${date}`);
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const isOnDoctorLeave = await isDoctorOnLeave(doctorUserId, date);
+  if (isOnDoctorLeave) {
+    const error = new Error(`Doctor is on approved leave on ${date}`);
+    error.statusCode = 400;
+    throw error;
+  }
+
+  // 5. Verify Working Hours on the Requested Weekday
+  const weekday = getWeekdayFromDate(date);
+  const daySchedule = doctorProfile.workingHours
+    ? doctorProfile.workingHours[weekday]
+    : null;
+
+  if (!daySchedule || !daySchedule.enabled || !daySchedule.start || !daySchedule.end) {
+    const error = new Error(`Doctor does not take consultations on ${weekday}s`);
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const slotDuration = doctorProfile.slotDuration || 30;
+  const requestedStartMinutes = timeToMinutes(startTime);
+  const requestedEndMinutes = requestedStartMinutes + slotDuration;
+
+  const workStartMinutes = timeToMinutes(daySchedule.start);
+  const workEndMinutes = timeToMinutes(daySchedule.end);
+
+  if (
+    requestedStartMinutes < workStartMinutes ||
+    requestedEndMinutes > workEndMinutes
+  ) {
+    const error = new Error(
+      `Requested slot (${startTime}) falls outside doctor's consultation hours (${daySchedule.start} - ${daySchedule.end})`
+    );
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const now = new Date();
+
+  // Check 1: Existing Appointment with status BOOKED or COMPLETED
+  const existingActiveAppointment = await Appointment.findOne({
+    doctorId: doctorUserId,
+    date,
+    startTime,
+    status: { $in: ['BOOKED', 'COMPLETED'] },
+  });
+
+  if (existingActiveAppointment) {
+    const error = new Error('This appointment slot is already booked');
+    error.statusCode = 409;
+    throw error;
+  }
+
+  // Check 2: Existing unexpired SlotHold for DIFFERENT patient
+  const existingHoldDifferentPatient = await SlotHold.findOne({
+    doctorId: doctorUserId,
+    date,
+    startTime,
+    expiresAt: { $gt: now },
+    patientId: { $ne: patientId },
+  });
+
+  if (existingHoldDifferentPatient) {
+    const error = new Error(
+      'This slot is currently held by another patient. Please select another slot or try again shortly.'
+    );
+    error.statusCode = 409;
+    throw error;
+  }
+
+  // Check 3: If unexpired hold exists for SAME patient, refresh/extend expiresAt
+  const existingHoldSamePatient = await SlotHold.findOne({
+    doctorId: doctorUserId,
+    date,
+    startTime,
+    expiresAt: { $gt: now },
+    patientId,
+  });
+
+  const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+
+  if (existingHoldSamePatient) {
+    existingHoldSamePatient.expiresAt = expiresAt;
+    await existingHoldSamePatient.save();
+    return existingHoldSamePatient;
+  }
+
+  // Clean up any expired holds for this slot
+  await SlotHold.deleteMany({
+    doctorId: doctorUserId,
+    date,
+    startTime,
+    expiresAt: { $lte: now },
+  });
+
+  // Create new SlotHold
+  const hold = await SlotHold.create({
+    doctorId: doctorUserId,
+    date,
+    startTime,
+    patientId,
+    expiresAt,
+  });
+
+  // Concurrency collision post-check: if multiple unexpired holds were created simultaneously,
+  // the first one created wins, and any competing hold is discarded with 409
+  const allActiveHolds = await SlotHold.find({
+    doctorId: doctorUserId,
+    date,
+    startTime,
+    expiresAt: { $gt: now },
+  }).sort({ createdAt: 1, _id: 1 });
+
+  if (
+    allActiveHolds.length > 1 &&
+    allActiveHolds[0]._id.toString() !== hold._id.toString()
+  ) {
+    await SlotHold.findByIdAndDelete(hold._id).catch(() => {});
+    const error = new Error(
+      'This slot is currently held by another patient. Please select another slot or try again shortly.'
+    );
+    error.statusCode = 409;
+    throw error;
+  }
+
+  return hold;
 };
 
 /**
@@ -182,6 +376,24 @@ const bookAppointment = async (payload) => {
     throw error;
   }
 
+  // 6b. Hold Conflict Check: Reject if slot is currently held by another patient
+  const now = new Date();
+  const existingHoldOtherPatient = await SlotHold.findOne({
+    doctorId: doctorUserId,
+    date,
+    startTime,
+    expiresAt: { $gt: now },
+    patientId: { $ne: patientId },
+  });
+
+  if (existingHoldOtherPatient) {
+    const error = new Error(
+      'This appointment slot is currently reserved by another patient. Please choose a different slot.'
+    );
+    error.statusCode = 409;
+    throw error;
+  }
+
   // 7. Insert Appointment document (Guarded by DB Partial Unique Index)
   try {
     const appointment = await Appointment.create({
@@ -196,6 +408,13 @@ const bookAppointment = async (payload) => {
       symptoms,
       aiStatus: symptoms ? 'PENDING' : 'FAILED',
     });
+
+    // Delete any slot holds for this doctor/date/startTime upon successful booking
+    await SlotHold.deleteMany({
+      doctorId: doctorUserId,
+      date,
+      startTime,
+    }).catch(() => {});
 
     const populated = await Appointment.findById(appointment._id)
       .populate('patientId', 'name email')
@@ -545,6 +764,7 @@ const getAllAppointmentsAdmin = async (filters = {}) => {
 };
 
 module.exports = {
+  holdSlot,
   bookAppointment,
   getPatientAppointments,
   getDoctorAppointments,

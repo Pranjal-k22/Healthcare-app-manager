@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const { Notification } = require('../models/Notification');
 const User = require('../models/User');
-const { sendEmail } = require('./email/emailService');
+const emailService = require('./email/emailService');
 const {
   buildAppointmentBookedEmail,
   buildAppointmentCancelledEmail,
@@ -222,7 +222,7 @@ const dispatchAppointmentBooked = async (appointment) => {
       endTime,
       isDoctor: false,
     });
-    sendEmail({ to: patient.email, ...patientMail }).catch(() => {});
+    emailService.sendEmail({ to: patient.email, ...patientMail }).catch(() => {});
 
     const doctorMail = buildAppointmentBookedEmail({
       recipientName: doctorName,
@@ -233,7 +233,7 @@ const dispatchAppointmentBooked = async (appointment) => {
       endTime,
       isDoctor: true,
     });
-    sendEmail({ to: doctor.email, ...doctorMail }).catch(() => {});
+    emailService.sendEmail({ to: doctor.email, ...doctorMail }).catch(() => {});
   } catch (error) {
     console.error('[NotificationService] Error in dispatchAppointmentBooked:', error.message);
   }
@@ -284,7 +284,7 @@ const dispatchAppointmentCancelled = async (appointment, cancelledByUser = {}) =
       isDoctor: false,
       otherPartyName: doctor.name,
     });
-    sendEmail({ to: patient.email, ...patientMail }).catch(() => {});
+    emailService.sendEmail({ to: patient.email, ...patientMail }).catch(() => {});
 
     const doctorMail = buildAppointmentCancelledEmail({
       recipientName: doctor.name,
@@ -293,7 +293,7 @@ const dispatchAppointmentCancelled = async (appointment, cancelledByUser = {}) =
       isDoctor: true,
       otherPartyName: patient.name,
     });
-    sendEmail({ to: doctor.email, ...doctorMail }).catch(() => {});
+    emailService.sendEmail({ to: doctor.email, ...doctorMail }).catch(() => {});
   } catch (error) {
     console.error('[NotificationService] Error in dispatchAppointmentCancelled:', error.message);
   }
@@ -346,7 +346,7 @@ const dispatchAppointmentRescheduled = async (newAppointment, oldAppointment) =>
       startTime,
       endTime,
     });
-    sendEmail({ to: patient.email, ...patientMail }).catch(() => {});
+    emailService.sendEmail({ to: patient.email, ...patientMail }).catch(() => {});
 
     const doctorMail = buildAppointmentRescheduledEmail({
       recipientName: doctor.name,
@@ -356,7 +356,7 @@ const dispatchAppointmentRescheduled = async (newAppointment, oldAppointment) =>
       startTime,
       endTime,
     });
-    sendEmail({ to: doctor.email, ...doctorMail }).catch(() => {});
+    emailService.sendEmail({ to: doctor.email, ...doctorMail }).catch(() => {});
   } catch (error) {
     console.error('[NotificationService] Error in dispatchAppointmentRescheduled:', error.message);
   }
@@ -396,7 +396,7 @@ const dispatchPrescriptionAvailable = async (prescription, appointment) => {
       date,
       startTime,
     });
-    sendEmail({ to: patient.email, ...patientMail }).catch(() => {});
+    emailService.sendEmail({ to: patient.email, ...patientMail }).catch(() => {});
   } catch (error) {
     console.error('[NotificationService] Error in dispatchPrescriptionAvailable:', error.message);
   }
@@ -448,7 +448,7 @@ const dispatchAppointmentReminder = async (appointment) => {
       startTime,
       endTime,
     });
-    sendEmail({ to: patient.email, ...patientMail }).catch(() => {});
+    emailService.sendEmail({ to: patient.email, ...patientMail }).catch(() => {});
 
     const doctorMail = buildAppointmentReminderEmail({
       recipientName: doctor.name,
@@ -458,7 +458,7 @@ const dispatchAppointmentReminder = async (appointment) => {
       startTime,
       endTime,
     });
-    sendEmail({ to: doctor.email, ...doctorMail }).catch(() => {});
+    emailService.sendEmail({ to: doctor.email, ...doctorMail }).catch(() => {});
   } catch (error) {
     console.error('[NotificationService] Error in dispatchAppointmentReminder:', error.message);
   }

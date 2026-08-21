@@ -199,12 +199,18 @@ const addDoctorLeaveHandler = async (req, res, next) => {
       });
     }
 
-    const leaves = await addDoctorLeave(req.params.id, req.body);
+    const result = await addDoctorLeave(req.params.id, req.body);
 
     res.status(200).json({
       success: true,
-      message: 'Leave scheduled successfully',
-      data: leaves,
+      message:
+        result.cancelledAppointmentsCount > 0
+          ? `Leave scheduled successfully. ${result.cancelledAppointmentsCount} conflicting appointment(s) were cancelled and affected patients notified.`
+          : 'Leave scheduled successfully',
+      data: result.leaves || result,
+      leave: result.leave,
+      cancelledAppointmentsCount: result.cancelledAppointmentsCount || 0,
+      affectedPatientIds: result.affectedPatientIds || [],
     });
   } catch (error) {
     next(error);

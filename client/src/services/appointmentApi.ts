@@ -7,6 +7,30 @@ import {
   RescheduleAppointmentRequest,
 } from '../types/appointment';
 
+export interface SlotHoldResponse {
+  _id: string;
+  doctorId: string;
+  patientId: string;
+  date: string;
+  startTime: string;
+  expiresAt: string;
+}
+
+/**
+ * Hold a slot temporarily for 5 minutes
+ */
+export const holdSlot = async (payload: {
+  doctorId: string;
+  date: string;
+  startTime: string;
+}): Promise<SlotHoldResponse> => {
+  const response = await apiClient.post<{ success: boolean; data: SlotHoldResponse }>(
+    '/appointments/hold-slot',
+    payload
+  );
+  return response.data.data;
+};
+
 /**
  * Get generated available slots for a doctor on a specific date
  */

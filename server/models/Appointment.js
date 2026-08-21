@@ -45,6 +45,14 @@ const appointmentSchema = new mongoose.Schema(
       default: 'BOOKED',
       index: true,
     },
+    cancellationReason: {
+      type: String,
+      enum: {
+        values: ['PATIENT_REQUEST', 'DOCTOR_LEAVE', 'ADMIN_ACTION', 'OTHER'],
+        message: '{VALUE} is not a valid cancellation reason',
+      },
+      default: null,
+    },
     reason: {
       type: String,
       trim: true,
@@ -71,10 +79,24 @@ const appointmentSchema = new mongoose.Schema(
       enum: ['PENDING', 'READY', 'FAILED'],
       default: 'PENDING',
     },
-    googleCalendarEventId: {
-      type: String,
-      default: null,
-    },
+    calendarEvents: [
+      {
+        userId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'User',
+          required: true,
+        },
+        eventId: {
+          type: String,
+          required: true,
+        },
+        syncStatus: {
+          type: String,
+          enum: ['PENDING', 'SYNCED', 'FAILED', 'DELETED'],
+          default: 'PENDING',
+        },
+      },
+    ],
     calendarSyncStatus: {
       type: String,
       enum: ['NOT_REQUIRED', 'PENDING', 'SYNCED', 'FAILED'],

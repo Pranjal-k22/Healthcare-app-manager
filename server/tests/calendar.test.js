@@ -38,7 +38,7 @@ const runCalendarTests = async () => {
   console.log('✓ OAuth authorization URL generator with CSRF state verified');
 
   // 3. Appointment Sync Status Fields
-  assert.ok(Appointment.schema.paths.googleCalendarEventId, 'Appointment must have googleCalendarEventId');
+  assert.ok(Appointment.schema.paths.calendarEvents, 'Appointment must have calendarEvents');
   assert.ok(Appointment.schema.paths.calendarSyncStatus, 'Appointment must have calendarSyncStatus');
   const statuses = Appointment.schema.paths.calendarSyncStatus.enumValues;
   assert.deepStrictEqual(statuses, ['NOT_REQUIRED', 'PENDING', 'SYNCED', 'FAILED']);

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { getDoctorById } from '../../services/doctorApi';
-import { bookAppointment, getAvailableSlots } from '../../services/appointmentApi';
+import { bookAppointment, getAvailableSlots, holdSlot } from '../../services/appointmentApi';
 import { Doctor } from '../../types/doctor';
 import { Appointment, AvailableSlot } from '../../types/appointment';
 import { SlotPicker } from '../../components/appointment/SlotPicker';
@@ -26,6 +26,9 @@ export const BookAppointment: React.FC = () => {
   });
   const [slots, setSlots] = useState<AvailableSlot[]>([]);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
+  const [holdExpiresAt, setHoldExpiresAt] = useState<Date | null>(null);
+  const [secondsRemaining, setSecondsRemaining] = useState<number>(0);
+  const [isHoldingSlot, setIsHoldingSlot] = useState<boolean>(false);
   const [symptoms, setSymptoms] = useState('');
   const [reason, setReason] = useState('');
   const [patientNotes, setPatientNotes] = useState('');
@@ -63,6 +66,8 @@ export const BookAppointment: React.FC = () => {
         setIsLoadingSlots(true);
         setError(null);
         setSelectedSlot(null);
+        setHoldExpiresAt(null);
+        setSecondsRemaining(0);
         const data = await getAvailableSlots(doctorId, selectedDate);
         setSlots(data);
       } catch (err: any) {
@@ -77,9 +82,63 @@ export const BookAppointment: React.FC = () => {
     }
   }, [doctorId, selectedDate]);
 
+  // Countdown timer for active slot hold
+  useEffect(() => {
+    if (!holdExpiresAt) return;
+
+    const interval = setInterval(() => {
+      const remaining = Math.floor((holdExpiresAt.getTime() - Date.now()) / 1000);
+      if (remaining <= 0) {
+        setSecondsRemaining(0);
+        setError('Your 5-minute hold on this slot has expired. Please reselect the slot to hold it again.');
+        clearInterval(interval);
+      } else {
+        setSecondsRemaining(remaining);
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [holdExpiresAt]);
+
+  const handleSelectSlot = async (slotTime: string) => {
+    if (!doctorId || !selectedDate) return;
+    setError(null);
+    setIsHoldingSlot(true);
+    try {
+      const hold = await holdSlot({
+        doctorId,
+        date: selectedDate,
+        startTime: slotTime,
+      });
+      setSelectedSlot(slotTime);
+      const expDate = new Date(hold.expiresAt);
+      setHoldExpiresAt(expDate);
+      setSecondsRemaining(Math.max(0, Math.floor((expDate.getTime() - Date.now()) / 1000)));
+    } catch (err: any) {
+      setSelectedSlot(null);
+      setHoldExpiresAt(null);
+      setSecondsRemaining(0);
+      setError(
+        err.response?.data?.message ||
+          err.message ||
+          'This slot is currently held by another patient or unavailable. Please choose another slot.'
+      );
+      if (doctorId && selectedDate) {
+        getAvailableSlots(doctorId, selectedDate).then(setSlots).catch(() => {});
+      }
+    } finally {
+      setIsHoldingSlot(false);
+    }
+  };
+
   const handleBook = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!doctorId || !selectedDate || !selectedSlot) return;
+
+    if (holdExpiresAt && secondsRemaining <= 0) {
+      setError('Your 5-minute reservation on this slot has expired. Please click the slot again to hold it.');
+      return;
+    }
 
     try {
       setIsSubmitting(true);
@@ -248,10 +307,44 @@ export const BookAppointment: React.FC = () => {
           <SlotPicker
             slots={slots}
             selectedSlot={selectedSlot}
-            onSelectSlot={setSelectedSlot}
-            isLoading={isLoadingSlots}
+            onSelectSlot={handleSelectSlot}
+            isLoading={isLoadingSlots || isHoldingSlot}
           />
         </div>
+
+        {selectedSlot && secondsRemaining > 0 && (
+          <div
+            style={{
+              padding: '0.85rem 1.15rem',
+              background: 'rgba(16, 185, 129, 0.1)',
+              border: '1px solid rgba(16, 185, 129, 0.3)',
+              borderRadius: 'var(--radius-sm)',
+              marginBottom: '1.5rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '0.5rem',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#10b981', fontWeight: 600 }}>
+              <Clock size={16} />
+              <span>Slot Reserved: {selectedSlot} ({selectedDate})</span>
+            </div>
+            <span
+              style={{
+                fontSize: '0.85rem',
+                fontWeight: 700,
+                color: secondsRemaining < 60 ? '#ef4444' : '#10b981',
+                background: secondsRemaining < 60 ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.15)',
+                padding: '0.2rem 0.6rem',
+                borderRadius: '999px',
+              }}
+            >
+              Reservation expires in: {Math.floor(secondsRemaining / 60)}:{String(secondsRemaining % 60).padStart(2, '0')}
+            </span>
+          </div>
+        )}
 
         <div className="form-group">
           <label className="form-label" htmlFor="patientSymptoms">
@@ -309,7 +402,7 @@ export const BookAppointment: React.FC = () => {
           <button
             type="submit"
             className="btn btn-primary"
-            disabled={isSubmitting || !selectedSlot || !selectedDate}
+            disabled={isSubmitting || !selectedSlot || !selectedDate || secondsRemaining <= 0 || isHoldingSlot}
           >
             {isSubmitting ? (
               <>
