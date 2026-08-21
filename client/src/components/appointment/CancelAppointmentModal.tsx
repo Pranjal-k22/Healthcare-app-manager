@@ -1,6 +1,7 @@
 import React from 'react';
 import { Appointment } from '../../types/appointment';
-import { AlertTriangle, Calendar, Clock, X } from 'lucide-react';
+import { AlertCircle, Calendar, Clock, X, User } from 'lucide-react';
+import Button from '../ui/Button';
 
 interface CancelAppointmentModalProps {
   appointment: Appointment | null;
@@ -22,77 +23,90 @@ export const CancelAppointmentModal: React.FC<CancelAppointmentModalProps> = ({
   if (!isOpen || !appointment) return null;
 
   return (
-    <div className="modal-overlay">
-      <div className="glass-card modal-container">
-        <div className="modal-header">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-            <div className="modal-icon-badge modal-icon-danger">
-              <AlertTriangle size={20} />
-            </div>
-            <h3 style={{ fontSize: '1.2rem', fontWeight: 700 }}>Cancel Appointment</h3>
+    <div className="dialog-backdrop" onClick={onClose}>
+      <div
+        className="dialog-content-card modal-anim-scale"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        style={{ maxWidth: '480px' }}
+      >
+        <button
+          type="button"
+          className="dialog-close-btn"
+          onClick={onClose}
+          disabled={isProcessing}
+          aria-label="Close dialog"
+        >
+          <X size={18} />
+        </button>
+
+        <div className="dialog-header">
+          <div className="dialog-icon-wrapper dialog-icon-danger-bg">
+            <AlertCircle size={24} className="dialog-icon-danger" color="var(--danger)" />
           </div>
-          <button
-            type="button"
-            className="modal-close-btn"
-            onClick={onClose}
-            disabled={isProcessing}
-          >
-            <X size={18} />
-          </button>
+          <div>
+            <h3 className="dialog-title card-title" style={{ fontSize: '1.25rem', color: 'var(--text-primary)' }}>
+              Cancel Consultation
+            </h3>
+            <p className="body-text" style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
+              Are you sure you want to cancel this appointment? The reserved slot will be released back to the doctor's schedule.
+            </p>
+          </div>
         </div>
 
-        <div className="modal-body">
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.925rem', marginBottom: '1.25rem' }}>
-            Are you sure you want to cancel this consultation? The slot will be released back to the doctor's calendar.
-          </p>
-
-          <div className="modal-summary-box">
-            <div style={{ fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
-              {appointment.doctorName}
+        {/* Appointment Context Summary Card */}
+        <div
+          style={{
+            background: 'var(--surface)',
+            border: '1px solid var(--border)',
+            borderRadius: 'var(--radius-md)',
+            padding: '1rem 1.15rem',
+            margin: '1.25rem 0',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+            <User size={16} color="var(--primary)" />
+            <span>Dr. {appointment.doctorName}</span>
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.25rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+              <Calendar size={14} color="var(--primary)" />
+              <span style={{ fontWeight: 500 }}>{appointment.date}</span>
             </div>
-            <div style={{ display: 'flex', gap: '1.25rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                <Calendar size={14} color="var(--primary)" />
-                <span>{appointment.date}</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                <Clock size={14} color="var(--primary)" />
-                <span>{appointment.startTime} - {appointment.endTime}</span>
-              </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+              <Clock size={14} color="var(--primary)" />
+              <span style={{ fontWeight: 500 }}>{appointment.startTime} – {appointment.endTime}</span>
             </div>
           </div>
-
-          {error && (
-            <div className="alert alert-error" style={{ marginTop: '1rem', marginBottom: 0 }}>
-              <span>{error}</span>
-            </div>
-          )}
         </div>
 
-        <div className="modal-footer">
-          <button
+        {error && (
+          <div className="alert-inline alert-inline-error" style={{ marginBottom: '1.25rem' }}>
+            <AlertCircle size={16} />
+            <span>{error}</span>
+          </div>
+        )}
+
+        <div className="dialog-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.5rem' }}>
+          <Button
             type="button"
-            className="btn btn-outline"
+            variant="outline"
+            size="md"
             onClick={onClose}
             disabled={isProcessing}
           >
             Keep Appointment
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
-            className="btn btn-danger-outline"
+            variant="danger"
+            size="md"
             onClick={onConfirm}
-            disabled={isProcessing}
+            isLoading={isProcessing}
           >
-            {isProcessing ? (
-              <>
-                <div className="spinner" />
-                <span>Cancelling...</span>
-              </>
-            ) : (
-              <span>Confirm Cancellation</span>
-            )}
-          </button>
+            Confirm Cancellation
+          </Button>
         </div>
       </div>
     </div>

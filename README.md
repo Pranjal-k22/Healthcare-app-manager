@@ -187,12 +187,62 @@ Complete architectural documentation is available in the [`docs/`](docs/) direct
 
 ---
 
+## 📧 Email Notifications Architecture (Nodemailer + Gmail SMTP)
+
+### 1. Overview
+- **Transport**: Uses Nodemailer configured with Gmail SMTP (`service: 'gmail'`) initialized as a singleton transporter with startup verification (`verifyTransporter`). Operates with a graceful in-development mock logger if credentials are not enabled.
+- **Reliability & Audit Logging**: Every send attempt is recorded in the `NotificationLog` collection (`recipientEmail`, `notificationType`, `appointmentId`, `subject`, `payload`, `status: sent|failed|dead`, `attempts`, `nextRetryAt`, `lastError`).
+- **Non-Blocking Safety**: Email delivery failures never throw into or block core booking, rescheduling, or cancellation transactions.
+- **Automated Retry Worker**: Background job (`startEmailRetryJob`) runs every 10 minutes, querying failed notifications with exponential backoff (`2^attempts` minutes) up to `MAX_ATTEMPTS = 5` before marking them `dead`.
+
+### 2. Supported Email Templates (`services/emailTemplates/`)
+- **`bookingConfirmation`**: Sent to patient and doctor on appointment confirmation.
+- **`appointmentReminder`**: Scheduled reminders sent 24h before and 1h before consultations.
+- **`appointmentCancellation`**: Sent to patient and doctor on cancellation or slot reschedule.
+- **`doctorLeaveConflict`**: Sent to affected patients when doctor leave conflicts with existing appointments, with direct reschedule CTAs.
+- **`medicationReminder`**: Scheduled reminders for prescription medication doses.
+- **`passwordChanged`**: Security alert sent when user credentials are updated.
+
+### 3. Gmail App Password Setup Steps
+Gmail blocks plain-password SMTP authentication. You must generate a dedicated **16-character App Password**:
+1. Log into the Gmail account you want to send emails from (`GMAIL_USER`).
+2. Navigate to [**Google Account Security**](https://myaccount.google.com/security).
+3. Ensure **2-Step Verification** is turned **ON**.
+4. In the search bar at the top, search for **"App passwords"** (or go to **2-Step Verification > App passwords**).
+5. Enter an App Name (e.g. `HealthPulse App`) and click **Create**.
+6. Google will generate a 16-character password (e.g. `abcd efgh ijkl mnop`).
+7. Copy and paste it (without spaces) into your `.env`:
+   ```env
+   GMAIL_USER=your_address@gmail.com
+   GMAIL_APP_PASSWORD=your_16_character_app_password
+   EMAIL_FROM_NAME="HealthPulse Hospital"
+   SUPPORT_EMAIL=your_address@gmail.com
+   ENABLE_EMAIL_NOTIFICATIONS=true
+   ```
+> [!NOTE]
+> Free Gmail accounts have a sending volume limit of roughly 500 emails/day (adequate for development and demonstration). For high-volume production deployments, swap Nodemailer's transport configuration to SendGrid, AWS SES, or Mailgun without changing any template or calling code.
+
+### 4. Development Test Email Endpoint
+Verify your SMTP credentials independently of appointment workflows using the dev-only endpoint:
+```http
+POST /api/dev/test-email
+Content-Type: application/json
+
+{
+  "to": "your_email@gmail.com",
+  "template": "bookingConfirmation"
+}
+```
+
+---
+
 ## ⚠️ Known Limitations
 
 1. **Hardware Requirements for Local LLM**: Running Ollama with 7B/8B models requires at least 8GB of system RAM.
 2. **Google Calendar Configuration**: Requires creating an OAuth 2.0 Web Client ID in the Google Cloud Console.
-3. **Email Delivery Mode**: Operates in development (mock console log) mode unless `ENABLE_EMAIL_NOTIFICATIONS=true` and SMTP credentials are provided.
+3. **Gmail SMTP Volume Limits**: Gmail limits free sending to ~500 emails/day. Use SendGrid or Amazon SES for high-volume production scale.
 4. **Payment Gateway**: The billing payment endpoint simulates successful settlement for development. Wire Stripe/PayPal API keys for live transactions.
 5. **Avatar Storage**: Uses local static disk storage under `/uploads/avatars`. Wire AWS S3 or Cloudflare R2 for multi-instance deployments.
+
 
 

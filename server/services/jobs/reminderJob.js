@@ -8,7 +8,7 @@ let reminderTimer = null;
 let isJobRunning = false;
 
 /**
- * Check and process upcoming appointment reminders
+ * Check and process upcoming appointment reminders (24h and 1h windows)
  */
 const processUpcomingReminders = async () => {
   if (isJobRunning) {
@@ -20,33 +20,59 @@ const processUpcomingReminders = async () => {
   try {
     const now = new Date();
     const todayStr = now.toISOString().split('T')[0];
-    const currentMinutes = now.getHours() * 60 + now.getMinutes();
-    const reminderWindowMinutes = config.APPOINTMENT_REMINDER_MINUTES;
 
-    // Find all active booked appointments scheduled for today
-    const upcomingAppointments = await Appointment.find({
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowStr = tomorrow.toISOString().split('T')[0];
+
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+    const reminderWindowMinutes = config.APPOINTMENT_REMINDER_MINUTES || 60;
+
+    // 1. Process 1-Hour Reminders (Today's upcoming appointments)
+    const todayAppointments = await Appointment.find({
       date: todayStr,
       status: 'BOOKED',
     }).lean();
 
-    for (const appointment of upcomingAppointments) {
+    for (const appointment of todayAppointments) {
       const slotStartMinutes = timeToMinutes(appointment.startTime);
       const minutesUntilSlot = slotStartMinutes - currentMinutes;
 
-      // Check if appointment is within the reminder window (e.g. within next 60 minutes and hasn't started yet)
+      // Check if appointment is within the 1-hour reminder window
       if (minutesUntilSlot > 0 && minutesUntilSlot <= reminderWindowMinutes) {
-        // Check for duplicate reminder
-        const alreadyNotified = await Notification.exists({
+        const alreadyNotified1h = await Notification.exists({
           relatedAppointmentId: appointment._id,
           type: 'APPOINTMENT_REMINDER',
+          'metadata.hoursUntil': 1,
         });
 
-        if (!alreadyNotified) {
+        if (!alreadyNotified1h) {
           console.log(
-            `[ReminderJob] Triggering reminder for Appointment ID ${appointment._id} (${minutesUntilSlot}m before ${appointment.startTime})`
+            `[ReminderJob] Triggering 1-hour reminder for Appointment ID ${appointment._id} (${minutesUntilSlot}m before ${appointment.startTime})`
           );
-          await dispatchAppointmentReminder(appointment);
+          await dispatchAppointmentReminder(appointment, 1);
         }
+      }
+    }
+
+    // 2. Process 24-Hour Reminders (Tomorrow's appointments)
+    const tomorrowAppointments = await Appointment.find({
+      date: tomorrowStr,
+      status: 'BOOKED',
+    }).lean();
+
+    for (const appointment of tomorrowAppointments) {
+      const alreadyNotified24h = await Notification.exists({
+        relatedAppointmentId: appointment._id,
+        type: 'APPOINTMENT_REMINDER',
+        'metadata.hoursUntil': 24,
+      });
+
+      if (!alreadyNotified24h) {
+        console.log(
+          `[ReminderJob] Triggering 24-hour advance reminder for Appointment ID ${appointment._id} on ${tomorrowStr}`
+        );
+        await dispatchAppointmentReminder(appointment, 24);
       }
     }
   } catch (error) {

@@ -9,15 +9,16 @@ const runSecurityTests = require('./security.test');
 const runLLMTests = require('./llm.test');
 const runE2ETests = require('./e2e.test');
 const { runProfileBillingTests } = require('./profileBillingPrescription.test');
+const runEmailTests = require('./email.test');
 
 const runMasterTestSuite = async () => {
   console.log('================================================================');
-  console.log('  HEALTHPULSE CLINIC — COMPREHENSIVE AUTOMATED TEST SUITE (PHASE 11)');
+  console.log('  HEALTHPULSE CLINIC — COMPREHENSIVE AUTOMATED TEST SUITE (PHASE 12)');
   console.log('================================================================');
 
   const startTime = Date.now();
   let passedSuites = 0;
-  const totalSuites = 11;
+  const totalSuites = 12;
 
   try {
     await runAuthTests();
@@ -51,6 +52,9 @@ const runMasterTestSuite = async () => {
     passedSuites++;
 
     await runProfileBillingTests();
+    passedSuites++;
+
+    await runEmailTests();
     passedSuites++;
 
     const duration = ((Date.now() - startTime) / 1000).toFixed(2);

@@ -9,6 +9,20 @@ node_modules/
 .env.development.local
 .env.test.local
 .env.production.local
+server/.env
+client/.env
+
+# Tasks & Internal Working Files (Non-tracking)
+tasks/
+
+# Uploads & Media Assets
+uploads/
+server/uploads/
+server/uploads/avatars/
+
+# Archives
+*.zip
+*.tar.gz
 
 # Production Build
 dist/

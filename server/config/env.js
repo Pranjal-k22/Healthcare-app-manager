@@ -19,12 +19,18 @@ const config = {
   ADMIN_EMAIL: process.env.ADMIN_EMAIL || 'admin@healthcare.com',
   ADMIN_PASSWORD: process.env.ADMIN_PASSWORD || 'AdminPassword123!',
 
-  // Email Notification Settings (Phase 5)
-  SMTP_HOST: process.env.SMTP_HOST || process.env.EMAIL_HOST || 'smtp.mailtrap.io',
-  SMTP_PORT: parseInt(process.env.SMTP_PORT || process.env.EMAIL_PORT, 10) || 2525,
-  SMTP_USER: process.env.SMTP_USER || process.env.EMAIL_USER || '',
-  SMTP_PASS: process.env.SMTP_PASS || process.env.EMAIL_PASSWORD || '',
-  EMAIL_FROM: process.env.EMAIL_FROM || 'HealthPulse <notifications@healthpulse.com>',
+  // Email Notification Settings (Nodemailer + Gmail SMTP)
+  GMAIL_USER: process.env.GMAIL_USER || process.env.SMTP_USER || '',
+  GMAIL_APP_PASSWORD: process.env.GMAIL_APP_PASSWORD || process.env.SMTP_PASS || '',
+  SMTP_HOST: process.env.SMTP_HOST || 'smtp.gmail.com',
+  SMTP_PORT: parseInt(process.env.SMTP_PORT, 10) || 465,
+  SMTP_USER: process.env.GMAIL_USER || process.env.SMTP_USER || '',
+  SMTP_PASS: process.env.GMAIL_APP_PASSWORD || process.env.SMTP_PASS || '',
+  EMAIL_FROM_NAME: process.env.EMAIL_FROM_NAME || 'HealthPulse Hospital',
+  EMAIL_FROM:
+    process.env.EMAIL_FROM ||
+    `"${process.env.EMAIL_FROM_NAME || 'HealthPulse Hospital'}" <${process.env.GMAIL_USER || process.env.SMTP_USER || 'notifications@healthpulse.com'}>`,
+  SUPPORT_EMAIL: process.env.SUPPORT_EMAIL || process.env.GMAIL_USER || 'support@healthpulse.com',
   ENABLE_EMAIL_NOTIFICATIONS: process.env.ENABLE_EMAIL_NOTIFICATIONS === 'true',
 
   // Background Job & Reminder Settings (Phase 5)

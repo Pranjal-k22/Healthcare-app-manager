@@ -1,14 +1,8 @@
 const mongoose = require('mongoose');
 const { Notification } = require('../models/Notification');
 const User = require('../models/User');
-const emailService = require('./email/emailService');
-const {
-  buildAppointmentBookedEmail,
-  buildAppointmentCancelledEmail,
-  buildAppointmentRescheduledEmail,
-  buildAppointmentReminderEmail,
-  buildPrescriptionAvailableEmail,
-} = require('./email/emailTemplates');
+const emailService = require('./emailService');
+const emailTemplates = require('./emailTemplates');
 
 /**
  * Create a persistent in-app notification
@@ -99,7 +93,7 @@ const getUnreadCount = async (userId) => {
 };
 
 /**
- * Mark a single notification as read (with user ownership check)
+ * Mark a single notification as read
  * @param {string} notificationId
  * @param {string} userId
  * @returns {Promise<object>}
@@ -125,13 +119,16 @@ const markAsRead = async (notificationId, userId) => {
   notification.isRead = true;
   await notification.save();
 
-  return notification;
+  return {
+    id: notification._id.toString(),
+    isRead: true,
+  };
 };
 
 /**
- * Mark all unread notifications for a user as read
+ * Mark all notifications for a user as read
  * @param {string} userId
- * @returns {Promise<number>} - Count of updated notifications
+ * @returns {Promise<number>} Number of updated documents
  */
 const markAllAsRead = async (userId) => {
   const result = await Notification.updateMany(
@@ -187,19 +184,21 @@ const dispatchAppointmentBooked = async (appointment) => {
     if (!patient || !doctor) return;
 
     const patientName = patient.name;
-    const doctorName = doctor.name;
+    const cleanDoctorName = doctor.name.replace(/^Dr\.?\s+/i, '').trim();
+    const doctorDisplay = `Dr. ${cleanDoctorName}`;
     const date = appointment.date;
     const startTime = appointment.startTime;
     const endTime = appointment.endTime;
+    const fee = appointment.fee || 75;
 
     // 1. In-App Notification for Patient
     await createNotification({
       userId: patient._id,
       type: 'APPOINTMENT_BOOKED',
       title: 'Appointment Confirmed',
-      message: `Your consultation with ${doctorName} is confirmed for ${date} at ${startTime}–${endTime}.`,
+      message: `Your consultation with ${doctorDisplay} is confirmed for ${date} at ${startTime}–${endTime}.`,
       relatedAppointmentId: appointment._id,
-      metadata: { doctorName, date, startTime, endTime },
+      metadata: { doctorName: cleanDoctorName, date, startTime, endTime, fee },
     });
 
     // 2. In-App Notification for Doctor
@@ -212,28 +211,45 @@ const dispatchAppointmentBooked = async (appointment) => {
       metadata: { patientName, date, startTime, endTime },
     });
 
-    // 3. Asynchronous Emails
-    const patientMail = buildAppointmentBookedEmail({
+    // 3. Branded Emails (Patient & Doctor)
+    const patientPayload = {
       recipientName: patientName,
+      recipientRole: 'PATIENT',
       doctorName,
       patientName,
+      specialisation: 'Specialist Physician',
       date,
-      startTime,
-      endTime,
-      isDoctor: false,
-    });
-    emailService.sendEmail({ to: patient.email, ...patientMail }).catch(() => {});
+      time: `${startTime}–${endTime}`,
+      fee,
+      appointmentId: appointment._id ? appointment._id.toString() : '',
+    };
+    const patientMail = emailTemplates.bookingConfirmation(patientPayload);
+    emailService.sendEmail({
+      to: patient.email,
+      ...patientMail,
+      appointmentId: appointment._id,
+      notificationType: 'bookingConfirmation',
+      payload: patientPayload,
+    }).catch(() => {});
 
-    const doctorMail = buildAppointmentBookedEmail({
-      recipientName: doctorName,
+    const doctorPayload = {
+      recipientName: `Dr. ${doctorName}`,
+      recipientRole: 'DOCTOR',
       doctorName,
       patientName,
+      specialisation: 'Specialist Physician',
       date,
-      startTime,
-      endTime,
-      isDoctor: true,
-    });
-    emailService.sendEmail({ to: doctor.email, ...doctorMail }).catch(() => {});
+      time: `${startTime}–${endTime}`,
+      appointmentId: appointment._id ? appointment._id.toString() : '',
+    };
+    const doctorMail = emailTemplates.bookingConfirmation(doctorPayload);
+    emailService.sendEmail({
+      to: doctor.email,
+      ...doctorMail,
+      appointmentId: appointment._id,
+      notificationType: 'bookingConfirmation',
+      payload: doctorPayload,
+    }).catch(() => {});
   } catch (error) {
     console.error('[NotificationService] Error in dispatchAppointmentBooked:', error.message);
   }
@@ -255,15 +271,16 @@ const dispatchAppointmentCancelled = async (appointment, cancelledByUser = {}) =
 
     const date = appointment.date;
     const startTime = appointment.startTime;
+    const reason = appointment.reason || 'Cancelled by user request';
 
     // 1. In-App Notification for Patient
     await createNotification({
       userId: patient._id,
       type: 'APPOINTMENT_CANCELLED',
       title: 'Appointment Cancelled',
-      message: `Your consultation with ${doctor.name} on ${date} at ${startTime} has been cancelled.`,
+      message: `Your consultation with Dr. ${doctor.name} on ${date} at ${startTime} has been cancelled.`,
       relatedAppointmentId: appointment._id,
-      metadata: { doctorName: doctor.name, date, startTime },
+      metadata: { doctorName: doctor.name, date, startTime, reason },
     });
 
     // 2. In-App Notification for Doctor
@@ -273,27 +290,47 @@ const dispatchAppointmentCancelled = async (appointment, cancelledByUser = {}) =
       title: 'Appointment Cancelled',
       message: `The consultation with ${patient.name} on ${date} at ${startTime} was cancelled.`,
       relatedAppointmentId: appointment._id,
-      metadata: { patientName: patient.name, date, startTime },
+      metadata: { patientName: patient.name, date, startTime, reason },
     });
 
     // 3. Asynchronous Emails
-    const patientMail = buildAppointmentCancelledEmail({
+    const patientPayload = {
       recipientName: patient.name,
+      recipientRole: 'PATIENT',
+      doctorName: doctor.name,
+      patientName: patient.name,
       date,
-      startTime,
-      isDoctor: false,
-      otherPartyName: doctor.name,
-    });
-    emailService.sendEmail({ to: patient.email, ...patientMail }).catch(() => {});
+      time: startTime,
+      reason,
+      appointmentId: appointment._id ? appointment._id.toString() : '',
+    };
+    const patientMail = emailTemplates.appointmentCancellation(patientPayload);
+    emailService.sendEmail({
+      to: patient.email,
+      ...patientMail,
+      appointmentId: appointment._id,
+      notificationType: 'appointmentCancellation',
+      payload: patientPayload,
+    }).catch(() => {});
 
-    const doctorMail = buildAppointmentCancelledEmail({
-      recipientName: doctor.name,
+    const doctorPayload = {
+      recipientName: `Dr. ${doctor.name}`,
+      recipientRole: 'DOCTOR',
+      doctorName: doctor.name,
+      patientName: patient.name,
       date,
-      startTime,
-      isDoctor: true,
-      otherPartyName: patient.name,
-    });
-    emailService.sendEmail({ to: doctor.email, ...doctorMail }).catch(() => {});
+      time: startTime,
+      reason,
+      appointmentId: appointment._id ? appointment._id.toString() : '',
+    };
+    const doctorMail = emailTemplates.appointmentCancellation(doctorPayload);
+    emailService.sendEmail({
+      to: doctor.email,
+      ...doctorMail,
+      appointmentId: appointment._id,
+      notificationType: 'appointmentCancellation',
+      payload: doctorPayload,
+    }).catch(() => {});
   } catch (error) {
     console.error('[NotificationService] Error in dispatchAppointmentCancelled:', error.message);
   }
@@ -322,7 +359,7 @@ const dispatchAppointmentRescheduled = async (newAppointment, oldAppointment) =>
       userId: patient._id,
       type: 'APPOINTMENT_RESCHEDULED',
       title: 'Appointment Rescheduled',
-      message: `Your consultation with ${doctor.name} has been moved to ${date} at ${startTime}–${endTime}.`,
+      message: `Your consultation with Dr. ${doctor.name} has been moved to ${date} at ${startTime}–${endTime}.`,
       relatedAppointmentId: newAppointment._id,
       metadata: { doctorName: doctor.name, date, startTime, endTime },
     });
@@ -337,26 +374,45 @@ const dispatchAppointmentRescheduled = async (newAppointment, oldAppointment) =>
       metadata: { patientName: patient.name, date, startTime, endTime },
     });
 
-    // 3. Asynchronous Emails
-    const patientMail = buildAppointmentRescheduledEmail({
-      recipientName: patient.name,
-      otherPartyName: doctor.name,
-      isDoctor: false,
-      date,
-      startTime,
-      endTime,
-    });
-    emailService.sendEmail({ to: patient.email, ...patientMail }).catch(() => {});
+    // 3. Emails: cancellation of old slot + confirmation of new slot
+    if (oldAppointment) {
+      const cancelPayload = {
+        recipientName: patient.name,
+        recipientRole: 'PATIENT',
+        doctorName: doctor.name,
+        patientName: patient.name,
+        date: oldAppointment.date,
+        time: oldAppointment.startTime,
+        reason: 'Rescheduled to new time slot',
+      };
+      const cancelMail = emailTemplates.appointmentCancellation(cancelPayload);
+      emailService.sendEmail({
+        to: patient.email,
+        ...cancelMail,
+        appointmentId: oldAppointment._id,
+        notificationType: 'appointmentCancellation',
+        payload: cancelPayload,
+      }).catch(() => {});
+    }
 
-    const doctorMail = buildAppointmentRescheduledEmail({
-      recipientName: doctor.name,
-      otherPartyName: patient.name,
-      isDoctor: true,
+    const bookingPayload = {
+      recipientName: patient.name,
+      recipientRole: 'PATIENT',
+      doctorName: doctor.name,
+      patientName: patient.name,
+      specialisation: 'Specialist Physician',
       date,
-      startTime,
-      endTime,
-    });
-    emailService.sendEmail({ to: doctor.email, ...doctorMail }).catch(() => {});
+      time: `${startTime}–${endTime}`,
+      appointmentId: newAppointment._id ? newAppointment._id.toString() : '',
+    };
+    const confirmMail = emailTemplates.bookingConfirmation(bookingPayload);
+    emailService.sendEmail({
+      to: patient.email,
+      ...confirmMail,
+      appointmentId: newAppointment._id,
+      notificationType: 'bookingConfirmation',
+      payload: bookingPayload,
+    }).catch(() => {});
   } catch (error) {
     console.error('[NotificationService] Error in dispatchAppointmentRescheduled:', error.message);
   }
@@ -376,10 +432,7 @@ const dispatchPrescriptionAvailable = async (prescription, appointment) => {
 
     if (!patient || !doctor) return;
 
-    const date = appointment?.date || 'recent consultation';
-    const startTime = appointment?.startTime || '';
-
-    // 1. In-App Notification for Patient
+    // In-App Notification for Patient
     await createNotification({
       userId: patient._id,
       type: 'PRESCRIPTION_AVAILABLE',
@@ -388,15 +441,6 @@ const dispatchPrescriptionAvailable = async (prescription, appointment) => {
       relatedAppointmentId: prescription.appointmentId,
       metadata: { doctorName: doctor.name, prescriptionId: prescription._id },
     });
-
-    // 2. Asynchronous Email for Patient
-    const patientMail = buildPrescriptionAvailableEmail({
-      patientName: patient.name,
-      doctorName: doctor.name,
-      date,
-      startTime,
-    });
-    emailService.sendEmail({ to: patient.email, ...patientMail }).catch(() => {});
   } catch (error) {
     console.error('[NotificationService] Error in dispatchPrescriptionAvailable:', error.message);
   }
@@ -405,8 +449,9 @@ const dispatchPrescriptionAvailable = async (prescription, appointment) => {
 /**
  * Dispatch upcoming appointment reminder (called by background job)
  * @param {object} appointment
+ * @param {number} [hoursUntil=24]
  */
-const dispatchAppointmentReminder = async (appointment) => {
+const dispatchAppointmentReminder = async (appointment, hoursUntil = 24) => {
   try {
     const [patient, doctor] = await Promise.all([
       User.findById(appointment.patientId).select('name email'),
@@ -424,43 +469,102 @@ const dispatchAppointmentReminder = async (appointment) => {
       userId: patient._id,
       type: 'APPOINTMENT_REMINDER',
       title: 'Upcoming Consultation Reminder',
-      message: `Reminder: You have a consultation with ${doctor.name} scheduled today at ${startTime}–${endTime}.`,
+      message: `Reminder: You have a consultation with Dr. ${doctor.name} scheduled ${hoursUntil <= 1 ? 'in 1 hour' : 'tomorrow'} at ${startTime}–${endTime}.`,
       relatedAppointmentId: appointment._id,
-      metadata: { doctorName: doctor.name, date, startTime, endTime },
+      metadata: { doctorName: doctor.name, date, startTime, endTime, hoursUntil },
     });
 
-    // 2. In-App Notification for Doctor
-    await createNotification({
-      userId: doctor._id,
-      type: 'APPOINTMENT_REMINDER',
-      title: 'Upcoming Consultation Reminder',
-      message: `Reminder: Consultation with ${patient.name} scheduled today at ${startTime}–${endTime}.`,
-      relatedAppointmentId: appointment._id,
-      metadata: { patientName: patient.name, date, startTime, endTime },
-    });
-
-    // 3. Asynchronous Emails
-    const patientMail = buildAppointmentReminderEmail({
+    // 2. Email Reminder to Patient
+    const reminderPayload = {
       recipientName: patient.name,
-      otherPartyName: doctor.name,
-      isDoctor: false,
+      doctorName: doctor.name,
+      patientName: patient.name,
       date,
-      startTime,
-      endTime,
-    });
-    emailService.sendEmail({ to: patient.email, ...patientMail }).catch(() => {});
-
-    const doctorMail = buildAppointmentReminderEmail({
-      recipientName: doctor.name,
-      otherPartyName: patient.name,
-      isDoctor: true,
-      date,
-      startTime,
-      endTime,
-    });
-    emailService.sendEmail({ to: doctor.email, ...doctorMail }).catch(() => {});
+      time: `${startTime}–${endTime}`,
+      hoursUntil,
+      appointmentId: appointment._id ? appointment._id.toString() : '',
+    };
+    const reminderMail = emailTemplates.appointmentReminder(reminderPayload);
+    emailService.sendEmail({
+      to: patient.email,
+      ...reminderMail,
+      appointmentId: appointment._id,
+      notificationType: 'appointmentReminder',
+      payload: reminderPayload,
+    }).catch(() => {});
   } catch (error) {
     console.error('[NotificationService] Error in dispatchAppointmentReminder:', error.message);
+  }
+};
+
+/**
+ * Dispatch Doctor Leave Conflict email to affected patient
+ * @param {object} params - { patientEmail, patientName, doctorName, date, time, rescheduleLink }
+ */
+const dispatchDoctorLeaveConflict = async ({
+  patientEmail,
+  patientName,
+  doctorName,
+  date,
+  time,
+  rescheduleLink = '/patient/doctors',
+}) => {
+  try {
+    const payload = { patientName, doctorName, date, time, rescheduleLink };
+    const mail = emailTemplates.doctorLeaveConflict(payload);
+    await emailService.sendEmail({
+      to: patientEmail,
+      ...mail,
+      notificationType: 'doctorLeaveConflict',
+      payload,
+    });
+  } catch (err) {
+    console.error('[NotificationService] Error in dispatchDoctorLeaveConflict:', err.message);
+  }
+};
+
+/**
+ * Dispatch Medication Reminder email
+ * @param {object} params - { patientEmail, patientName, medicationName, dosage, doseTime, instructions }
+ */
+const dispatchMedicationReminder = async ({
+  patientEmail,
+  patientName,
+  medicationName,
+  dosage,
+  doseTime,
+  instructions,
+}) => {
+  try {
+    const payload = { patientName, medicationName, dosage, doseTime, instructions };
+    const mail = emailTemplates.medicationReminder(payload);
+    await emailService.sendEmail({
+      to: patientEmail,
+      ...mail,
+      notificationType: 'medicationReminder',
+      payload,
+    });
+  } catch (err) {
+    console.error('[NotificationService] Error in dispatchMedicationReminder:', err.message);
+  }
+};
+
+/**
+ * Dispatch Password Changed Security Alert email
+ * @param {object} user - { email, name }
+ */
+const dispatchPasswordChangedAlert = async (user) => {
+  try {
+    const payload = { recipientName: user.name || 'User' };
+    const mail = emailTemplates.passwordChanged(payload);
+    await emailService.sendEmail({
+      to: user.email,
+      ...mail,
+      notificationType: 'passwordChanged',
+      payload,
+    });
+  } catch (err) {
+    console.error('[NotificationService] Error in dispatchPasswordChangedAlert:', err.message);
   }
 };
 
@@ -476,4 +580,7 @@ module.exports = {
   dispatchAppointmentRescheduled,
   dispatchPrescriptionAvailable,
   dispatchAppointmentReminder,
+  dispatchDoctorLeaveConflict,
+  dispatchMedicationReminder,
+  dispatchPasswordChangedAlert,
 };

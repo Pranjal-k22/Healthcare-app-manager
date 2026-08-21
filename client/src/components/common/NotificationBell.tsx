@@ -10,12 +10,14 @@ import { NotificationItem } from '../../types/notification';
 import { useAuth } from '../../hooks/useAuth';
 import {
   Bell,
+  Calendar,
   CheckCheck,
   Clock,
   ExternalLink,
   Pill,
   RefreshCw,
   XCircle,
+  Sparkles,
 } from 'lucide-react';
 
 export const NotificationBell: React.FC = () => {
@@ -29,18 +31,41 @@ export const NotificationBell: React.FC = () => {
 
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Poll for unread count every 30 seconds
-  const fetchUnreadCount = async () => {
+  // Helper for relative timestamps
+  const formatTimeAgo = (dateStr: string) => {
+    try {
+      const now = new Date();
+      const date = new Date(dateStr);
+      const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+      if (diffInSeconds < 60) return 'Just now';
+      if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+      if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+      if (diffInSeconds < 172800) return 'Yesterday';
+      return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+    } catch {
+      return '';
+    }
+  };
+
+  // Helper to clean duplicate Dr. Dr.
+  const cleanMessage = (msg: string) => {
+    if (!msg) return '';
+    return msg.replace(/Dr\.\s+Dr\./g, 'Dr.');
+  };
+
+  // Poll unread count every 30s
+  const fetchUnread = async () => {
     if (!isAuthenticated) return;
     try {
       const count = await getUnreadCount();
       setUnreadCount(count);
     } catch (err) {
-      // Non-blocking background error
+      // Non-blocking
     }
   };
 
-  const fetchDropdownNotifications = async () => {
+  const fetchDropdownItems = async () => {
     if (!isAuthenticated) return;
     try {
       setIsLoading(true);
@@ -55,21 +80,20 @@ export const NotificationBell: React.FC = () => {
 
   useEffect(() => {
     if (isAuthenticated) {
-      fetchUnreadCount();
-      const interval = setInterval(fetchUnreadCount, 30000);
+      fetchUnread();
+      const interval = setInterval(fetchUnread, 30000);
       return () => clearInterval(interval);
     }
   }, [isAuthenticated]);
 
-  // Fetch items when opening dropdown
   useEffect(() => {
     if (isOpen) {
-      fetchDropdownNotifications();
-      fetchUnreadCount();
+      fetchDropdownItems();
+      fetchUnread();
     }
   }, [isOpen]);
 
-  // Click outside listener
+  // Click outside & ESC key listeners
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -80,11 +104,19 @@ export const NotificationBell: React.FC = () => {
       }
     };
 
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsOpen(false);
+      }
+    };
+
     if (isOpen) {
       document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('keydown', handleKeyDown);
     }
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
     };
   }, [isOpen]);
 
@@ -114,127 +146,173 @@ export const NotificationBell: React.FC = () => {
 
     setIsOpen(false);
 
-    // Route navigation based on notification role & type
-    const appId = typeof notification.relatedAppointmentId === 'object'
-      ? notification.relatedAppointmentId?._id || notification.relatedAppointmentId?.id
-      : notification.relatedAppointmentId;
+    const appId =
+      typeof notification.relatedAppointmentId === 'object'
+        ? notification.relatedAppointmentId?._id || notification.relatedAppointmentId?.id
+        : notification.relatedAppointmentId;
 
     if (appId) {
       if (user?.role === 'DOCTOR') {
-        navigate(`/doctor/consultation/${appId}`);
+        navigate(`/doctor/schedule`);
       } else if (user?.role === 'PATIENT') {
-        navigate(`/patient/appointments/${appId}`);
+        navigate(`/patient/appointments`);
       } else {
-        navigate('/admin/appointments');
+        navigate('/admin/dashboard');
       }
     }
   };
 
-  const getIconForType = (type: string) => {
+  const renderIcon = (type: string) => {
     switch (type) {
       case 'APPOINTMENT_BOOKED':
       case 'APPOINTMENT_CONFIRMED':
-        return <Clock size={16} color="#10b981" />;
+        return (
+          <div className="notif-icon-pill notif-icon-success">
+            <Calendar size={15} />
+          </div>
+        );
       case 'APPOINTMENT_CANCELLED':
-        return <XCircle size={16} color="#fb7185" />;
+        return (
+          <div className="notif-icon-pill notif-icon-danger">
+            <XCircle size={15} />
+          </div>
+        );
       case 'APPOINTMENT_RESCHEDULED':
-        return <RefreshCw size={16} color="#38bdf8" />;
+        return (
+          <div className="notif-icon-pill notif-icon-info">
+            <RefreshCw size={15} />
+          </div>
+        );
       case 'PRESCRIPTION_AVAILABLE':
-        return <Pill size={16} color="#a855f7" />;
+      case 'MEDICATION_REMINDER':
+        return (
+          <div className="notif-icon-pill notif-icon-purple">
+            <Pill size={15} />
+          </div>
+        );
       case 'APPOINTMENT_REMINDER':
       default:
-        return <Bell size={16} color="#f59e0b" />;
+        return (
+          <div className="notif-icon-pill notif-icon-warning">
+            <Clock size={15} />
+          </div>
+        );
     }
   };
 
   if (!isAuthenticated) return null;
 
   return (
-    <div className="notification-bell-wrapper" ref={dropdownRef}>
+    <div className="notif-bell-container" ref={dropdownRef}>
       <button
         type="button"
-        className="notification-bell-btn"
+        className={`notif-bell-trigger-btn ${isOpen ? 'is-active' : ''}`}
         onClick={() => setIsOpen(!isOpen)}
-        aria-label="Notifications"
+        aria-label="View notifications"
         title="Notifications"
+        aria-expanded={isOpen}
       >
-        <Bell size={20} />
+        <Bell size={19} />
         {unreadCount > 0 && (
-          <span className="notification-badge">
-            {unreadCount > 99 ? '99+' : unreadCount}
+          <span className="notif-bell-badge">
+            {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}
       </button>
 
       {isOpen && (
-        <div className="notification-dropdown glass-card">
-          <div className="notification-dropdown-header">
+        <div className="notif-dropdown-menu" role="menu">
+          {/* Header */}
+          <div className="notif-dropdown-header">
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Bell size={16} color="var(--primary)" />
-              <h4 style={{ fontSize: '0.95rem', fontWeight: 700 }}>Notifications</h4>
+              <span className="notif-dropdown-title">Notifications</span>
+              {unreadCount > 0 && (
+                <span className="notif-unread-tag">{unreadCount} new</span>
+              )}
             </div>
 
             {unreadCount > 0 && (
               <button
                 type="button"
-                className="btn-mark-all-read"
+                className="notif-mark-all-btn"
                 onClick={handleMarkAllRead}
                 title="Mark all as read"
               >
-                <CheckCheck size={14} />
+                <CheckCheck size={13} />
                 <span>Mark all read</span>
               </button>
             )}
           </div>
 
-          <div className="notification-dropdown-body">
+          {/* Body Items List */}
+          <div className="notif-dropdown-body">
             {isLoading ? (
-              <div style={{ padding: '2rem', textAlign: 'center' }}>
-                <div className="spinner" style={{ margin: '0 auto', width: '24px', height: '24px' }} />
+              <div className="notif-loading-state">
+                <div
+                  className="btn-spinner"
+                  style={{
+                    width: '22px',
+                    height: '22px',
+                    margin: '0 auto 0.5rem auto',
+                    borderColor: 'var(--primary)',
+                    borderTopColor: 'transparent',
+                  }}
+                />
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: 0 }}>
+                  Loading alerts...
+                </p>
               </div>
             ) : notifications.length === 0 ? (
-              <div className="notification-empty">
-                <Bell size={24} style={{ color: 'var(--text-muted)', margin: '0 auto 0.5rem' }} />
-                <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                  You have no notifications yet.
+              <div className="notif-empty-state">
+                <div className="notif-empty-icon-circle">
+                  <Sparkles size={20} color="var(--primary)" />
+                </div>
+                <p style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--text-primary)', margin: '0 0 2px 0' }}>
+                  All caught up!
+                </p>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>
+                  You have no pending notifications.
                 </p>
               </div>
             ) : (
               notifications.map((notif) => (
                 <div
                   key={notif.id}
-                  className={`notification-item ${!notif.isRead ? 'unread' : ''}`}
+                  className={`notif-card-item ${!notif.isRead ? 'is-unread' : ''}`}
                   onClick={() => handleItemClick(notif)}
+                  role="menuitem"
                 >
-                  <div className="notification-item-icon">
-                    {getIconForType(notif.type)}
+                  <div className="notif-item-left">
+                    {renderIcon(notif.type)}
                   </div>
-                  <div className="notification-item-content">
-                    <div className="notification-item-title-row">
-                      <strong className="notification-title">{notif.title}</strong>
-                      <span className="notification-time">
-                        {new Date(notif.createdAt).toLocaleTimeString([], {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
+
+                  <div className="notif-item-main">
+                    <div className="notif-item-row">
+                      <span className="notif-item-title">{notif.title}</span>
+                      <span className="notif-item-time">
+                        {formatTimeAgo(notif.createdAt)}
                       </span>
                     </div>
-                    <p className="notification-message">{notif.message}</p>
+                    <p className="notif-item-message">
+                      {cleanMessage(notif.message)}
+                    </p>
                   </div>
-                  {!notif.isRead && <div className="unread-dot" />}
+
+                  {!notif.isRead && <span className="notif-item-unread-dot" />}
                 </div>
               ))
             )}
           </div>
 
-          <div className="notification-dropdown-footer">
+          {/* Footer */}
+          <div className="notif-dropdown-footer">
             <Link
               to="/notifications"
-              className="view-all-notifications-link"
+              className="notif-view-all-link"
               onClick={() => setIsOpen(false)}
             >
               <span>View All Notifications</span>
-              <ExternalLink size={12} />
+              <ExternalLink size={13} />
             </Link>
           </div>
         </div>

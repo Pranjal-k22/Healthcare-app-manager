@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Appointment, AvailableSlot } from '../../types/appointment';
 import { getAvailableSlots } from '../../services/appointmentApi';
 import { SlotPicker } from './SlotPicker';
-import { AlertCircle, Calendar, RefreshCw, X } from 'lucide-react';
+import { AlertCircle, Calendar, RefreshCw, X, User } from 'lucide-react';
+import Button from '../ui/Button';
 
 interface RescheduleModalProps {
   appointment: Appointment | null;
@@ -67,54 +68,100 @@ export const RescheduleModal: React.FC<RescheduleModalProps> = ({
   };
 
   return (
-    <div className="modal-overlay">
-      <div className="glass-card modal-container" style={{ maxWidth: '580px' }}>
-        <div className="modal-header">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-            <div className="modal-icon-badge">
-              <RefreshCw size={20} />
-            </div>
-            <h3 style={{ fontSize: '1.2rem', fontWeight: 700 }}>Reschedule Appointment</h3>
+    <div className="dialog-backdrop" onClick={onClose}>
+      <div
+        className="dialog-content-card modal-anim-scale"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        style={{ maxWidth: '620px', width: '100%' }}
+      >
+        <button
+          type="button"
+          className="dialog-close-btn"
+          onClick={onClose}
+          disabled={isProcessing}
+          aria-label="Close dialog"
+        >
+          <X size={18} />
+        </button>
+
+        <div className="dialog-header">
+          <div className="dialog-icon-wrapper dialog-icon-primary-bg">
+            <RefreshCw size={22} color="var(--primary)" />
           </div>
-          <button
-            type="button"
-            className="modal-close-btn"
-            onClick={onClose}
-            disabled={isProcessing}
-          >
-            <X size={18} />
-          </button>
+          <div>
+            <h3 className="dialog-title card-title" style={{ fontSize: '1.25rem', color: 'var(--text-primary)' }}>
+              Reschedule Consultation
+            </h3>
+            <p className="body-text" style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
+              Select a new date and open time slot with <strong>Dr. {appointment.doctorName}</strong>.
+            </p>
+          </div>
         </div>
 
         <form onSubmit={handleSubmit}>
-          <div className="modal-body">
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: '1rem' }}>
-              Choose a new consultation date and time slot with <strong>{appointment.doctorName}</strong>.
-            </p>
+          <div style={{ margin: '1.25rem 0 0 0' }}>
+            {/* Current Appointment Pill */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                background: 'var(--surface)',
+                border: '1px solid var(--border)',
+                borderRadius: 'var(--radius-md)',
+                padding: '0.75rem 1rem',
+                marginBottom: '1.25rem',
+                fontSize: '0.85rem',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-primary)', fontWeight: 600 }}>
+                <User size={15} color="var(--primary)" />
+                <span>Dr. {appointment.doctorName}</span>
+              </div>
+              <div style={{ color: 'var(--text-muted)' }}>
+                Current: <strong style={{ color: 'var(--text-secondary)' }}>{appointment.date} ({appointment.startTime})</strong>
+              </div>
+            </div>
 
-            <div className="form-group" style={{ marginBottom: '1.25rem' }}>
-              <label className="form-label" htmlFor="rescheduleDate">
-                <Calendar size={14} style={{ display: 'inline', marginRight: '0.35rem' }} />
-                New Consultation Date
+            {/* Date Input Field */}
+            <div className="form-group" style={{ marginBottom: '1rem' }}>
+              <label
+                htmlFor="rescheduleDate"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  fontSize: '0.875rem',
+                  fontWeight: 600,
+                  color: 'var(--text-primary)',
+                  marginBottom: '0.4rem',
+                }}
+              >
+                <Calendar size={15} color="var(--primary)" />
+                <span>New Consultation Date</span>
               </label>
               <input
                 id="rescheduleDate"
                 type="date"
-                className="form-input"
+                className="input-field-ui"
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
                 min={new Date().toISOString().split('T')[0]}
                 required
+                style={{ width: '100%' }}
               />
             </div>
 
             {fetchError && (
-              <div className="alert alert-error" style={{ padding: '0.65rem 0.85rem' }}>
+              <div className="alert-inline alert-inline-error" style={{ marginBottom: '1rem' }}>
                 <AlertCircle size={15} />
                 <span>{fetchError}</span>
               </div>
             )}
 
+            {/* Slot Picker Component */}
             <SlotPicker
               slots={slots}
               selectedSlot={selectedSlot}
@@ -123,36 +170,42 @@ export const RescheduleModal: React.FC<RescheduleModalProps> = ({
             />
 
             {error && (
-              <div className="alert alert-error" style={{ marginTop: '1rem', marginBottom: 0 }}>
+              <div className="alert-inline alert-inline-error" style={{ marginTop: '1.25rem' }}>
                 <AlertCircle size={16} />
                 <span>{error}</span>
               </div>
             )}
           </div>
 
-          <div className="modal-footer">
-            <button
+          <div
+            className="dialog-actions"
+            style={{
+              display: 'flex',
+              justifyContent: 'flex-end',
+              gap: '0.75rem',
+              marginTop: '1.5rem',
+              paddingTop: '1rem',
+              borderTop: '1px solid var(--border-light)',
+            }}
+          >
+            <Button
               type="button"
-              className="btn btn-outline"
+              variant="outline"
+              size="md"
               onClick={onClose}
               disabled={isProcessing}
             >
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
-              className="btn btn-primary"
+              variant="primary"
+              size="md"
               disabled={isProcessing || !selectedSlot || !selectedDate}
+              isLoading={isProcessing}
             >
-              {isProcessing ? (
-                <>
-                  <div className="spinner" />
-                  <span>Rescheduling...</span>
-                </>
-              ) : (
-                <span>Confirm Reschedule</span>
-              )}
-            </button>
+              Confirm Reschedule
+            </Button>
           </div>
         </form>
       </div>

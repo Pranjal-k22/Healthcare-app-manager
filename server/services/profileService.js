@@ -85,6 +85,10 @@ const changePatientPassword = async (userId, currentPassword, newPassword) => {
   user.tokenVersion = (user.tokenVersion || 0) + 1;
   await user.save();
 
+  // Asynchronously dispatch Security Alert Email
+  const { dispatchPasswordChangedAlert } = require('./notificationService');
+  dispatchPasswordChangedAlert(user).catch(() => {});
+
   return user.toJSON();
 };
 

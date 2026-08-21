@@ -2,6 +2,7 @@ const app = require('./app');
 const config = require('./config/env');
 const connectDB = require('./config/db');
 const mongoose = require('mongoose');
+const { verifyTransporter } = require('./services/emailService');
 const { startReminderJob, stopReminderJob } = require('./services/jobs/reminderJob');
 const {
   startMedicationReminderJob,
@@ -11,13 +12,21 @@ const {
   startBillingAndPrescriptionJob,
   stopBillingAndPrescriptionJob,
 } = require('./services/jobs/billingAndPrescriptionJob');
+const {
+  startEmailRetryJob,
+  stopEmailRetryJob,
+} = require('./services/jobs/emailRetryJob');
 
 // Connect to Database
 connectDB().then(() => {
+  // Verify SMTP Transporter (Non-blocking, logs warning on failure)
+  verifyTransporter().catch(() => {});
+
   // Start Background Jobs after DB is connected
   startReminderJob();
   startMedicationReminderJob();
   startBillingAndPrescriptionJob();
+  startEmailRetryJob();
 });
 
 // Start Server
@@ -35,6 +44,7 @@ const gracefulShutdown = (signal) => {
   stopReminderJob();
   stopMedicationReminderJob();
   stopBillingAndPrescriptionJob();
+  stopEmailRetryJob();
   server.close(() => {
     console.log('[Server] HTTP server closed.');
     mongoose.connection.close(false).then(() => {
@@ -52,5 +62,7 @@ process.on('unhandledRejection', (err) => {
   console.error(`[Server] Unhandled Rejection: ${err.message}`);
   stopReminderJob();
   stopMedicationReminderJob();
+  stopBillingAndPrescriptionJob();
+  stopEmailRetryJob();
   server.close(() => process.exit(1));
 });

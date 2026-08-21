@@ -86,6 +86,10 @@ app.use('/api/patient', profileRoutes);
 app.use('/api/patient', billingRoutes);
 app.use('/api/patient', prescriptionRoutes);
 
+// Dev-Only Testing Endpoints (Disabled in Production)
+const devRoutes = require('./routes/devRoutes');
+app.use('/api/dev', devRoutes);
+
 // Error Handling Middleware
 app.use(notFound);
 app.use(errorHandler);

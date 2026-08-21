@@ -49,26 +49,24 @@ const processDueMedicationReminders = async () => {
           },
         });
 
-        // 2. Send Optional Email Notification
-        if (config.ENABLE_EMAIL_NOTIFICATIONS && reminder.patientId.email) {
+        // 2. Send On-Brand Email Notification
+        if (reminder.patientId.email) {
+          const emailTemplates = require('../emailTemplates');
+          const payload = {
+            patientName: reminder.patientId.name,
+            medicationName: reminder.medicineName,
+            dosage: reminder.dosage,
+            doseTime: reminder.scheduledTime,
+            instructions: reminder.instructions,
+          };
+          const rendered = emailTemplates.medicationReminder(payload);
           sendEmail({
             to: reminder.patientId.email,
-            subject: `Medication Reminder: ${reminder.medicineName} (${reminder.dosage})`,
-            text: `Hello ${reminder.patientId.name},\n\nThis is a reminder to take your prescribed dose of ${reminder.medicineName} (${reminder.dosage}) at ${reminder.scheduledTime}.\nInstructions: ${reminder.instructions}\n\nStay healthy,\nHealthPulse Clinic`,
-            html: `
-              <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 8px;">
-                <h2 style="color: #0ea5e9;">Medication Dose Reminder</h2>
-                <p>Hello <strong>${reminder.patientId.name}</strong>,</p>
-                <p>It is time to take your prescribed medication:</p>
-                <div style="background: #f8fafc; padding: 15px; border-left: 4px solid #0ea5e9; border-radius: 4px; margin: 15px 0;">
-                  <h3 style="margin: 0 0 5px 0; color: #0f172a;">${reminder.medicineName}</h3>
-                  <p style="margin: 3px 0;"><strong>Dosage:</strong> ${reminder.dosage}</p>
-                  <p style="margin: 3px 0;"><strong>Scheduled Time:</strong> ${reminder.scheduledTime}</p>
-                  <p style="margin: 3px 0;"><strong>Doctor Instructions:</strong> ${reminder.instructions}</p>
-                </div>
-                <p style="font-size: 12px; color: #64748b;">Prescribed by Dr. ${reminder.doctorId?.name || 'Practitioner'}</p>
-              </div>
-            `,
+            ...rendered,
+            appointmentId: reminder.appointmentId,
+            notificationType: 'medicationReminder',
+            payload,
+            recipientName: reminder.patientId.name,
           }).catch((err) => {
             console.error('[MedicationJob] Email dispatch failed:', err.message);
           });
