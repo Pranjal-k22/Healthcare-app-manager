@@ -10,6 +10,8 @@ import {
   PlusCircle,
   Stethoscope,
   Users,
+  ShieldCheck,
+  UserCheck,
 } from 'lucide-react';
 
 export const ManageDoctors: React.FC = () => {
@@ -71,102 +73,199 @@ export const ManageDoctors: React.FC = () => {
     new Set(doctors.map((d) => d.specialization).filter(Boolean))
   );
 
+  const activeCount = doctors.filter((d) => d.isActive !== false).length;
+
+
   return (
-    <div className="container dashboard-container">
-      <div className="dashboard-header-row">
+    <div className="container dashboard-container" style={{ maxWidth: '1180px', padding: '2rem 1.5rem', margin: '0 auto' }}>
+      {/* Header Row */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.75rem' }}>
         <div>
-          <h1 className="welcome-title" style={{ fontSize: '1.85rem' }}>
-            Doctor Management
-          </h1>
-          <p className="welcome-subtitle">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+            <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0f172a', margin: 0, letterSpacing: '-0.02em' }}>
+              Doctor Management
+            </h1>
+            <span
+              style={{
+                fontSize: '0.72rem',
+                fontWeight: 700,
+                padding: '0.2rem 0.65rem',
+                borderRadius: '999px',
+                background: '#eff6ff',
+                color: '#0062cc',
+                border: '1px solid #bfdbfe',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.3rem',
+              }}
+            >
+              <ShieldCheck size={12} /> Admin Directory
+            </span>
+          </div>
+          <p style={{ color: '#64748b', fontSize: '0.9rem', marginTop: '0.35rem', marginBottom: 0 }}>
             Provision practitioner accounts, configure working hours, and manage schedules.
           </p>
         </div>
-        <Link to="/admin/doctors/create" className="btn btn-primary">
-          <PlusCircle size={18} />
+
+        <Link
+          to="/admin/doctors/create"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.45rem',
+            padding: '0.6rem 1.25rem',
+            borderRadius: '8px',
+            background: 'linear-gradient(135deg, #0062cc, #0052ad)',
+            color: '#ffffff',
+            fontSize: '0.88rem',
+            fontWeight: 700,
+            textDecoration: 'none',
+            boxShadow: '0 4px 12px rgba(0, 98, 204, 0.25)',
+          }}
+        >
+          <PlusCircle size={16} />
           <span>Add New Doctor</span>
         </Link>
       </div>
 
-      <div className="stats-grid" style={{ marginBottom: '1.5rem' }}>
-        <div className="glass-card stat-card">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span className="stat-label">Total Doctors</span>
-            <Users size={20} color="#a855f7" />
-          </div>
-          <span className="stat-value">{doctors.length}</span>
-          <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-            Configured in System
-          </span>
-        </div>
-
-        <div className="glass-card stat-card">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span className="stat-label">Specializations</span>
-            <Stethoscope size={20} color="var(--primary)" />
-          </div>
-          <span className="stat-value">{uniqueSpecializations.length}</span>
-          <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-            Active Medical Domains
-          </span>
-        </div>
-      </div>
-
       {successMsg && (
-        <div className="alert alert-success" style={{ marginBottom: '1rem' }}>
-          <CheckCircle2 size={18} />
+        <div style={{ marginBottom: '1.25rem', padding: '0.85rem 1.25rem', borderRadius: '10px', background: '#ecfdf5', border: '1px solid #a7f3d0', color: '#047857', display: 'flex', alignItems: 'center', gap: '0.65rem', fontSize: '0.9rem', fontWeight: 500 }}>
+          <CheckCircle2 size={18} color="#059669" />
           <span>{successMsg}</span>
         </div>
       )}
 
-      <DoctorSearchBar
-        searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
-        selectedSpecialization={selectedSpecialization}
-        onSpecializationChange={setSelectedSpecialization}
-        specializations={uniqueSpecializations}
-        onReset={() => {
-          setSearchTerm('');
-          setSelectedSpecialization('');
-        }}
-      />
-
       {error && (
-        <div className="alert alert-error" style={{ marginTop: '1.5rem' }}>
-          <AlertCircle size={18} />
+        <div style={{ marginBottom: '1.25rem', padding: '0.85rem 1.25rem', borderRadius: '10px', background: '#fef2f2', border: '1px solid #fecaca', color: '#b91c1c', display: 'flex', alignItems: 'center', gap: '0.65rem', fontSize: '0.9rem', fontWeight: 500 }}>
+          <AlertCircle size={18} color="#dc2626" />
           <span>{error}</span>
         </div>
       )}
 
+      {/* 3 Top Summary Stat Cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', marginBottom: '1.75rem' }}>
+        <div
+          style={{
+            padding: '1.25rem',
+            borderRadius: '12px',
+            background: '#ffffff',
+            border: '1px solid #e2e8f0',
+            boxShadow: '0 2px 8px rgba(15, 23, 42, 0.04)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '0.35rem',
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Total Doctors
+            </span>
+            <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#f3e8ff', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9333ea' }}>
+              <Users size={18} />
+            </div>
+          </div>
+          <span style={{ fontSize: '1.85rem', fontWeight: 800, color: '#0f172a' }}>{doctors.length}</span>
+          <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Configured in System</span>
+        </div>
+
+        <div
+          style={{
+            padding: '1.25rem',
+            borderRadius: '12px',
+            background: '#ffffff',
+            border: '1px solid #e2e8f0',
+            boxShadow: '0 2px 8px rgba(15, 23, 42, 0.04)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '0.35rem',
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#059669', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Active Practitioners
+            </span>
+            <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#ecfdf5', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#059669' }}>
+              <UserCheck size={18} />
+            </div>
+          </div>
+          <span style={{ fontSize: '1.85rem', fontWeight: 800, color: '#059669' }}>{activeCount}</span>
+          <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Accepting bookings</span>
+        </div>
+
+        <div
+          style={{
+            padding: '1.25rem',
+            borderRadius: '12px',
+            background: '#ffffff',
+            border: '1px solid #e2e8f0',
+            boxShadow: '0 2px 8px rgba(15, 23, 42, 0.04)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '0.35rem',
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Specialties
+            </span>
+            <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0062cc' }}>
+              <Stethoscope size={18} />
+            </div>
+          </div>
+          <span style={{ fontSize: '1.85rem', fontWeight: 800, color: '#0062cc' }}>{uniqueSpecializations.length}</span>
+          <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Medical domains covered</span>
+        </div>
+      </div>
+
+      {/* Filter & Search Bar */}
+      <div style={{ marginBottom: '1.75rem' }}>
+        <DoctorSearchBar
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          selectedSpecialization={selectedSpecialization}
+          onSpecializationChange={setSelectedSpecialization}
+          specializations={uniqueSpecializations}
+          onReset={() => {
+            setSearchTerm('');
+            setSelectedSpecialization('');
+          }}
+        />
+      </div>
+
+      {/* Doctors Grid */}
       {isLoading ? (
-        <div className="loader-container">
-          <div className="spinner" style={{ width: '32px', height: '32px' }} />
-          <p style={{ color: 'var(--text-secondary)', marginTop: '0.75rem' }}>
-            Loading doctor directory...
+        <div style={{ textAlign: 'center', padding: '4rem 0' }}>
+          <div className="spinner" style={{ width: '36px', height: '36px', margin: '0 auto', borderWidth: '3px' }} />
+          <p style={{ color: '#64748b', marginTop: '1rem', fontWeight: 500 }}>
+            Loading doctor roster...
           </p>
         </div>
       ) : doctors.length === 0 ? (
-        <div className="glass-card empty-state-card">
-          <Stethoscope size={48} color="var(--text-muted)" />
-          <h3>No Doctors Found</h3>
-          <p style={{ color: 'var(--text-secondary)', margin: '0.5rem 0 1.25rem' }}>
-            {searchTerm || selectedSpecialization
-              ? 'No doctors matched your filter criteria.'
-              : 'No doctor profiles have been created yet.'}
+        <div
+          style={{
+            padding: '3.5rem 1.5rem',
+            textAlign: 'center',
+            background: '#ffffff',
+            borderRadius: '14px',
+            border: '1.5px dashed #cbd5e1',
+          }}
+        >
+          <Stethoscope size={36} color="#94a3b8" style={{ margin: '0 auto 0.75rem' }} />
+          <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#0f172a', margin: '0 0 0.35rem' }}>
+            No practitioners found
+          </h3>
+          <p style={{ color: '#64748b', fontSize: '0.9rem', margin: 0 }}>
+            Try adjusting your search keywords or specialization filter.
           </p>
-          <Link to="/admin/doctors/create" className="btn btn-primary btn-sm">
-            <PlusCircle size={16} />
-            <span>Create First Doctor Profile</span>
-          </Link>
         </div>
       ) : (
-        <div className="doctors-grid">
-          {doctors.map((doc) => (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.25rem' }}>
+          {doctors.map((doctor) => (
             <DoctorCard
-              key={doc.id}
-              doctor={doc}
+              key={doctor.id}
+              doctor={doctor}
               isAdminView={true}
-              onToggleStatus={handleToggleStatus}
+              onToggleStatus={(docId, newStatus) => handleToggleStatus(docId, newStatus)}
               isStatusUpdating={isStatusUpdating}
             />
           ))}
@@ -175,3 +274,5 @@ export const ManageDoctors: React.FC = () => {
     </div>
   );
 };
+
+export default ManageDoctors;
