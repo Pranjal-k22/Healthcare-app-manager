@@ -1,10 +1,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Appointment } from '../../types/appointment';
-import { AppointmentStatusBadge } from './AppointmentStatusBadge';
+import StatusBadge from '../ui/StatusBadge';
+import Card from '../ui/Card';
+import Button from '../ui/Button';
 import {
   Calendar,
-  CheckCircle2,
   Clock,
   ExternalLink,
   FileText,
@@ -37,20 +38,21 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({
   const isCompleted = appointment.status === 'COMPLETED';
 
   return (
-    <div className="glass-card appointment-card">
+    <Card className="appointment-card-ui" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      {/* Card Header */}
       <div className="appointment-card-header">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           <div className="appointment-avatar">
             {viewRole === 'PATIENT' ? (
               <Stethoscope size={20} color="var(--primary)" />
             ) : (
-              <User size={20} color="var(--accent-teal)" />
+              <User size={20} color="var(--primary-dark)" />
             )}
           </div>
           <div>
             <h4 className="appointment-person-name">
               {viewRole === 'PATIENT'
-                ? appointment.doctorName
+                ? `Dr. ${appointment.doctorName}`
                 : appointment.patientName}
             </h4>
             <span className="appointment-person-email">
@@ -62,10 +64,11 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({
           </div>
         </div>
 
-        <AppointmentStatusBadge status={appointment.status} />
+        <StatusBadge status={appointment.status} size="sm" />
       </div>
 
-      <div className="appointment-card-body">
+      {/* Card Body */}
+      <div style={{ flex: 1 }}>
         <div className="appointment-timing-row">
           <div className="appointment-time-badge">
             <Calendar size={14} color="var(--primary)" />
@@ -81,87 +84,90 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({
 
         {appointment.reason && (
           <div className="appointment-reason-box">
-            <FileText size={14} color="var(--text-secondary)" style={{ flexShrink: 0 }} />
-            <span className="appointment-reason-text">{appointment.reason}</span>
+            <FileText size={14} color="var(--text-secondary)" style={{ flexShrink: 0, marginTop: '2px' }} />
+            <span>{appointment.reason}</span>
           </div>
         )}
       </div>
 
+      {/* Card Actions */}
       <div className="appointment-card-actions">
         {/* Doctor Actions */}
         {viewRole === 'DOCTOR' && (
-          <Link
-            to={`/doctor/consultation/${appointment.id}`}
-            className="btn btn-primary btn-sm"
-            style={{ flex: 1 }}
-          >
-            <Stethoscope size={14} />
-            <span>{isBooked ? 'Consultation Room' : 'View Clinical Record'}</span>
-          </Link>
-        )}
-
-        {/* Doctor One-Click Complete (if booked) */}
-        {viewRole === 'DOCTOR' && isBooked && onComplete && (
-          <button
-            type="button"
-            className="btn btn-emerald-outline btn-sm"
-            onClick={() => onComplete(appointment)}
-            disabled={isActionLoading}
-            title="Mark Completed"
-          >
-            <CheckCircle2 size={14} />
-          </button>
+          <div style={{ display: 'flex', gap: '0.5rem', width: '100%' }}>
+            <Link
+              to={`/doctor/consultation/${appointment.id}`}
+              style={{ flex: 1 }}
+            >
+              <Button variant="primary" size="sm" fullWidth leftIcon={<Stethoscope size={14} />}>
+                {isBooked ? 'Consultation Room' : 'View Record'}
+              </Button>
+            </Link>
+            {isBooked && onComplete && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onComplete(appointment)}
+                disabled={isActionLoading}
+              >
+                Complete
+              </Button>
+            )}
+          </div>
         )}
 
         {/* Patient Completed Details View */}
         {viewRole === 'PATIENT' && isCompleted && (
           <Link
             to={`/patient/appointments/${appointment.id}`}
-            className="btn btn-primary btn-sm btn-block"
+            style={{ width: '100%' }}
           >
-            <Pill size={14} />
-            <span>View Summary & Prescription</span>
+            <Button variant="primary" size="sm" fullWidth leftIcon={<Pill size={14} />}>
+              View Summary & Prescription
+            </Button>
           </Link>
         )}
 
         {/* Patient Active Booked Actions */}
         {isBooked && viewRole === 'PATIENT' && (
-          <>
+          <div style={{ display: 'flex', gap: '0.5rem', width: '100%' }}>
             <Link
               to={`/patient/appointments/${appointment.id}`}
-              className="btn btn-outline btn-sm"
+              style={{ flex: 1 }}
             >
-              <ExternalLink size={14} />
-              <span>Details</span>
+              <Button variant="outline" size="sm" fullWidth leftIcon={<ExternalLink size={13} />}>
+                Details
+              </Button>
             </Link>
 
             {onReschedule && (
-              <button
-                type="button"
-                className="btn btn-outline btn-sm"
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={() => onReschedule(appointment)}
                 disabled={isActionLoading}
+                leftIcon={<RefreshCw size={13} />}
               >
-                <RefreshCw size={14} />
-                <span>Reschedule</span>
-              </button>
+                Reschedule
+              </Button>
             )}
-          </>
-        )}
 
-        {/* Cancel Button (Owner/Doctor/Admin) */}
-        {isBooked && onCancel && (
-          <button
-            type="button"
-            className="btn btn-danger-outline btn-sm"
-            onClick={() => onCancel(appointment)}
-            disabled={isActionLoading}
-            title="Cancel Appointment"
-          >
-            <XCircle size={14} />
-          </button>
+            {onCancel && (
+              <Button
+                variant="danger"
+                size="sm"
+                onClick={() => onCancel(appointment)}
+                disabled={isActionLoading}
+                leftIcon={<XCircle size={13} />}
+              >
+                Cancel
+              </Button>
+            )}
+          </div>
         )}
       </div>
-    </div>
+    </Card>
   );
 };
+
+export default AppointmentCard;

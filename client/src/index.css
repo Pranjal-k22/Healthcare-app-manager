@@ -90,24 +90,36 @@
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(255, 255, 255, 0.88);
   text-decoration: none;
   font-size: 0.9375rem;
   font-weight: 500;
-  padding: 0.5rem 0.85rem;
-  border-radius: var(--radius-sm);
+  padding: 6px 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  outline: none;
   transition: all var(--transition-fast);
 }
 
 .nav-link-item:hover {
   color: var(--white);
   background: rgba(255, 255, 255, 0.12);
+  border-color: transparent;
 }
 
 .nav-link-active {
   color: var(--white) !important;
-  background: rgba(255, 255, 255, 0.2) !important;
+  background: rgba(255, 255, 255, 0.18) !important;
   font-weight: 600;
+  border-color: transparent !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.nav-link-item:focus,
+.nav-link-item:focus-visible {
+  outline: none !important;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.35) !important;
 }
 
 .nav-user-panel {
@@ -1647,6 +1659,362 @@
 }
 
 /* ==========================================================================
+   Segmented Tab Group (Pill Tabs)
+   ========================================================================== */
+
+.segmented-tab-group {
+  display: inline-flex;
+  align-items: center;
+  background-color: var(--surface-alt);
+  padding: 4px;
+  border-radius: var(--radius-md);
+  border: none;
+  gap: 2px;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.segmented-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 8px 16px;
+  min-height: 40px;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: transparent;
+  font-family: var(--font-family);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all var(--transition-fast);
+  user-select: none;
+}
+
+.segmented-tab-btn:hover:not(.is-active) {
+  color: var(--text-primary);
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
+.segmented-tab-btn.is-active {
+  background-color: var(--white);
+  color: var(--primary);
+  font-weight: 600;
+  box-shadow: var(--shadow-sm);
+}
+
+/* ==========================================================================
+   Empty State Block
+   ========================================================================== */
+
+.empty-state-card-ui {
+  text-align: center;
+  padding: 56px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.empty-state-icon-circle {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background-color: rgba(0, 98, 204, 0.08);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.25rem;
+}
+
+.empty-state-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.empty-state-desc {
+  font-size: 15px;
+  color: var(--text-secondary);
+  max-width: 440px;
+  margin: 0 auto 1.5rem auto;
+  line-height: 1.5;
+}
+
+/* ==========================================================================
+   Appointment Grid & Cards
+   ========================================================================== */
+
+.appointments-grid-ui {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 1.25rem;
+}
+
+.appointment-card-ui {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.appointment-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.appointment-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  background-color: rgba(0, 98, 204, 0.08);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.appointment-person-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.appointment-person-email {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.appointment-timing-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.appointment-time-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 13px;
+  color: var(--text-primary);
+  background-color: var(--surface);
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-light);
+  font-weight: 500;
+}
+
+.appointment-reason-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  font-size: 13px;
+  color: var(--text-secondary);
+  background-color: var(--surface);
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  margin-bottom: 1rem;
+}
+
+.appointment-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: auto;
+  padding-top: 1rem;
+  border-top: 1px solid var(--surface-alt);
+}
+
+/* ==========================================================================
+   Doctor Search & Doctor Card UI
+   ========================================================================== */
+
+.search-filter-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.search-input-col {
+  flex: 2;
+  min-width: 260px;
+}
+
+.filter-select-col {
+  flex: 1.2;
+  min-width: 200px;
+}
+
+.clear-btn-col {
+  display: flex;
+  align-items: center;
+}
+
+.doctor-card-ui {
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.doctor-card-ui:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.doctor-card-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.doctor-card-main-info {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.25rem;
+  flex: 1;
+  min-width: 280px;
+}
+
+.doctor-initials-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background-color: rgba(0, 98, 204, 0.08);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 16px;
+  flex-shrink: 0;
+  border: 1px solid rgba(0, 98, 204, 0.15);
+}
+
+.doctor-details-block {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.doctor-name-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.doctor-name-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.doctor-spec-chip {
+  display: inline-block;
+  background-color: var(--surface);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-light);
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.doctor-qualifications-text {
+  color: var(--text-muted);
+}
+
+.doctor-contact-row {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  font-size: 13px;
+  color: var(--text-secondary);
+  flex-wrap: wrap;
+}
+
+.doctor-contact-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.doctor-stats-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 13px;
+  color: var(--text-secondary);
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.doctor-stat-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-weight: 500;
+}
+
+.doctor-stat-divider {
+  color: var(--border);
+}
+
+.doctor-card-side-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  min-width: 200px;
+}
+
+.doctor-status-and-fee {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.doctor-fee-display {
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+}
+
+.doctor-fee-amount {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.doctor-fee-unit {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.doctor-card-action-btn-wrap {
+  width: 100%;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* ==========================================================================
    5. Responsive Breakpoints
    ========================================================================== */
 
@@ -1728,6 +2096,10 @@
     grid-template-columns: 1fr;
   }
 
+  .appointments-grid-ui {
+    grid-template-columns: 1fr;
+  }
+
   .next-appointment-hero-card {
     flex-direction: column;
     align-items: flex-start;
@@ -1749,5 +2121,53 @@
 
   .step-divider {
     display: none;
+  }
+
+  .segmented-tab-group {
+    width: 100%;
+    display: flex;
+  }
+
+  .segmented-tab-btn {
+    flex: 1;
+    padding: 8px 10px;
+    font-size: 13px;
+  }
+
+  .search-filter-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .search-input-col,
+  .filter-select-col,
+  .clear-btn-col {
+    width: 100%;
+    min-width: 100%;
+  }
+
+  .doctor-card-inner {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .doctor-card-main-info {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .doctor-card-side-info {
+    align-items: stretch;
+    width: 100%;
+    border-top: 1px solid var(--surface-alt);
+    padding-top: 1rem;
+    margin-top: 0.5rem;
+  }
+
+  .doctor-status-and-fee {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
   }
 }

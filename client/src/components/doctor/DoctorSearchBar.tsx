@@ -1,4 +1,8 @@
 import React from 'react';
+import Input from '../ui/Input';
+import Select from '../ui/Select';
+import Button from '../ui/Button';
+import Card from '../ui/Card';
 import { Filter, Search, X } from 'lucide-react';
 
 interface DoctorSearchBarProps {
@@ -18,60 +22,70 @@ export const DoctorSearchBar: React.FC<DoctorSearchBarProps> = ({
   specializations,
   onReset,
 }) => {
-  const hasActiveFilters = searchTerm || selectedSpecialization;
+  const hasActiveFilters = Boolean(searchTerm || selectedSpecialization);
 
   return (
-    <div className="glass-card search-bar-container">
-      <div className="search-inputs-row">
-        {/* Keyword Search */}
-        <div className="search-field" style={{ flex: 2 }}>
-          <Search size={18} className="search-icon" />
-          <input
-            type="text"
-            className="form-input search-input"
-            placeholder="Search doctor name or keyword..."
-            value={searchTerm}
-            onChange={(e) => onSearchChange(e.target.value)}
-          />
-          {searchTerm && (
-            <button
-              type="button"
-              className="search-clear-btn"
-              onClick={() => onSearchChange('')}
-            >
-              <X size={14} />
-            </button>
+    <Card noPadding className="doctor-search-bar-card" style={{ marginBottom: '1.75rem' }}>
+      <div style={{ padding: '18px 20px' }}>
+        <div className="search-filter-row">
+          {/* Keyword Search Input */}
+          <div className="search-input-col">
+            <Input
+              id="doctor-search-input"
+              type="text"
+              placeholder="Search doctor name or specialization..."
+              value={searchTerm}
+              onChange={(e) => onSearchChange(e.target.value)}
+              leftIcon={<Search size={18} />}
+              rightIcon={
+                searchTerm ? (
+                  <button
+                    type="button"
+                    onClick={() => onSearchChange('')}
+                    style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}
+                    aria-label="Clear search text"
+                  >
+                    <X size={16} />
+                  </button>
+                ) : undefined
+              }
+              style={{ marginBottom: 0 }}
+            />
+          </div>
+
+          {/* Specialization Select */}
+          <div className="filter-select-col">
+            <Select
+              id="doctor-spec-filter"
+              value={selectedSpecialization}
+              onChange={(e) => onSpecializationChange(e.target.value)}
+              leftIcon={<Filter size={18} />}
+              options={[
+                { value: '', label: 'All Specializations' },
+                ...specializations.map((spec) => ({ value: spec, label: spec })),
+              ]}
+              style={{ marginBottom: 0 }}
+            />
+          </div>
+
+          {/* Clear Filters Button */}
+          {hasActiveFilters && (
+            <div className="clear-btn-col">
+              <Button
+                type="button"
+                variant="outline"
+                size="md"
+                onClick={onReset}
+                leftIcon={<X size={15} />}
+              >
+                Clear
+              </Button>
+            </div>
           )}
         </div>
-
-        {/* Specialization Filter */}
-        <div className="search-field" style={{ flex: 1.2 }}>
-          <Filter size={18} className="search-icon" />
-          <select
-            className="form-input search-select"
-            value={selectedSpecialization}
-            onChange={(e) => onSpecializationChange(e.target.value)}
-          >
-            <option value="">All Specializations</option>
-            {specializations.map((spec) => (
-              <option key={spec} value={spec}>
-                {spec}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {hasActiveFilters && (
-          <button
-            type="button"
-            className="btn btn-outline btn-sm"
-            onClick={onReset}
-            style={{ height: '42px' }}
-          >
-            Clear Filters
-          </button>
-        )}
       </div>
-    </div>
+    </Card>
   );
 };
+
+export default DoctorSearchBar;

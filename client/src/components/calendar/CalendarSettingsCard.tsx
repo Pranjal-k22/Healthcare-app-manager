@@ -6,10 +6,14 @@ import {
   disconnectGoogleCalendar,
 } from '../../services/calendarApi';
 import { CalendarConnectionStatus } from '../../types/calendar';
+import Card from '../ui/Card';
+import Button from '../ui/Button';
+import StatusBadge from '../ui/StatusBadge';
+import InlineAlert from '../ui/InlineAlert';
+import ConfirmDialog from '../ui/ConfirmDialog';
+import { useToast } from '../ui/Toast';
 import {
-  AlertCircle,
   Calendar,
-  CheckCircle2,
   ExternalLink,
   LogOut,
   ShieldCheck,
@@ -17,10 +21,12 @@ import {
 
 export const CalendarSettingsCard: React.FC = () => {
   const location = useLocation();
+  const { success, error: toastError } = useToast();
 
   const [status, setStatus] = useState<CalendarConnectionStatus | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showDisconnectConfirm, setShowDisconnectConfirm] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -43,10 +49,14 @@ export const CalendarSettingsCard: React.FC = () => {
     // Check for redirect search params from OAuth callback
     const searchParams = new URLSearchParams(location.search);
     if (searchParams.get('calendar_connected') === 'true') {
-      setMessage('Google Calendar successfully linked! Future consultations will be synchronized.');
+      const successMsg = 'Google Calendar successfully linked! Future consultations will be synchronized.';
+      setMessage(successMsg);
+      success(successMsg, 'Calendar Linked');
     }
     if (searchParams.get('calendar_error')) {
-      setError(`Google OAuth encountered an issue: ${searchParams.get('calendar_error')}`);
+      const errMsg = `Google OAuth encountered an issue: ${searchParams.get('calendar_error')}`;
+      setError(errMsg);
+      toastError(errMsg, 'OAuth Error');
     }
   }, [location.search]);
 
@@ -59,11 +69,12 @@ export const CalendarSettingsCard: React.FC = () => {
       // Redirect user to Google OAuth consent screen
       window.location.href = authUrl;
     } catch (err: any) {
-      setError(
+      const errMsg =
         err.response?.data?.message ||
-          err.message ||
-          'Failed to initiate Google Calendar connection.'
-      );
+        err.message ||
+        'Failed to initiate Google Calendar connection.';
+      setError(errMsg);
+      toastError(errMsg, 'Connection Error');
       setIsProcessing(false);
     }
   };
@@ -76,117 +87,143 @@ export const CalendarSettingsCard: React.FC = () => {
       await disconnectGoogleCalendar();
       setStatus({ isConnected: false, googleAccountEmail: '' });
       setMessage('Google Calendar disconnected successfully.');
+      success('Google Calendar disconnected.', 'Disconnected');
+      setShowDisconnectConfirm(false);
     } catch (err: any) {
-      setError(err.message || 'Failed to disconnect Google Calendar.');
+      const errMsg = err.message || 'Failed to disconnect Google Calendar.';
+      setError(errMsg);
+      toastError(errMsg, 'Error');
     } finally {
       setIsProcessing(false);
     }
   };
 
   return (
-    <div className="glass-card calendar-settings-card">
-      <div className="calendar-settings-header">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <div className="calendar-icon-badge">
-            <Calendar size={22} color="#38bdf8" />
-          </div>
-          <div>
-            <h3 style={{ fontSize: '1.15rem', fontWeight: 800 }}>
-              Google Calendar Synchronization
-            </h3>
-            <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-              Automatically sync your appointments and consultations to your Google Calendar
-            </span>
-          </div>
-        </div>
-
-        {status && status.isConnected ? (
-          <span className="calendar-status-badge badge-connected">
-            <CheckCircle2 size={13} />
-            <span>Connected</span>
-          </span>
-        ) : (
-          <span className="calendar-status-badge badge-disconnected">
-            Not Connected
-          </span>
-        )}
-      </div>
-
-      {message && (
-        <div className="alert alert-success" style={{ margin: '1rem 0 0.5rem' }}>
-          <CheckCircle2 size={16} />
-          <span>{message}</span>
-        </div>
-      )}
-
-      {error && (
-        <div className="alert alert-error" style={{ margin: '1rem 0 0.5rem' }}>
-          <AlertCircle size={16} />
-          <span>{error}</span>
-        </div>
-      )}
-
-      <div className="calendar-settings-body">
-        {isLoading ? (
-          <div style={{ padding: '1.5rem', textAlign: 'center' }}>
-            <div className="spinner" style={{ width: '24px', height: '24px', margin: '0 auto' }} />
-          </div>
-        ) : status && status.isConnected ? (
-          <div className="calendar-connected-box">
-            <div className="calendar-account-info">
-              <span className="cal-label">Linked Account:</span>
-              <strong className="cal-email">{status.googleAccountEmail || 'Google Account'}</strong>
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.75rem', fontSize: '0.825rem', color: 'var(--text-secondary)' }}>
-              <ShieldCheck size={15} color="#10b981" />
-              <span>
-                Automatic 2-way event syncing is active. Cancelled and rescheduled visits update automatically.
-              </span>
-            </div>
-
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1.25rem' }}>
-              <button
-                type="button"
-                className="btn btn-danger-outline btn-sm"
-                onClick={handleDisconnect}
-                disabled={isProcessing}
+    <>
+      <Card noPadding style={{ overflow: 'hidden' }}>
+        <div style={{ padding: '24px' }}>
+          {/* Header Row */}
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', marginBottom: '1rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+              <div
+                style={{
+                  width: '42px',
+                  height: '42px',
+                  borderRadius: '50%',
+                  backgroundColor: 'rgba(0, 198, 255, 0.12)',
+                  color: 'var(--primary)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                }}
               >
-                <LogOut size={14} />
-                <span>Disconnect Calendar</span>
-              </button>
+                <Calendar size={22} />
+              </div>
+              <div>
+                <h3 className="card-title" style={{ margin: 0 }}>
+                  Google Calendar Synchronization
+                </h3>
+                <p className="helper-text" style={{ marginTop: '2px' }}>
+                  Automatically sync your scheduled appointments and consultations to your Google Calendar
+                </p>
+              </div>
             </div>
-          </div>
-        ) : (
-          <div className="calendar-disconnected-box">
-            <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-              Connect your Google Calendar to synchronize scheduled consultation slots, receive Google Calendar reminders, and access appointment timing across all your devices.
-            </p>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-start', marginTop: '1.25rem' }}>
-              <button
-                type="button"
-                className="btn btn-primary btn-sm"
-                onClick={handleConnect}
-                disabled={isProcessing}
-                style={{ background: 'linear-gradient(135deg, #0284c7, #0ea5e9)' }}
-              >
-                {isProcessing ? (
-                  <>
-                    <div className="spinner" />
-                    <span>Connecting...</span>
-                  </>
-                ) : (
-                  <>
-                    <ExternalLink size={14} />
-                    <span>Connect Google Calendar</span>
-                  </>
-                )}
-              </button>
+            <div>
+              {status && status.isConnected ? (
+                <StatusBadge status="ACTIVE" label="Connected" size="sm" />
+              ) : (
+                <StatusBadge status="EXPIRED" label="Not Connected" size="sm" />
+              )}
             </div>
           </div>
-        )}
-      </div>
-    </div>
+
+          {/* Feedback Alerts */}
+          {message && (
+            <InlineAlert
+              type="success"
+              message={message}
+              onClose={() => setMessage(null)}
+            />
+          )}
+
+          {error && (
+            <InlineAlert
+              type="danger"
+              message={error}
+              onClose={() => setError(null)}
+            />
+          )}
+
+          {/* Card Body */}
+          {isLoading ? (
+            <div style={{ padding: '1rem 0', textAlign: 'center' }}>
+              <div className="btn-spinner" style={{ width: '24px', height: '24px', margin: '0 auto', borderColor: 'var(--primary)', borderTopColor: 'transparent' }} />
+            </div>
+          ) : status && status.isConnected ? (
+            <div style={{ backgroundColor: 'var(--surface)', padding: '14px 18px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-light)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
+                <div>
+                  <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Linked Google Account</div>
+                  <div style={{ fontWeight: 600, fontSize: '14px', color: 'var(--text-primary)', marginTop: '2px' }}>
+                    {status.googleAccountEmail || 'Google Account Active'}
+                  </div>
+                </div>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowDisconnectConfirm(true)}
+                  disabled={isProcessing}
+                  leftIcon={<LogOut size={14} />}
+                  style={{ color: 'var(--danger)', borderColor: 'var(--border)' }}
+                >
+                  Disconnect Calendar
+                </Button>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.75rem', fontSize: '13px', color: 'var(--text-secondary)' }}>
+                <ShieldCheck size={16} color="var(--success)" />
+                <span>Automatic 2-way event syncing is active. Cancelled or rescheduled visits update automatically.</span>
+              </div>
+            </div>
+          ) : (
+            <div>
+              <p className="body-text" style={{ color: 'var(--text-secondary)', fontSize: '14px', lineHeight: 1.5, marginBottom: '1.25rem' }}>
+                Connect your Google Calendar to synchronize scheduled consultation slots, receive Google Calendar reminders, and access appointment timing across all your devices.
+              </p>
+
+              <div>
+                <Button
+                  variant="outline"
+                  size="md"
+                  onClick={handleConnect}
+                  isLoading={isProcessing}
+                  leftIcon={<ExternalLink size={15} />}
+                >
+                  Connect Google Calendar
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+      </Card>
+
+      {/* Disconnect Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={showDisconnectConfirm}
+        title="Disconnect Google Calendar"
+        message="Are you sure you want to disconnect your Google Calendar? New appointments will no longer be synchronized automatically."
+        confirmLabel="Yes, Disconnect"
+        cancelLabel="Keep Connected"
+        variant="warning"
+        isLoading={isProcessing}
+        onConfirm={handleDisconnect}
+        onCancel={() => setShowDisconnectConfirm(false)}
+      />
+    </>
   );
 };
+
+export default CalendarSettingsCard;

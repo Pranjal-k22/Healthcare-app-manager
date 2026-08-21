@@ -1,17 +1,19 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Doctor } from '../../types/doctor';
+import Card from '../ui/Card';
+import Button from '../ui/Button';
+import StatusBadge from '../ui/StatusBadge';
 import {
   Award,
-  Building,
+  Building2,
   Calendar,
   Clock,
-  DollarSign,
-  Edit3,
+  Edit,
   Eye,
   Mail,
   Power,
-  Stethoscope,
+  CalendarDays,
 } from 'lucide-react';
 
 interface DoctorCardProps {
@@ -27,133 +29,134 @@ export const DoctorCard: React.FC<DoctorCardProps> = ({
   onToggleStatus,
   isStatusUpdating = false,
 }) => {
-  const activeDays = Object.entries(doctor.workingHours || {})
+  // Format days cleanly: e.g. "Mon, Tue, Wed, Thu"
+  const activeDaysList = Object.entries(doctor.workingHours || {})
     .filter(([_, config]) => config && config.enabled)
     .map(([day]) => day.charAt(0).toUpperCase() + day.slice(1, 3));
 
+  const formattedDays = activeDaysList.length > 0 ? activeDaysList.join(', ') : 'Schedule on request';
+
+  // Calculate initials (e.g. "Dr. Sarah Jenkins" -> "SJ")
+  const cleanName = doctor.name.replace(/^Dr\.\s*/i, '').trim();
+  const nameParts = cleanName.split(/\s+/);
+  const initials =
+    nameParts.length >= 2
+      ? `${nameParts[0].charAt(0)}${nameParts[nameParts.length - 1].charAt(0)}`.toUpperCase()
+      : cleanName.slice(0, 2).toUpperCase() || 'DR';
+
   return (
-    <div className={`glass-card doctor-card ${!doctor.isActive ? 'doctor-card-inactive' : ''}`}>
-      <div className="doctor-card-header">
-        <div className="doctor-avatar">
-          <Stethoscope size={24} color="#10b981" />
-        </div>
-        <div className="doctor-main-info" style={{ flex: 1 }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <h3 className="doctor-name">{doctor.name}</h3>
-            {doctor.isAvailable ? (
-              <span className="status-pill status-pill-active" title="Available for appointments">
-                Available
-              </span>
-            ) : (
-              <span className="status-pill status-pill-unavailable" title="Currently unavailable">
-                Unavailable
-              </span>
-            )}
-          </div>
-          <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginTop: '0.25rem' }}>
-            <span className="specialization-badge">{doctor.specialization}</span>
-            {doctor.qualifications && doctor.qualifications.length > 0 && (
-              <span className="qualification-badge">
-                {doctor.qualifications.join(', ')}
-              </span>
-            )}
-          </div>
-        </div>
-      </div>
-
-      <div className="doctor-card-details">
-        <div className="detail-item">
-          <Mail size={14} className="detail-icon" />
-          <span className="detail-text">{doctor.email}</span>
-        </div>
-
-        {doctor.clinicName && (
-          <div className="detail-item">
-            <Building size={14} className="detail-icon" />
-            <span className="detail-text">{doctor.clinicName}</span>
-          </div>
-        )}
-
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.825rem', color: 'var(--text-secondary)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-            <Award size={14} color="var(--accent-teal)" />
-            <span>{doctor.experienceYears || 0} yrs exp.</span>
+    <Card className="doctor-card-ui" style={{ marginBottom: '1.25rem' }}>
+      <div className="doctor-card-inner">
+        {/* Main Info Section (Left/Center) */}
+        <div className="doctor-card-main-info">
+          {/* Circular Initials Avatar */}
+          <div className="doctor-initials-avatar">
+            <span>{initials}</span>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontWeight: 600, color: '#10b981' }}>
-            <DollarSign size={14} />
-            <span>${doctor.consultationFee || 0} / visit</span>
-          </div>
-        </div>
-
-        <div className="detail-item">
-          <Clock size={14} className="detail-icon" />
-          <span className="detail-text">
-            {doctor.slotDuration || 30} min consultations
-          </span>
-        </div>
-
-        <div className="detail-item" style={{ alignItems: 'flex-start' }}>
-          <Calendar size={14} className="detail-icon" style={{ marginTop: '3px' }} />
-          <div className="days-chip-list">
-            {activeDays.length > 0 ? (
-              activeDays.map((d) => (
-                <span key={d} className="day-chip">
-                  {d}
+          <div className="doctor-details-block">
+            {/* Name and Specialization Tag */}
+            <div className="doctor-name-row">
+              <h3 className="card-title doctor-name-title">{doctor.name}</h3>
+              <span className="doctor-spec-chip">{doctor.specialization}</span>
+              {doctor.qualifications && doctor.qualifications.length > 0 && (
+                <span className="helper-text doctor-qualifications-text">
+                  ({doctor.qualifications.join(', ')})
                 </span>
-              ))
-            ) : (
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                No active working days
+              )}
+            </div>
+
+            {/* Contact & Location */}
+            <div className="doctor-contact-row">
+              <span className="doctor-contact-item">
+                <Mail size={15} color="var(--text-secondary)" />
+                <span>{doctor.email}</span>
               </span>
+              <span className="doctor-contact-item">
+                <Building2 size={15} color="var(--text-secondary)" />
+                <span>{doctor.clinicName || 'HealthPulse Main Hospital Campus'}</span>
+              </span>
+            </div>
+
+            {/* Stat Row Chips */}
+            <div className="doctor-stats-row">
+              <span className="doctor-stat-chip">
+                <Award size={14} color="var(--primary)" />
+                <span>{doctor.experienceYears || 5} yrs exp.</span>
+              </span>
+              <span className="doctor-stat-divider">•</span>
+              <span className="doctor-stat-chip">
+                <Clock size={14} color="var(--primary)" />
+                <span>{doctor.slotDuration || 30} min consultations</span>
+              </span>
+              <span className="doctor-stat-divider">•</span>
+              <span className="doctor-stat-chip">
+                <Calendar size={14} color="var(--primary)" />
+                <span>{formattedDays}</span>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Status & Pricing Column */}
+        <div className="doctor-card-side-info">
+          <div className="doctor-status-and-fee">
+            <div className="doctor-status-badge-wrap">
+              {doctor.isAvailable && doctor.isActive !== false ? (
+                <StatusBadge status="ACTIVE" label="Available" size="sm" />
+              ) : (
+                <StatusBadge status="EXPIRED" label="Unavailable" size="sm" />
+              )}
+            </div>
+            <div className="doctor-fee-display">
+              <span className="doctor-fee-amount">${doctor.consultationFee || 75}</span>
+              <span className="doctor-fee-unit">/ visit</span>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="doctor-card-action-btn-wrap">
+            {isAdminView ? (
+              <div style={{ display: 'flex', gap: '0.5rem', width: '100%' }}>
+                <Link to={`/admin/doctors/${doctor.id}/edit`} style={{ flex: 1 }}>
+                  <Button variant="outline" size="sm" fullWidth leftIcon={<Edit size={14} />}>
+                    Edit
+                  </Button>
+                </Link>
+                <Link to={`/admin/doctors/${doctor.id}/leave`} style={{ flex: 1 }}>
+                  <Button variant="outline" size="sm" fullWidth leftIcon={<CalendarDays size={14} />}>
+                    Leaves
+                  </Button>
+                </Link>
+                {onToggleStatus && (
+                  <Button
+                    variant={doctor.isActive ? 'danger' : 'success'}
+                    size="sm"
+                    onClick={() => onToggleStatus(doctor.id, !doctor.isActive)}
+                    disabled={isStatusUpdating}
+                    title={doctor.isActive ? 'Deactivate' : 'Activate'}
+                  >
+                    <Power size={14} />
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <Link to={`/patient/doctors/${doctor.id}`}>
+                <Button
+                  variant="primary"
+                  size="md"
+                  fullWidth
+                  leftIcon={<Eye size={16} />}
+                >
+                  View Profile & Schedule
+                </Button>
+              </Link>
             )}
           </div>
         </div>
       </div>
-
-      <div className="doctor-card-actions">
-        {isAdminView ? (
-          <>
-            <Link
-              to={`/admin/doctors/${doctor.id}/edit`}
-              className="btn btn-outline btn-sm"
-              style={{ flex: 1 }}
-            >
-              <Edit3 size={14} />
-              <span>Edit</span>
-            </Link>
-            <Link
-              to={`/admin/doctors/${doctor.id}/leave`}
-              className="btn btn-outline btn-sm"
-              style={{ flex: 1 }}
-            >
-              <Calendar size={14} />
-              <span>Leaves</span>
-            </Link>
-            {onToggleStatus && (
-              <button
-                type="button"
-                className={`btn btn-sm ${
-                  doctor.isActive ? 'btn-danger-outline' : 'btn-emerald-outline'
-                }`}
-                onClick={() => onToggleStatus(doctor.id, !doctor.isActive)}
-                disabled={isStatusUpdating}
-                title={doctor.isActive ? 'Deactivate Doctor' : 'Activate Doctor'}
-              >
-                <Power size={14} />
-              </button>
-            )}
-          </>
-        ) : (
-          <Link
-            to={`/patient/doctors/${doctor.id}`}
-            className="btn btn-primary btn-sm btn-block"
-          >
-            <Eye size={14} />
-            <span>View Profile & Schedule</span>
-          </Link>
-        )}
-      </div>
-    </div>
+    </Card>
   );
 };
+
+export default DoctorCard;

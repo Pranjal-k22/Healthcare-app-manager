@@ -9,16 +9,21 @@ import { Appointment, AppointmentStatus } from '../../types/appointment';
 import { AppointmentCard } from '../../components/appointment/AppointmentCard';
 import { CancelAppointmentModal } from '../../components/appointment/CancelAppointmentModal';
 import { RescheduleModal } from '../../components/appointment/RescheduleModal';
-import {
-  AlertCircle,
-  CalendarCheck2,
-  CheckCircle2,
-  PlusCircle,
-  Search,
-} from 'lucide-react';
 import { CalendarSettingsCard } from '../../components/calendar/CalendarSettingsCard';
+import DashboardLayout from '../../components/ui/DashboardLayout';
+import Button from '../../components/ui/Button';
+import Card from '../../components/ui/Card';
+import InlineAlert from '../../components/ui/InlineAlert';
+import { useToast } from '../../components/ui/Toast';
+import {
+  CalendarCheck2,
+  Search,
+  Plus,
+} from 'lucide-react';
 
 export const MyAppointments: React.FC = () => {
+  const { success, error: toastError } = useToast();
+
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [activeTab, setActiveTab] = useState<'ALL' | AppointmentStatus>('ALL');
   const [isLoading, setIsLoading] = useState(true);
@@ -60,10 +65,14 @@ export const MyAppointments: React.FC = () => {
       setCancelError(null);
       await cancelAppointment(selectedAppForCancel.id);
       setSelectedAppForCancel(null);
-      setActionSuccess('Appointment cancelled successfully.');
+      const msg = 'Appointment cancelled successfully.';
+      setActionSuccess(msg);
+      success(msg, 'Cancelled');
       fetchAppointments();
     } catch (err: any) {
-      setCancelError(err.response?.data?.message || err.message || 'Failed to cancel appointment.');
+      const errMsg = err.response?.data?.message || err.message || 'Failed to cancel appointment.';
+      setCancelError(errMsg);
+      toastError(errMsg, 'Action Error');
     } finally {
       setIsCancelling(false);
     }
@@ -79,157 +88,182 @@ export const MyAppointments: React.FC = () => {
         startTime: newStartTime,
       });
       setSelectedAppForReschedule(null);
-      setActionSuccess('Appointment rescheduled successfully.');
+      const msg = 'Appointment rescheduled successfully.';
+      setActionSuccess(msg);
+      success(msg, 'Rescheduled');
       fetchAppointments();
     } catch (err: any) {
-      setRescheduleError(
-        err.response?.data?.message || err.message || 'Failed to reschedule appointment.'
-      );
+      const errMsg = err.response?.data?.message || err.message || 'Failed to reschedule appointment.';
+      setRescheduleError(errMsg);
+      toastError(errMsg, 'Action Error');
     } finally {
       setIsRescheduling(false);
     }
   };
 
   return (
-    <div className="container dashboard-container">
-      <div className="dashboard-header-row">
-        <div>
-          <h1 className="welcome-title" style={{ fontSize: '1.85rem' }}>
-            My Appointments
-          </h1>
-          <p className="welcome-subtitle">
-            Manage your booked consultations, view clinical history, or reschedule appointments.
-          </p>
-        </div>
-        <Link to="/patient/doctors" className="btn btn-primary">
-          <Search size={16} />
-          <span>Book New Consultation</span>
-        </Link>
-      </div>
-
-      {/* Google Calendar Synchronization (Phase 6) */}
-      <div style={{ marginBottom: '1.5rem' }}>
-        <CalendarSettingsCard />
-      </div>
-
-      {actionSuccess && (
-        <div className="alert alert-success" style={{ marginBottom: '1.5rem' }}>
-          <CheckCircle2 size={18} />
-          <span>{actionSuccess}</span>
-        </div>
-      )}
-
-      {error && (
-        <div className="alert alert-error" style={{ marginBottom: '1.5rem' }}>
-          <AlertCircle size={18} />
-          <span>{error}</span>
-        </div>
-      )}
-
-      {/* Tabs */}
-      <div className="tabs-container">
-        <button
-          type="button"
-          className={`tab-btn ${activeTab === 'ALL' ? 'tab-btn-active' : ''}`}
-          onClick={() => {
-            setActiveTab('ALL');
-            setActionSuccess(null);
-          }}
-        >
-          All Appointments
-        </button>
-        <button
-          type="button"
-          className={`tab-btn ${activeTab === 'BOOKED' ? 'tab-btn-active' : ''}`}
-          onClick={() => {
-            setActiveTab('BOOKED');
-            setActionSuccess(null);
-          }}
-        >
-          Upcoming
-        </button>
-        <button
-          type="button"
-          className={`tab-btn ${activeTab === 'COMPLETED' ? 'tab-btn-active' : ''}`}
-          onClick={() => {
-            setActiveTab('COMPLETED');
-            setActionSuccess(null);
-          }}
-        >
-          Completed
-        </button>
-        <button
-          type="button"
-          className={`tab-btn ${activeTab === 'CANCELLED' ? 'tab-btn-active' : ''}`}
-          onClick={() => {
-            setActiveTab('CANCELLED');
-            setActionSuccess(null);
-          }}
-        >
-          Cancelled
-        </button>
-      </div>
-
-      {isLoading ? (
-        <div className="loader-container">
-          <div className="spinner" style={{ width: '32px', height: '32px' }} />
-          <p style={{ color: 'var(--text-secondary)', marginTop: '0.75rem' }}>
-            Loading your appointments...
-          </p>
-        </div>
-      ) : appointments.length === 0 ? (
-        <div className="glass-card empty-state-card" style={{ marginTop: '1rem' }}>
-          <CalendarCheck2 size={48} color="var(--text-muted)" />
-          <h3 style={{ marginTop: '1rem' }}>No Appointments Found</h3>
-          <p style={{ color: 'var(--text-secondary)', margin: '0.5rem 0 1.25rem' }}>
-            {activeTab === 'ALL'
-              ? 'You have no scheduled appointments on record.'
-              : `You have no ${activeTab.toLowerCase()} appointments.`}
-          </p>
-          <Link to="/patient/doctors" className="btn btn-primary btn-sm">
-            <PlusCircle size={16} />
-            <span>Find a Doctor & Book</span>
+    <DashboardLayout>
+      <div className="my-appointments-view">
+        {/* Page Header Row */}
+        <div className="dashboard-header-row" style={{ marginBottom: '2rem' }}>
+          <div>
+            <h1 className="page-title">My Appointments</h1>
+            <p className="body-text" style={{ color: 'var(--text-secondary)', marginTop: '4px' }}>
+              Manage your booked consultations, view clinical history, or reschedule appointments.
+            </p>
+          </div>
+          <Link to="/patient/doctors">
+            <Button variant="primary" size="md" leftIcon={<Search size={16} />}>
+              Book New Consultation
+            </Button>
           </Link>
         </div>
-      ) : (
-        <div className="appointments-grid" style={{ marginTop: '1.25rem' }}>
-          {appointments.map((app) => (
-            <AppointmentCard
-              key={app.id}
-              appointment={app}
-              viewRole="PATIENT"
-              onCancel={(a) => {
-                setSelectedAppForCancel(a);
-                setCancelError(null);
-              }}
-              onReschedule={(a) => {
-                setSelectedAppForReschedule(a);
-                setRescheduleError(null);
-              }}
-            />
-          ))}
+
+        {/* Google Calendar Synchronization Card */}
+        <div style={{ marginBottom: '2rem' }}>
+          <CalendarSettingsCard />
         </div>
-      )}
 
-      {/* Cancel Modal */}
-      <CancelAppointmentModal
-        appointment={selectedAppForCancel}
-        isOpen={Boolean(selectedAppForCancel)}
-        onClose={() => setSelectedAppForCancel(null)}
-        onConfirm={handleConfirmCancel}
-        isProcessing={isCancelling}
-        error={cancelError}
-      />
+        {/* Success / Error Alerts */}
+        {actionSuccess && (
+          <InlineAlert
+            type="success"
+            message={actionSuccess}
+            onClose={() => setActionSuccess(null)}
+            className="mb-4"
+          />
+        )}
 
-      {/* Reschedule Modal */}
-      <RescheduleModal
-        appointment={selectedAppForReschedule}
-        isOpen={Boolean(selectedAppForReschedule)}
-        onClose={() => setSelectedAppForReschedule(null)}
-        onConfirm={handleConfirmReschedule}
-        isProcessing={isRescheduling}
-        error={rescheduleError}
-      />
-    </div>
+        {error && (
+          <InlineAlert
+            type="danger"
+            message={error}
+            onClose={() => setError(null)}
+            className="mb-4"
+          />
+        )}
+
+        {/* Segmented Filter Tab Group */}
+        <div style={{ marginBottom: '1.75rem' }}>
+          <div className="segmented-tab-group" role="tablist">
+            <button
+              type="button"
+              className={`segmented-tab-btn ${activeTab === 'ALL' ? 'is-active' : ''}`}
+              onClick={() => {
+                setActiveTab('ALL');
+                setActionSuccess(null);
+              }}
+              role="tab"
+              aria-selected={activeTab === 'ALL'}
+            >
+              All Appointments
+            </button>
+            <button
+              type="button"
+              className={`segmented-tab-btn ${activeTab === 'BOOKED' ? 'is-active' : ''}`}
+              onClick={() => {
+                setActiveTab('BOOKED');
+                setActionSuccess(null);
+              }}
+              role="tab"
+              aria-selected={activeTab === 'BOOKED'}
+            >
+              Upcoming
+            </button>
+            <button
+              type="button"
+              className={`segmented-tab-btn ${activeTab === 'COMPLETED' ? 'is-active' : ''}`}
+              onClick={() => {
+                setActiveTab('COMPLETED');
+                setActionSuccess(null);
+              }}
+              role="tab"
+              aria-selected={activeTab === 'COMPLETED'}
+            >
+              Completed
+            </button>
+            <button
+              type="button"
+              className={`segmented-tab-btn ${activeTab === 'CANCELLED' ? 'is-active' : ''}`}
+              onClick={() => {
+                setActiveTab('CANCELLED');
+                setActionSuccess(null);
+              }}
+              role="tab"
+              aria-selected={activeTab === 'CANCELLED'}
+            >
+              Cancelled
+            </button>
+          </div>
+        </div>
+
+        {/* Content Area: Loader, Empty State, or Grid */}
+        {isLoading ? (
+          <div style={{ textAlign: 'center', padding: '4rem 0' }}>
+            <div className="btn-spinner" style={{ width: '32px', height: '32px', margin: '0 auto', borderColor: 'var(--primary)', borderTopColor: 'transparent' }} />
+            <p className="body-text" style={{ color: 'var(--text-secondary)', marginTop: '0.75rem' }}>
+              Loading your appointments...
+            </p>
+          </div>
+        ) : appointments.length === 0 ? (
+          <Card className="empty-state-card-ui">
+            <div className="empty-state-icon-circle">
+              <CalendarCheck2 size={28} />
+            </div>
+            <h3 className="empty-state-title">No Appointments Found</h3>
+            <p className="empty-state-desc">
+              {activeTab === 'ALL'
+                ? 'You have no scheduled appointments on record. Connect with a specialist to book your next consultation.'
+                : `You currently have no ${activeTab.toLowerCase()} appointments in your record.`}
+            </p>
+            <Link to="/patient/doctors">
+              <Button variant="primary" size="md" leftIcon={<Plus size={16} />}>
+                Find a Doctor & Book
+              </Button>
+            </Link>
+          </Card>
+        ) : (
+          <div className="appointments-grid-ui">
+            {appointments.map((app) => (
+              <AppointmentCard
+                key={app.id}
+                appointment={app}
+                viewRole="PATIENT"
+                onCancel={(a) => {
+                  setSelectedAppForCancel(a);
+                  setCancelError(null);
+                }}
+                onReschedule={(a) => {
+                  setSelectedAppForReschedule(a);
+                  setRescheduleError(null);
+                }}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Cancel Modal */}
+        <CancelAppointmentModal
+          appointment={selectedAppForCancel}
+          isOpen={Boolean(selectedAppForCancel)}
+          onClose={() => setSelectedAppForCancel(null)}
+          onConfirm={handleConfirmCancel}
+          isProcessing={isCancelling}
+          error={cancelError}
+        />
+
+        {/* Reschedule Modal */}
+        <RescheduleModal
+          appointment={selectedAppForReschedule}
+          isOpen={Boolean(selectedAppForReschedule)}
+          onClose={() => setSelectedAppForReschedule(null)}
+          onConfirm={handleConfirmReschedule}
+          isProcessing={isRescheduling}
+          error={rescheduleError}
+        />
+      </div>
+    </DashboardLayout>
   );
 };
+
+export default MyAppointments;

@@ -3,7 +3,11 @@ import { Doctor } from '../../types/doctor';
 import { getDoctors } from '../../services/doctorApi';
 import { DoctorCard } from '../../components/doctor/DoctorCard';
 import { DoctorSearchBar } from '../../components/doctor/DoctorSearchBar';
-import { AlertCircle, Stethoscope } from 'lucide-react';
+import DashboardLayout from '../../components/ui/DashboardLayout';
+import Card from '../../components/ui/Card';
+import Button from '../../components/ui/Button';
+import InlineAlert from '../../components/ui/InlineAlert';
+import { Stethoscope, RotateCcw } from 'lucide-react';
 
 export const DoctorSearch: React.FC = () => {
   const [doctors, setDoctors] = useState<Doctor[]>([]);
@@ -40,66 +44,100 @@ export const DoctorSearch: React.FC = () => {
     new Set(doctors.map((d) => d.specialization).filter(Boolean))
   );
 
+  const handleClearFilters = () => {
+    setSearchTerm('');
+    setSelectedSpecialization('');
+  };
+
   return (
-    <div className="container dashboard-container">
-      <div className="dashboard-header">
-        <h1 className="welcome-title">Find a Doctor</h1>
-        <p className="welcome-subtitle">
-          Browse verified practitioners, explore specializations, and view consultation working hours.
-        </p>
+    <DashboardLayout>
+      <div className="doctor-search-view">
+        {/* Page Header */}
+        <div className="dashboard-header-row" style={{ marginBottom: '1.75rem' }}>
+          <div>
+            <h1 className="page-title">Find a Doctor</h1>
+            <p className="body-text" style={{ color: 'var(--text-secondary)', marginTop: '4px' }}>
+              Browse verified practitioners, explore medical specializations, and book consultation slots.
+            </p>
+          </div>
+        </div>
+
+        {/* Search & Filter Toolbar */}
+        <DoctorSearchBar
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          selectedSpecialization={selectedSpecialization}
+          onSpecializationChange={setSelectedSpecialization}
+          specializations={uniqueSpecializations}
+          onReset={handleClearFilters}
+        />
+
+        {/* Error Alert */}
+        {error && (
+          <InlineAlert
+            type="danger"
+            message={error}
+            onClose={() => setError(null)}
+            className="mb-4"
+          />
+        )}
+
+        {/* Doctor List / Loading Skeletons / Empty State */}
+        {isLoading ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            {[1, 2, 3].map((i) => (
+              <Card key={i} style={{ padding: '24px' }}>
+                <div style={{ display: 'flex', gap: '1.25rem', alignItems: 'center' }}>
+                  <div
+                    style={{
+                      width: '48px',
+                      height: '48px',
+                      borderRadius: '50%',
+                      backgroundColor: 'var(--surface-alt)',
+                      animation: 'pulse 1.5s infinite ease-in-out',
+                    }}
+                  />
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <div style={{ width: '220px', height: '18px', backgroundColor: 'var(--surface-alt)', borderRadius: '4px' }} />
+                    <div style={{ width: '140px', height: '14px', backgroundColor: 'var(--surface-alt)', borderRadius: '4px' }} />
+                    <div style={{ width: '300px', height: '12px', backgroundColor: 'var(--surface-alt)', borderRadius: '4px' }} />
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
+        ) : doctors.length === 0 ? (
+          <Card className="empty-state-card-ui">
+            <div className="empty-state-icon-circle">
+              <Stethoscope size={28} />
+            </div>
+            <h3 className="empty-state-title">No Doctors Found</h3>
+            <p className="empty-state-desc">
+              {searchTerm || selectedSpecialization
+                ? 'No specialists matched your current search criteria. Try adjusting your keyword or choosing a different specialization.'
+                : 'No doctor profiles are currently available in the directory.'}
+            </p>
+            {(searchTerm || selectedSpecialization) && (
+              <Button
+                variant="outline"
+                size="md"
+                onClick={handleClearFilters}
+                leftIcon={<RotateCcw size={15} />}
+              >
+                Clear All Filters
+              </Button>
+            )}
+          </Card>
+        ) : (
+          <div className="doctors-list-container" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            {doctors.map((doc) => (
+              <DoctorCard key={doc.id} doctor={doc} isAdminView={false} />
+            ))}
+          </div>
+        )}
       </div>
-
-      <DoctorSearchBar
-        searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
-        selectedSpecialization={selectedSpecialization}
-        onSpecializationChange={setSelectedSpecialization}
-        specializations={uniqueSpecializations}
-        onReset={() => {
-          setSearchTerm('');
-          setSelectedSpecialization('');
-        }}
-      />
-
-      {error && (
-        <div className="alert alert-error" style={{ marginTop: '1.5rem' }}>
-          <AlertCircle size={18} />
-          <span>{error}</span>
-        </div>
-      )}
-
-      {isLoading ? (
-        <div className="loader-container">
-          <div className="spinner" style={{ width: '32px', height: '32px' }} />
-          <p style={{ color: 'var(--text-secondary)', marginTop: '0.75rem' }}>
-            Searching practitioner directory...
-          </p>
-        </div>
-      ) : doctors.length === 0 ? (
-        <div className="glass-card empty-state-card">
-          <Stethoscope size={48} color="var(--text-muted)" />
-          <h3>No Doctors Found</h3>
-          <p style={{ color: 'var(--text-secondary)', margin: '0.5rem 0 1rem' }}>
-            No doctors matched your current search filters. Try broadening your keywords.
-          </p>
-          <button
-            type="button"
-            className="btn btn-outline btn-sm"
-            onClick={() => {
-              setSearchTerm('');
-              setSelectedSpecialization('');
-            }}
-          >
-            Clear All Filters
-          </button>
-        </div>
-      ) : (
-        <div className="doctors-grid" style={{ marginTop: '1.5rem' }}>
-          {doctors.map((doc) => (
-            <DoctorCard key={doc.id} doctor={doc} isAdminView={false} />
-          ))}
-        </div>
-      )}
-    </div>
+    </DashboardLayout>
   );
 };
+
+export default DoctorSearch;
