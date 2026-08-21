@@ -295,6 +295,16 @@ const completeConsultation = async (appointmentId, doctorUser, workflowData = {}
   appointment.status = 'COMPLETED';
   await appointment.save();
 
+  // 4. Automatically generate Invoice for Consultation
+  const { createInvoiceForAppointment } = require('./billingService');
+  createInvoiceForAppointment(
+    appointment._id,
+    appointment.doctorId,
+    appointment.patientId
+  ).catch((err) => {
+    console.error('[BillingService] Failed to auto-create invoice:', err.message);
+  });
+
   const [clinicalRecord, prescription] = await Promise.all([
     ClinicalRecord.findOne({ appointmentId }),
     Prescription.findOne({ appointmentId }),

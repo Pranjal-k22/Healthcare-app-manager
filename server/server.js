@@ -7,12 +7,17 @@ const {
   startMedicationReminderJob,
   stopMedicationReminderJob,
 } = require('./services/jobs/medicationReminderJob');
+const {
+  startBillingAndPrescriptionJob,
+  stopBillingAndPrescriptionJob,
+} = require('./services/jobs/billingAndPrescriptionJob');
 
 // Connect to Database
 connectDB().then(() => {
   // Start Background Jobs after DB is connected
   startReminderJob();
   startMedicationReminderJob();
+  startBillingAndPrescriptionJob();
 });
 
 // Start Server
@@ -29,6 +34,7 @@ const gracefulShutdown = (signal) => {
   console.log(`[Server] Received ${signal}. Initiating graceful shutdown...`);
   stopReminderJob();
   stopMedicationReminderJob();
+  stopBillingAndPrescriptionJob();
   server.close(() => {
     console.log('[Server] HTTP server closed.');
     mongoose.connection.close(false).then(() => {

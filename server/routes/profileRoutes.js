@@ -3,7 +3,8 @@ const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
 const rateLimit = require('express-rate-limit');
-const { protect, authorizeRoles } = require('../middleware/authMiddleware');
+const { protect } = require('../middleware/authMiddleware');
+const { requireRole } = require('../middleware/roleMiddleware');
 const {
   getProfile,
   updateProfile,
@@ -61,7 +62,7 @@ const passwordChangeLimiter = rateLimit({
 
 // Protect all profile routes & restrict to PATIENT
 router.use(protect);
-router.use(authorizeRoles('PATIENT'));
+router.use(requireRole('PATIENT'));
 
 router.get('/profile', getProfile);
 router.put('/profile', updateProfile);

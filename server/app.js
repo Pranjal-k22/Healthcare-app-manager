@@ -12,9 +12,16 @@ const notificationRoutes = require('./routes/notificationRoutes');
 const calendarRoutes = require('./routes/calendarRoutes');
 const leaveRoutes = require('./routes/leaveRoutes');
 const medicationReminderRoutes = require('./routes/medicationReminderRoutes');
+const profileRoutes = require('./routes/profileRoutes');
+const billingRoutes = require('./routes/billingRoutes');
+const prescriptionRoutes = require('./routes/prescriptionRoutes');
+const path = require('path');
 const { notFound, errorHandler } = require('./middleware/errorMiddleware');
 
 const app = express();
+
+// Serve Static Uploads (Avatars, documents)
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Security Headers (Helmet)
 app.use(
@@ -75,6 +82,9 @@ app.use('/api/calendar', calendarRoutes);
 app.use('/api', leaveRoutes);
 app.use('/api', medicationReminderRoutes);
 app.use('/api', clinicalRoutes);
+app.use('/api/patient', profileRoutes);
+app.use('/api/patient', billingRoutes);
+app.use('/api/patient', prescriptionRoutes);
 
 // Error Handling Middleware
 app.use(notFound);

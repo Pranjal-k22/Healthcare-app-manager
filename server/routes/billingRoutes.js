@@ -1,6 +1,7 @@
 const express = require('express');
 const rateLimit = require('express-rate-limit');
-const { protect, authorizeRoles } = require('../middleware/authMiddleware');
+const { protect } = require('../middleware/authMiddleware');
+const { requireRole } = require('../middleware/roleMiddleware');
 const {
   getBillingSummary,
   getInvoices,
@@ -24,7 +25,7 @@ const payLimiter = rateLimit({
 
 // Protect all billing routes & restrict to PATIENT
 router.use(protect);
-router.use(authorizeRoles('PATIENT'));
+router.use(requireRole('PATIENT'));
 
 router.get('/billing/summary', getBillingSummary);
 router.get('/billing', getInvoices);
