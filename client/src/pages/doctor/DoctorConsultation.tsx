@@ -7,6 +7,7 @@ import {
   saveClinicalRecord,
   savePrescription,
   completeConsultationWorkflow,
+  generatePostVisitSummary,
 } from '../../services/clinicalApi';
 import { Appointment } from '../../types/appointment';
 import { MedicineItem } from '../../types/clinical';
@@ -39,6 +40,8 @@ export const DoctorConsultation: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGeneratingAi, setIsGeneratingAi] = useState(false);
+  const [isGeneratingPostAi, setIsGeneratingPostAi] = useState(false);
+  const [postVisitAiSummary, setPostVisitAiSummary] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
@@ -69,9 +72,16 @@ export const DoctorConsultation: React.FC = () => {
           setDiagnosisNotes(record.diagnosisNotes || '');
           setPatientInstructions(record.patientInstructions || '');
           setFollowUpDate(record.followUpDate || '');
+          if ((record as any).postVisitSummary) {
+            setPostVisitAiSummary((record as any).postVisitSummary);
+          }
         }
       } catch (err) {
         // Record might not exist yet
+      }
+
+      if ((appData as any)?.postVisitSummary) {
+        setPostVisitAiSummary((appData as any).postVisitSummary);
       }
 
       // Fetch existing prescription if any
@@ -107,6 +117,36 @@ export const DoctorConsultation: React.FC = () => {
       setError(err.response?.data?.message || err.message || 'Failed to generate AI summary.');
     } finally {
       setIsGeneratingAi(false);
+    }
+  };
+
+  const handleGeneratePostVisitAi = async () => {
+    if (!appointmentId) return;
+    if (!clinicalNotes.trim()) {
+      setError('Please enter clinical examination notes before generating the Post-Visit AI summary.');
+      return;
+    }
+
+    try {
+      setIsGeneratingPostAi(true);
+      setError(null);
+      setSuccessMsg(null);
+
+      const result = await generatePostVisitSummary(appointmentId, {
+        clinicalNotes: clinicalNotes.trim(),
+        medicines,
+      });
+
+      if (result.postVisitSummary) {
+        setPostVisitAiSummary(result.postVisitSummary);
+        setSuccessMsg('✨ Post-Visit AI Care Plan & Medication Guidance synthesized with Google Gemini!');
+      } else {
+        setError('Google Gemini returned an unexpected response structure.');
+      }
+    } catch (err: any) {
+      setError(err.response?.data?.message || err.message || 'Failed to generate Post-Visit AI summary.');
+    } finally {
+      setIsGeneratingPostAi(false);
     }
   };
 
@@ -813,6 +853,155 @@ export const DoctorConsultation: React.FC = () => {
               <Save size={15} />
               <span>Save Prescription Draft</span>
             </button>
+          </div>
+        )}
+      </div>
+
+      {/* Post-Visit AI Clinical Synthesis & Care Guidance Card (Gemini) */}
+      <div
+        style={{
+          marginBottom: '2rem',
+          padding: '1.5rem',
+          background: 'linear-gradient(135deg, rgba(240, 253, 250, 0.7) 0%, #ffffff 100%)',
+          borderRadius: '14px',
+          border: '1.5px solid #99f6e4',
+          boxShadow: '0 4px 18px rgba(13, 148, 136, 0.07)',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+            <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'linear-gradient(135deg, #0d9488, #14b8a6)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ffffff' }}>
+              <Sparkles size={20} />
+            </div>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+                  Post-Visit AI Care Plan & Patient Guidance
+                </h3>
+                <span style={{ fontSize: '0.7rem', padding: '0.15rem 0.5rem', borderRadius: '999px', background: '#ccfbf1', color: '#0f766e', fontWeight: 700 }}>
+                  Google Gemini
+                </span>
+              </div>
+              <span style={{ fontSize: '0.78rem', color: '#64748b' }}>
+                Synthesizes clinical examination findings & prescription into plain-English patient instructions.
+              </span>
+            </div>
+          </div>
+
+          {!isCompleted && !isCancelled && (
+            <button
+              type="button"
+              onClick={handleGeneratePostVisitAi}
+              disabled={isGeneratingPostAi || !clinicalNotes.trim()}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                padding: '0.6rem 1.25rem',
+                borderRadius: '8px',
+                border: 'none',
+                background: !clinicalNotes.trim() ? '#cbd5e1' : 'linear-gradient(135deg, #0d9488, #0f766e)',
+                color: '#ffffff',
+                fontSize: '0.88rem',
+                fontWeight: 700,
+                cursor: !clinicalNotes.trim() ? 'not-allowed' : 'pointer',
+                boxShadow: !clinicalNotes.trim() ? 'none' : '0 4px 12px rgba(13, 148, 136, 0.25)',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              {isGeneratingPostAi ? (
+                <>
+                  <div className="spinner" style={{ width: '15px', height: '15px', borderWidth: '2px' }} />
+                  <span>Synthesizing with Gemini...</span>
+                </>
+              ) : (
+                <>
+                  <Sparkles size={16} />
+                  <span>{postVisitAiSummary ? 'Regenerate Post-Visit AI' : '✨ Generate Post-Visit AI Summary'}</span>
+                </>
+              )}
+            </button>
+          )}
+        </div>
+
+        {postVisitAiSummary ? (
+          <div
+            style={{
+              padding: '1.25rem',
+              background: '#ffffff',
+              borderRadius: '10px',
+              border: '1px solid #ccfbf1',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1rem',
+            }}
+          >
+            {/* Patient Friendly Summary */}
+            <div>
+              <h4 style={{ fontSize: '0.82rem', fontWeight: 800, color: '#0d9488', textTransform: 'uppercase', letterSpacing: '0.04em', margin: '0 0 0.35rem 0' }}>
+                Visit Summary & Care Explanation
+              </h4>
+              <p style={{ margin: 0, color: '#1e293b', fontSize: '0.92rem', lineHeight: 1.6 }}>
+                {postVisitAiSummary.patientSummary || postVisitAiSummary.summary}
+              </p>
+            </div>
+
+            {/* Medication Instructions & Schedule */}
+            {postVisitAiSummary.medicationSchedule && (
+              <div style={{ padding: '0.85rem 1rem', borderRadius: '8px', background: '#f0fdf4', border: '1px solid #bbf7d0' }}>
+                <h4 style={{ fontSize: '0.82rem', fontWeight: 800, color: '#15803d', textTransform: 'uppercase', letterSpacing: '0.04em', margin: '0 0 0.45rem 0' }}>
+                  Prescribed Medication Instructions & Schedule
+                </h4>
+                {Array.isArray(postVisitAiSummary.medicationSchedule) ? (
+                  <ul style={{ margin: 0, paddingLeft: '1.25rem', color: '#166534', fontSize: '0.9rem', lineHeight: 1.55 }}>
+                    {postVisitAiSummary.medicationSchedule.map((item: string, idx: number) => (
+                      <li key={idx} style={{ marginBottom: '0.25rem' }}>{item}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p style={{ margin: 0, color: '#166534', fontSize: '0.9rem', lineHeight: 1.55 }}>
+                    {String(postVisitAiSummary.medicationSchedule)}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Follow-up Steps & Precautions */}
+            {postVisitAiSummary.followUpSteps && (
+              <div style={{ padding: '0.85rem 1rem', borderRadius: '8px', background: '#fefce8', border: '1px solid #fef08a' }}>
+                <h4 style={{ fontSize: '0.82rem', fontWeight: 800, color: '#a16207', textTransform: 'uppercase', letterSpacing: '0.04em', margin: '0 0 0.45rem 0' }}>
+                  Next Steps & Follow-Up Guidance
+                </h4>
+                {Array.isArray(postVisitAiSummary.followUpSteps) ? (
+                  <ul style={{ margin: 0, paddingLeft: '1.25rem', color: '#854d0e', fontSize: '0.9rem', lineHeight: 1.55 }}>
+                    {postVisitAiSummary.followUpSteps.map((item: string, idx: number) => (
+                      <li key={idx} style={{ marginBottom: '0.25rem' }}>{item}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p style={{ margin: 0, color: '#854d0e', fontSize: '0.9rem', lineHeight: 1.55 }}>
+                    {String(postVisitAiSummary.followUpSteps)}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+        ) : (
+          <div
+            style={{
+              padding: '1.25rem',
+              background: 'rgba(255, 255, 255, 0.7)',
+              borderRadius: '10px',
+              border: '1px dashed #cbd5e1',
+              textAlign: 'center',
+              color: '#64748b',
+              fontSize: '0.88rem',
+            }}
+          >
+            <Sparkles size={20} color="#0d9488" style={{ margin: '0 auto 0.4rem auto', display: 'block' }} />
+            <span>
+              Click <strong>"Generate Post-Visit AI Summary"</strong> above to send the clinical observations and prescription to Google Gemini and preview the AI care guidance before finalizing.
+            </span>
           </div>
         )}
       </div>

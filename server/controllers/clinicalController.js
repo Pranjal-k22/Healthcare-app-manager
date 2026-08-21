@@ -1,3 +1,6 @@
+const Appointment = require('../models/Appointment');
+const ClinicalRecord = require('../models/ClinicalRecord');
+const llmService = require('../services/llm/llmService');
 const {
   validateClinicalRecordInput,
   validatePrescriptionInput,
@@ -187,6 +190,73 @@ const completeConsultationHandler = async (req, res, next) => {
   }
 };
 
+/**
+ * @desc    Generate Post-Visit AI Summary on-demand using Google Gemini
+ * @route   POST /api/appointments/:appointmentId/generate-post-visit
+ * @access  Private (DOCTOR, ADMIN)
+ */
+const generatePostVisitSummaryHandler = async (req, res, next) => {
+  try {
+    const { appointmentId } = req.params;
+    const { clinicalNotes, medicines = [] } = req.body;
+
+    if (!clinicalNotes || !clinicalNotes.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Clinical notes are required to generate post-visit summary',
+      });
+    }
+
+    const appointment = await Appointment.findById(appointmentId);
+    if (!appointment) {
+      return res.status(404).json({
+        success: false,
+        message: 'Appointment not found',
+      });
+    }
+
+    // Verify doctor ownership or admin
+    if (appointment.doctorId.toString() !== req.user._id.toString() && req.user.role !== 'ADMIN') {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied: You are not the assigned doctor for this appointment',
+      });
+    }
+
+    const result = await llmService.generatePostVisitSummary(clinicalNotes, medicines);
+
+    if (result.status === 'READY' && result.data) {
+      await Promise.all([
+        Appointment.findByIdAndUpdate(appointmentId, {
+          postVisitSummary: result.data,
+          aiStatus: 'READY',
+          aiPromptVersion: result.promptVersion,
+        }),
+        ClinicalRecord.findOneAndUpdate(
+          { appointmentId },
+          {
+            postVisitSummary: result.data,
+            aiStatus: 'READY',
+            aiPromptVersion: result.promptVersion,
+          },
+          { upsert: false }
+        ),
+      ]);
+    }
+
+    res.status(200).json({
+      success: true,
+      data: {
+        postVisitSummary: result.data,
+        aiStatus: result.status,
+        promptVersion: result.promptVersion,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   saveClinicalRecordHandler,
   getClinicalRecordHandler,
@@ -194,4 +264,5 @@ module.exports = {
   getPrescriptionHandler,
   getMyPrescriptionsHandler,
   completeConsultationHandler,
+  generatePostVisitSummaryHandler,
 };

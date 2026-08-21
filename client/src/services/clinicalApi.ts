@@ -83,3 +83,18 @@ export const completeConsultationWorkflow = async (
   }>(`/appointments/${appointmentId}/complete-consultation`, data);
   return response.data.data;
 };
+
+/**
+ * Generate Post-Visit AI Summary on Demand using Google Gemini
+ */
+export const generatePostVisitSummary = async (
+  appointmentId: string,
+  data: { clinicalNotes: string; medicines?: any[] }
+): Promise<{ postVisitSummary: any; aiStatus: string; promptVersion: string }> => {
+  const response = await apiClient.post<{
+    success: boolean;
+    data: { postVisitSummary: any; aiStatus: string; promptVersion: string };
+  }>(`/appointments/${appointmentId}/generate-post-visit`, data);
+  return response.data.data;
+};
+

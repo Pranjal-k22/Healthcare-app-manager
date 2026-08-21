@@ -30,6 +30,7 @@ export interface Appointment {
   patientNotes?: string;
   symptoms?: string;
   preVisitSummary?: PreVisitSummary | null;
+  postVisitSummary?: any;
   aiStatus?: AiStatus;
   createdAt: string;
   updatedAt: string;

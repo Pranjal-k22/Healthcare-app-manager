@@ -9,6 +9,7 @@ const {
   getPrescriptionHandler,
   getMyPrescriptionsHandler,
   completeConsultationHandler,
+  generatePostVisitSummaryHandler,
 } = require('../controllers/clinicalController');
 
 // All routes require authenticated user session
@@ -44,6 +45,13 @@ router.post(
   '/appointments/:appointmentId/complete-consultation',
   requireRole('DOCTOR', 'ADMIN'),
   completeConsultationHandler
+);
+
+// 5. Generate Post-Visit AI Summary on Demand (Gemini)
+router.post(
+  '/appointments/:appointmentId/generate-post-visit',
+  requireRole('DOCTOR', 'ADMIN'),
+  generatePostVisitSummaryHandler
 );
 
 module.exports = router;
