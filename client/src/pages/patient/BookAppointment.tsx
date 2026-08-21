@@ -5,21 +5,29 @@ import { bookAppointment, getAvailableSlots, holdSlot } from '../../services/app
 import { Doctor } from '../../types/doctor';
 import { Appointment, AvailableSlot } from '../../types/appointment';
 import { SlotPicker } from '../../components/appointment/SlotPicker';
+import Card from '../../components/ui/Card';
+import Button from '../../components/ui/Button';
+import Input from '../../components/ui/Input';
+import Textarea from '../../components/ui/Textarea';
+import InlineAlert from '../../components/ui/InlineAlert';
+import { useToast } from '../../components/ui/Toast';
 import {
-  AlertCircle,
   ArrowLeft,
   Calendar,
   CheckCircle2,
   Clock,
   FileText,
-  Mail,
   ShieldCheck,
   Stethoscope,
+  DollarSign,
+  Building2,
 } from 'lucide-react';
 
 export const BookAppointment: React.FC = () => {
   const { doctorId } = useParams<{ doctorId: string }>();
+  const { success, error: toastError } = useToast();
 
+  const [currentStep, setCurrentStep] = useState<number>(1);
   const [doctor, setDoctor] = useState<Doctor | null>(null);
   const [selectedDate, setSelectedDate] = useState<string>(() => {
     return new Date().toISOString().split('T')[0];
@@ -38,6 +46,8 @@ export const BookAppointment: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmedAppointment, setConfirmedAppointment] = useState<Appointment | null>(null);
+
+  const consultationFee = 75; // Standard consultation fee
 
   // Load Doctor Details
   useEffect(() => {
@@ -114,15 +124,17 @@ export const BookAppointment: React.FC = () => {
       const expDate = new Date(hold.expiresAt);
       setHoldExpiresAt(expDate);
       setSecondsRemaining(Math.max(0, Math.floor((expDate.getTime() - Date.now()) / 1000)));
+      success(`Slot ${slotTime} reserved for 5 minutes.`, 'Slot Held');
     } catch (err: any) {
       setSelectedSlot(null);
       setHoldExpiresAt(null);
       setSecondsRemaining(0);
-      setError(
+      const errMsg =
         err.response?.data?.message ||
-          err.message ||
-          'This slot is currently held by another patient or unavailable. Please choose another slot.'
-      );
+        err.message ||
+        'This slot is currently held by another patient or unavailable. Please choose another slot.';
+      setError(errMsg);
+      toastError(errMsg, 'Slot Unavailable');
       if (doctorId && selectedDate) {
         getAvailableSlots(doctorId, selectedDate).then(setSlots).catch(() => {});
       }
@@ -154,14 +166,15 @@ export const BookAppointment: React.FC = () => {
       });
 
       setConfirmedAppointment(appointment);
+      setCurrentStep(4);
+      success('Appointment confirmed successfully!', 'Booking Complete');
     } catch (err: any) {
-      // Handles 409 conflict and validation errors
-      setError(
+      const errMsg =
         err.response?.data?.message ||
-          err.message ||
-          'Failed to book appointment. The selected slot may no longer be available.'
-      );
-      // Refresh slots on failure to show latest availability
+        err.message ||
+        'Failed to book appointment. The selected slot may no longer be available.';
+      setError(errMsg);
+      toastError(errMsg, 'Booking Error');
       if (doctorId && selectedDate) {
         getAvailableSlots(doctorId, selectedDate)
           .then(setSlots)
@@ -174,250 +187,322 @@ export const BookAppointment: React.FC = () => {
 
   if (isLoadingDoctor) {
     return (
-      <div className="container dashboard-container" style={{ textAlign: 'center', padding: '4rem 0' }}>
-        <div className="spinner" style={{ width: '36px', height: '36px', margin: '0 auto' }} />
-        <p style={{ color: 'var(--text-secondary)', marginTop: '1rem' }}>
-          Loading practitioner profile...
+      <div className="container" style={{ textAlign: 'center', padding: '5rem 0' }}>
+        <div className="btn-spinner" style={{ width: '36px', height: '36px', margin: '0 auto', borderColor: 'var(--primary)', borderTopColor: 'transparent' }} />
+        <p className="body-text" style={{ color: 'var(--text-secondary)', marginTop: '1rem' }}>
+          Loading doctor consultation schedule...
         </p>
       </div>
     );
   }
 
-  if (confirmedAppointment) {
+  // Step 4: Booking Confirmation Screen
+  if (confirmedAppointment || currentStep === 4) {
     return (
-      <div className="container dashboard-container" style={{ maxWidth: '680px' }}>
-        <div className="glass-card confirmation-card">
-          <div className="confirmation-icon-circle">
-            <CheckCircle2 size={42} color="#10b981" />
+      <div className="container" style={{ maxWidth: '720px', padding: '2.5rem 1.5rem' }}>
+        <Card noPadding style={{ overflow: 'hidden', textAlign: 'center' }}>
+          <div style={{ background: 'var(--gradient-brand)', color: 'var(--white)', padding: '2.5rem 2rem' }}>
+            <div
+              style={{
+                width: '64px',
+                height: '64px',
+                borderRadius: '50%',
+                backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                backdropFilter: 'blur(8px)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 1rem auto',
+                border: '2px solid rgba(255, 255, 255, 0.4)',
+              }}
+            >
+              <CheckCircle2 size={36} color="#ffffff" />
+            </div>
+            <h2 style={{ fontSize: '26px', fontWeight: 700, color: 'var(--white)', marginBottom: '0.5rem' }}>
+              Appointment Confirmed!
+            </h2>
+            <p style={{ color: 'rgba(255, 255, 255, 0.9)', fontSize: '15px' }}>
+              Your consultation reference has been registered with hospital administration.
+            </p>
           </div>
 
-          <h2 style={{ fontSize: '1.75rem', fontWeight: 800, marginTop: '1rem' }}>
-            Appointment Confirmed!
-          </h2>
-          <p style={{ color: 'var(--text-secondary)', marginTop: '0.35rem' }}>
-            Your consultation has been successfully booked with <strong>{confirmedAppointment.doctorName}</strong>.
-          </p>
+          <div style={{ padding: '2rem' }}>
+            <div
+              style={{
+                backgroundColor: 'var(--surface)',
+                border: '1px solid var(--border)',
+                borderRadius: 'var(--radius-md)',
+                padding: '1.5rem',
+                textAlign: 'left',
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                gap: '1.25rem',
+                marginBottom: '2rem',
+              }}
+            >
+              <div>
+                <div className="helper-text">Practitioner / Specialist</div>
+                <div style={{ fontWeight: 600, fontSize: '15px', color: 'var(--text-primary)', marginTop: '2px' }}>
+                  {confirmedAppointment?.doctorName || doctor?.name}
+                </div>
+              </div>
+              <div>
+                <div className="helper-text">Department / Specialization</div>
+                <div style={{ fontWeight: 600, fontSize: '15px', color: 'var(--primary)', marginTop: '2px' }}>
+                  {doctor?.specialization || 'Clinical Medicine'}
+                </div>
+              </div>
+              <div>
+                <div className="helper-text">Consultation Date</div>
+                <div style={{ fontWeight: 600, fontSize: '15px', color: 'var(--text-primary)', marginTop: '2px' }}>
+                  {confirmedAppointment?.date || selectedDate}
+                </div>
+              </div>
+              <div>
+                <div className="helper-text">Time Window</div>
+                <div style={{ fontWeight: 600, fontSize: '15px', color: 'var(--text-primary)', marginTop: '2px' }}>
+                  {confirmedAppointment?.startTime || selectedSlot} – {confirmedAppointment?.endTime || ''}
+                </div>
+              </div>
+              <div>
+                <div className="helper-text">Consultation Fee</div>
+                <div style={{ fontWeight: 700, fontSize: '16px', color: 'var(--success)', marginTop: '2px' }}>
+                  ${consultationFee}.00 USD (Covered / Invoiced)
+                </div>
+              </div>
+              <div>
+                <div className="helper-text">Appointment ID</div>
+                <div style={{ fontFamily: 'monospace', fontSize: '13px', color: 'var(--text-secondary)', marginTop: '2px' }}>
+                  {confirmedAppointment?.id || 'CONF-REF-LIVE'}
+                </div>
+              </div>
+            </div>
 
-          <div className="confirmation-details-box">
-            <div className="conf-item">
-              <span className="conf-label">Doctor</span>
-              <span className="conf-value">{confirmedAppointment.doctorName}</span>
-            </div>
-            <div className="conf-item">
-              <span className="conf-label">Consultation Date</span>
-              <span className="conf-value">{confirmedAppointment.date}</span>
-            </div>
-            <div className="conf-item">
-              <span className="conf-label">Time Window</span>
-              <span className="conf-value">
-                {confirmedAppointment.startTime} – {confirmedAppointment.endTime}
-              </span>
-            </div>
-            <div className="conf-item">
-              <span className="conf-label">Appointment ID</span>
-              <span className="conf-value" style={{ fontFamily: 'monospace', fontSize: '0.85rem' }}>
-                {confirmedAppointment.id}
-              </span>
+            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+              <Link to="/patient/appointments">
+                <Button variant="primary" size="md">
+                  View My Appointments
+                </Button>
+              </Link>
+              <Link to="/patient/doctors">
+                <Button variant="outline" size="md">
+                  Find Another Doctor
+                </Button>
+              </Link>
             </div>
           </div>
-
-          <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem', justifyContent: 'center' }}>
-            <Link to="/patient/appointments" className="btn btn-primary">
-              <span>View My Appointments</span>
-            </Link>
-            <Link to="/patient/doctors" className="btn btn-outline">
-              <span>Find Another Doctor</span>
-            </Link>
-          </div>
-        </div>
+        </Card>
       </div>
     );
   }
 
   return (
-    <div className="container dashboard-container" style={{ maxWidth: '820px' }}>
+    <div className="container" style={{ maxWidth: '840px', padding: '2rem 1.5rem' }}>
       <div style={{ marginBottom: '1.5rem' }}>
-        <Link to="/patient/doctors" className="back-link">
+        <Link to="/patient/doctors" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', color: 'var(--primary)', fontWeight: 500, fontSize: '14px', marginBottom: '0.75rem' }}>
           <ArrowLeft size={16} />
           <span>Back to Doctor Directory</span>
         </Link>
-        <h1 className="welcome-title" style={{ fontSize: '1.85rem', marginTop: '0.5rem' }}>
-          Book Consultation
-        </h1>
-        <p className="welcome-subtitle">
-          Select an available date and consultation slot with {doctor?.name}.
+        <h1 className="page-title" style={{ fontSize: '28px' }}>Book Specialist Consultation</h1>
+        <p className="body-text" style={{ color: 'var(--text-secondary)', marginTop: '2px' }}>
+          Reserve your preferred consultation slot with {doctor?.name}.
         </p>
       </div>
 
+      {/* Multi-stage Stepper */}
+      <div className="booking-stepper">
+        <div className={`step-item ${currentStep >= 1 ? 'is-active' : ''} ${selectedSlot ? 'is-completed' : ''}`}>
+          <div className="step-circle">{selectedSlot ? '✓' : '1'}</div>
+          <span className="step-label">1. Specialist & Slot</span>
+        </div>
+        <div className="step-divider" />
+        <div className={`step-item ${currentStep >= 2 ? 'is-active' : ''} ${symptoms ? 'is-completed' : ''}`}>
+          <div className="step-circle">{symptoms ? '✓' : '2'}</div>
+          <span className="step-label">2. Symptoms & Intake</span>
+        </div>
+        <div className="step-divider" />
+        <div className={`step-item ${currentStep >= 3 ? 'is-active' : ''}`}>
+          <div className="step-circle">3</div>
+          <span className="step-label">3. Fee & Confirm</span>
+        </div>
+      </div>
+
+      {/* Doctor Summary Card */}
       {doctor && (
-        <div className="glass-card info-card" style={{ marginBottom: '1.5rem', padding: '1.25rem 1.5rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-            <div className="doctor-avatar" style={{ width: '52px', height: '52px' }}>
-              <Stethoscope size={28} color="#10b981" />
+        <Card style={{ marginBottom: '1.5rem', padding: '18px 24px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', flexWrap: 'wrap' }}>
+            <div
+              style={{
+                width: '52px',
+                height: '52px',
+                borderRadius: 'var(--radius-md)',
+                backgroundColor: 'rgba(0, 98, 204, 0.08)',
+                color: 'var(--primary)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Stethoscope size={26} />
             </div>
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                <h3 style={{ fontSize: '1.25rem', fontWeight: 700 }}>{doctor.name}</h3>
-                <span className="specialization-badge">{doctor.specialization}</span>
+            <div style={{ flex: 1 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                <h3 style={{ fontSize: '18px', fontWeight: 600, margin: 0 }}>{doctor.name}</h3>
+                <span className="role-badge badge-doctor">{doctor.specialization}</span>
               </div>
-              <div style={{ display: 'flex', gap: '1.25rem', color: 'var(--text-secondary)', fontSize: '0.85rem', marginTop: '0.25rem' }}>
+              <div style={{ display: 'flex', gap: '1.5rem', color: 'var(--text-secondary)', fontSize: '13px', marginTop: '4px', flexWrap: 'wrap' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                  <Mail size={13} />
-                  <span>{doctor.email}</span>
+                  <Building2 size={14} color="var(--primary)" />
+                  <span>Main Hospital Campus</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                  <Clock size={13} color="var(--primary)" />
+                  <Clock size={14} color="var(--primary)" />
                   <span>{doctor.slotDuration} min consultation slots</span>
                 </div>
               </div>
             </div>
           </div>
-        </div>
+        </Card>
       )}
 
       {error && (
-        <div className="alert alert-error" style={{ marginBottom: '1.5rem' }}>
-          <AlertCircle size={18} />
-          <span>{error}</span>
-        </div>
+        <InlineAlert
+          type="danger"
+          message={error}
+          onClose={() => setError(null)}
+        />
       )}
 
-      <form onSubmit={handleBook} className="glass-card form-card">
-        <div className="form-group">
-          <label className="form-label" htmlFor="appointmentDate">
-            <Calendar size={15} style={{ display: 'inline', marginRight: '0.35rem' }} />
-            1. Select Consultation Date *
-          </label>
-          <input
-            id="appointmentDate"
-            type="date"
-            className="form-input"
-            value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
-            min={new Date().toISOString().split('T')[0]}
-            required
-            style={{ maxWidth: '320px' }}
-          />
-        </div>
+      {/* Booking Form */}
+      <form onSubmit={handleBook}>
+        <Card title="Select Date & Time Slot" icon={<Calendar size={18} />} style={{ marginBottom: '1.5rem' }}>
+          <div className="form-group" style={{ maxWidth: '320px' }}>
+            <Input
+              id="appointmentDate"
+              type="date"
+              label="Consultation Date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              min={new Date().toISOString().split('T')[0]}
+              leftIcon={<Calendar size={16} />}
+              required
+            />
+          </div>
 
-        <div style={{ margin: '1.75rem 0' }}>
-          <label className="form-label" style={{ marginBottom: '0.75rem' }}>
-            2. Choose Time Slot *
-          </label>
-          <SlotPicker
-            slots={slots}
-            selectedSlot={selectedSlot}
-            onSelectSlot={handleSelectSlot}
-            isLoading={isLoadingSlots || isHoldingSlot}
-          />
-        </div>
+          <div style={{ marginTop: '1.25rem' }}>
+            <label className="form-field-label">Available Slots for {selectedDate} *</label>
+            <SlotPicker
+              slots={slots}
+              selectedSlot={selectedSlot}
+              onSelectSlot={handleSelectSlot}
+              isLoading={isLoadingSlots || isHoldingSlot}
+            />
+          </div>
 
-        {selectedSlot && secondsRemaining > 0 && (
-          <div
-            style={{
-              padding: '0.85rem 1.15rem',
-              background: 'rgba(16, 185, 129, 0.1)',
-              border: '1px solid rgba(16, 185, 129, 0.3)',
-              borderRadius: 'var(--radius-sm)',
-              marginBottom: '1.5rem',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              flexWrap: 'wrap',
-              gap: '0.5rem',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#10b981', fontWeight: 600 }}>
-              <Clock size={16} />
-              <span>Slot Reserved: {selectedSlot} ({selectedDate})</span>
-            </div>
-            <span
+          {selectedSlot && secondsRemaining > 0 && (
+            <div
               style={{
-                fontSize: '0.85rem',
-                fontWeight: 700,
-                color: secondsRemaining < 60 ? '#ef4444' : '#10b981',
-                background: secondsRemaining < 60 ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.15)',
-                padding: '0.2rem 0.6rem',
-                borderRadius: '999px',
+                marginTop: '1.25rem',
+                padding: '12px 16px',
+                backgroundColor: 'var(--success-bg)',
+                border: '1px solid var(--success-border)',
+                borderRadius: 'var(--radius-md)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '0.5rem',
               }}
             >
-              Reservation expires in: {Math.floor(secondsRemaining / 60)}:{String(secondsRemaining % 60).padStart(2, '0')}
-            </span>
-          </div>
-        )}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#155724', fontWeight: 600, fontSize: '14px' }}>
+                <Clock size={16} />
+                <span>Slot Reserved: {selectedSlot} ({selectedDate})</span>
+              </div>
+              <span
+                style={{
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  color: secondsRemaining < 60 ? 'var(--danger)' : 'var(--success)',
+                  backgroundColor: 'var(--white)',
+                  padding: '3px 8px',
+                  borderRadius: 'var(--radius-sm)',
+                  border: '1px solid var(--border)',
+                }}
+              >
+                Reservation expires in: {Math.floor(secondsRemaining / 60)}:{String(secondsRemaining % 60).padStart(2, '0')}
+              </span>
+            </div>
+          )}
+        </Card>
 
-        <div className="form-group">
-          <label className="form-label" htmlFor="patientSymptoms">
-            <FileText size={15} style={{ display: 'inline', marginRight: '0.35rem' }} />
-            3. Patient Symptoms (Required for Intake) *
-          </label>
-          <textarea
+        <Card title="Patient Intake & Medical Reason" icon={<FileText size={18} />} style={{ marginBottom: '1.5rem' }}>
+          <Textarea
             id="patientSymptoms"
-            className="form-input"
+            label="Current Symptoms (Required for Intake)"
             rows={3}
-            placeholder="Describe your current symptoms (e.g., headache and fever for 2 days, sharp pain in lower back when bending)..."
+            placeholder="Describe your current symptoms (e.g., persistent fever, headache, muscle ache for 2 days)..."
             value={symptoms}
             onChange={(e) => setSymptoms(e.target.value)}
             required
             maxLength={1000}
           />
-        </div>
 
-        <div className="form-group">
-          <label className="form-label" htmlFor="consultReason">
-            <FileText size={15} style={{ display: 'inline', marginRight: '0.35rem' }} />
-            4. Reason for Visit / Chief Complaint (Optional)
-          </label>
-          <textarea
+          <Textarea
             id="consultReason"
-            className="form-input"
+            label="Reason for Visit / Chief Complaint (Optional)"
             rows={2}
-            placeholder="Briefly describe general category or visit context (e.g. Routine follow-up, specialist consultation)"
+            placeholder="e.g. Routine follow-up, specialist consultation"
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             maxLength={500}
           />
-        </div>
 
-        <div className="form-group">
-          <label className="form-label" htmlFor="patientNotes">
-            <FileText size={15} style={{ display: 'inline', marginRight: '0.35rem' }} />
-            5. Additional Background Notes (Optional)
-          </label>
-          <textarea
+          <Textarea
             id="patientNotes"
-            className="form-input"
+            label="Additional Background / Notes for Doctor (Optional)"
             rows={2}
-            placeholder="Any past medical history, current medications, or notes for the doctor..."
+            placeholder="Any past medical history, current medications, or questions for the doctor..."
             value={patientNotes}
             onChange={(e) => setPatientNotes(e.target.value)}
             maxLength={1000}
           />
-        </div>
+        </Card>
 
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '2rem' }}>
-          <Link to="/patient/doctors" className="btn btn-outline">
-            Cancel
+        <Card title="Fee Review & Confirmation" icon={<DollarSign size={18} />} style={{ marginBottom: '1.5rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid var(--surface-alt)' }}>
+            <span className="body-text">Specialist Consultation Fee</span>
+            <span style={{ fontWeight: 600, fontSize: '15px' }}>${consultationFee}.00</span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid var(--surface-alt)' }}>
+            <span className="body-text">Platform & Booking Fee</span>
+            <span style={{ fontWeight: 600, fontSize: '15px', color: 'var(--success)' }}>$0.00 (Waived)</span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 0 0 0' }}>
+            <span style={{ fontWeight: 700, fontSize: '16px' }}>Total Due at Visit</span>
+            <span style={{ fontWeight: 700, fontSize: '20px', color: 'var(--primary)' }}>${consultationFee}.00 USD</span>
+          </div>
+        </Card>
+
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
+          <Link to="/patient/doctors">
+            <Button variant="outline" size="md">
+              Cancel
+            </Button>
           </Link>
-          <button
+          <Button
             type="submit"
-            className="btn btn-primary"
+            variant="primary"
+            size="md"
             disabled={isSubmitting || !selectedSlot || !selectedDate || secondsRemaining <= 0 || isHoldingSlot}
+            isLoading={isSubmitting}
+            leftIcon={<ShieldCheck size={16} />}
           >
-            {isSubmitting ? (
-              <>
-                <div className="spinner" />
-                <span>Securing Slot...</span>
-              </>
-            ) : (
-              <>
-                <ShieldCheck size={16} />
-                <span>Confirm & Book Appointment</span>
-              </>
-            )}
-          </button>
+            Confirm & Book Appointment
+          </Button>
         </div>
       </form>
     </div>
   );
 };
+
+export default BookAppointment;
