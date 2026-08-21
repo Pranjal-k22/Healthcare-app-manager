@@ -104,30 +104,15 @@ const createDoctor = async (data) => {
     throw error;
   }
 
-  let session = null;
-  try {
-    session = await mongoose.startSession();
-    session.startTransaction();
-  } catch (err) {
-    // MongoDB standalone instance without replica set fallback
-    session = null;
-  }
-
   let createdUser = null;
   try {
     // 2. Create User entity with DOCTOR role
-    const userDocs = await User.create(
-      [
-        {
-          name: name.trim(),
-          email: email.toLowerCase().trim(),
-          password,
-          role: 'DOCTOR',
-        },
-      ],
-      session ? { session } : {}
-    );
-    createdUser = userDocs[0];
+    createdUser = await User.create({
+      name: name.trim(),
+      email: email.toLowerCase().trim(),
+      password,
+      role: 'DOCTOR',
+    });
 
     // 3. Create DoctorProfile linked by userId
     const profilePayload = {
@@ -148,16 +133,7 @@ const createDoctor = async (data) => {
       ...(workingHours && { workingHours }),
     };
 
-    const profileDocs = await DoctorProfile.create(
-      [profilePayload],
-      session ? { session } : {}
-    );
-    const doctorProfile = profileDocs[0];
-
-    if (session) {
-      await session.commitTransaction();
-      session.endSession();
-    }
+    const doctorProfile = await DoctorProfile.create(profilePayload);
 
     const populated = await DoctorProfile.findById(doctorProfile._id).populate(
       'userId',
@@ -166,12 +142,9 @@ const createDoctor = async (data) => {
 
     return await formatDoctorResponse(populated);
   } catch (error) {
-    if (session) {
-      await session.abortTransaction();
-      session.endSession();
-    } else if (createdUser) {
-      // Compensating rollback for standalone MongoDB
-      await User.findByIdAndDelete(createdUser._id);
+    if (createdUser && createdUser._id) {
+      // Compensating rollback for atomic consistency
+      await User.findByIdAndDelete(createdUser._id).catch(() => {});
     }
     throw error;
   }

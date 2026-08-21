@@ -198,30 +198,52 @@ export const AppointmentDetails: React.FC = () => {
               lineHeight: 1.65,
             }}
           >
-            {typeof clinicalRecord.postVisitSummary === 'string' ? (
-              <div style={{ whiteSpace: 'pre-line' }}>{clinicalRecord.postVisitSummary}</div>
+            {typeof (clinicalRecord.postVisitSummary || appointment?.postVisitSummary) === 'string' ? (
+              <div style={{ whiteSpace: 'pre-line' }}>{String(clinicalRecord.postVisitSummary || appointment?.postVisitSummary)}</div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
                 <div>
                   <h4 style={{ fontSize: '0.82rem', fontWeight: 700, color: '#10b981', textTransform: 'uppercase', marginBottom: '0.25rem' }}>
                     Visit Summary & Care Explanation
                   </h4>
-                  <p style={{ margin: 0, color: 'var(--text-primary)' }}>{clinicalRecord.postVisitSummary.summary}</p>
+                  <p style={{ margin: 0, color: 'var(--text-primary)' }}>
+                    {(clinicalRecord.postVisitSummary as any)?.patientSummary || (clinicalRecord.postVisitSummary as any)?.summary || (appointment?.postVisitSummary as any)?.patientSummary || (appointment?.postVisitSummary as any)?.summary}
+                  </p>
                 </div>
-                {clinicalRecord.postVisitSummary.medicationSchedule && (
+                {((clinicalRecord.postVisitSummary as any)?.medicationSchedule || (appointment?.postVisitSummary as any)?.medicationSchedule) && (
                   <div>
                     <h4 style={{ fontSize: '0.82rem', fontWeight: 700, color: '#38bdf8', textTransform: 'uppercase', marginBottom: '0.25rem' }}>
                       Medication Instructions & Schedule
                     </h4>
-                    <p style={{ margin: 0, color: 'var(--text-secondary)' }}>{clinicalRecord.postVisitSummary.medicationSchedule}</p>
+                    {Array.isArray((clinicalRecord.postVisitSummary as any)?.medicationSchedule || (appointment?.postVisitSummary as any)?.medicationSchedule) ? (
+                      <ul style={{ margin: 0, paddingLeft: '1.25rem', color: 'var(--text-secondary)' }}>
+                        {(((clinicalRecord.postVisitSummary as any)?.medicationSchedule || (appointment?.postVisitSummary as any)?.medicationSchedule) as string[]).map((item: string, i: number) => (
+                          <li key={i}>{item}</li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p style={{ margin: 0, color: 'var(--text-secondary)' }}>
+                        {String((clinicalRecord.postVisitSummary as any)?.medicationSchedule || (appointment?.postVisitSummary as any)?.medicationSchedule)}
+                      </p>
+                    )}
                   </div>
                 )}
-                {clinicalRecord.postVisitSummary.followUpSteps && (
+                {((clinicalRecord.postVisitSummary as any)?.followUpSteps || (appointment?.postVisitSummary as any)?.followUpSteps) && (
                   <div>
                     <h4 style={{ fontSize: '0.82rem', fontWeight: 700, color: '#f59e0b', textTransform: 'uppercase', marginBottom: '0.25rem' }}>
                       Next Steps & Follow-Up
                     </h4>
-                    <p style={{ margin: 0, color: 'var(--text-secondary)' }}>{clinicalRecord.postVisitSummary.followUpSteps}</p>
+                    {Array.isArray((clinicalRecord.postVisitSummary as any)?.followUpSteps || (appointment?.postVisitSummary as any)?.followUpSteps) ? (
+                      <ul style={{ margin: 0, paddingLeft: '1.25rem', color: 'var(--text-secondary)' }}>
+                        {(((clinicalRecord.postVisitSummary as any)?.followUpSteps || (appointment?.postVisitSummary as any)?.followUpSteps) as string[]).map((item: string, i: number) => (
+                          <li key={i}>{item}</li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p style={{ margin: 0, color: 'var(--text-secondary)' }}>
+                        {String((clinicalRecord.postVisitSummary as any)?.followUpSteps || (appointment?.postVisitSummary as any)?.followUpSteps)}
+                      </p>
+                    )}
                   </div>
                 )}
               </div>

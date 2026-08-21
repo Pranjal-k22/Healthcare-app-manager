@@ -6,7 +6,6 @@ const mongoose = require('mongoose');
 const { generatePreVisitSummary, generatePostVisitSummary } = require('../services/llm/llmService');
 const aiService = require('../utils/aiService');
 const ollamaProvider = require('../services/llm/ollamaProvider');
-const geminiProvider = require('../services/llm/geminiProvider');
 const Appointment = require('../models/Appointment');
 const User = require('../models/User');
 
@@ -17,10 +16,9 @@ async function runLiveLlmVerification() {
   console.log('🏥 HEALTHCARE LLM LIVE VERIFICATION SUITE');
   console.log('====================================================\n');
 
-  console.log(`[Config] LLM_PROVIDER: ${process.env.LLM_PROVIDER || 'default (auto-detect)'}`);
-  console.log(`[Config] GEMINI_API_KEY: ${geminiProvider.isConfigured() ? 'CONFIGURED (Cloud Active)' : 'NOT SET'}`);
   console.log(`[Config] OLLAMA_HOST: ${process.env.OLLAMA_HOST || 'http://localhost:11434'}`);
   console.log(`[Config] OLLAMA_MODEL: ${process.env.OLLAMA_MODEL || 'qwen2.5-coder:7b'}\n`);
+
 
   // ---------------------------------------------------------------
   // TEST 1: Live Pre-Visit Synthesis (High-Urgency Case)

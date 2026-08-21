@@ -1,6 +1,8 @@
+const mongoose = require('mongoose');
 const runAuthTests = require('./auth.test');
 const runAppointmentTests = require('./appointment.test');
 const runClinicalTests = require('./clinical.test');
+
 const runLeaveTests = require('./leave.test');
 const runNotificationTests = require('./notification.test');
 const runCalendarTests = require('./calendar.test');
@@ -10,6 +12,7 @@ const runLLMTests = require('./llm.test');
 const runE2ETests = require('./e2e.test');
 const { runProfileBillingTests } = require('./profileBillingPrescription.test');
 const runEmailTests = require('./email.test');
+const runConcurrencyTests = require('./concurrency.test');
 
 const runMasterTestSuite = async () => {
   console.log('================================================================');
@@ -18,7 +21,7 @@ const runMasterTestSuite = async () => {
 
   const startTime = Date.now();
   let passedSuites = 0;
-  const totalSuites = 12;
+  const totalSuites = 13;
 
   try {
     await runAuthTests();
@@ -27,8 +30,12 @@ const runMasterTestSuite = async () => {
     await runAppointmentTests();
     passedSuites++;
 
+    await runConcurrencyTests();
+    passedSuites++;
+
     await runClinicalTests();
     passedSuites++;
+
 
     await runLeaveTests();
     passedSuites++;
@@ -63,10 +70,19 @@ const runMasterTestSuite = async () => {
     console.log('   Security Hardening: 100% Verified');
     console.log('   Zero Critical Vulnerabilities Found');
     console.log('================================================================\n');
+
+    if (mongoose.connection.readyState !== 0) {
+      await mongoose.connection.close();
+    }
+    process.exit(0);
   } catch (error) {
     console.error('\n❌ TEST RUNNER FAILED:', error.message);
+    if (mongoose.connection.readyState !== 0) {
+      await mongoose.connection.close();
+    }
     process.exit(1);
   }
 };
 
 runMasterTestSuite();
+

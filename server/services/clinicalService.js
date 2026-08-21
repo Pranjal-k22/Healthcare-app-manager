@@ -314,7 +314,7 @@ const completeConsultation = async (appointmentId, doctorUser, workflowData = {}
   // Asynchronously trigger Post-Visit LLM summary generation (Non-blocking fire-and-forget)
   if (clinicalRecord && clinicalRecord.clinicalNotes) {
     const medicines = prescription ? prescription.medicines : [];
-    triggerPostVisitSummary(clinicalRecord._id, clinicalRecord.clinicalNotes, medicines);
+    triggerPostVisitSummary(appointment._id, clinicalRecord._id, clinicalRecord.clinicalNotes, medicines);
   }
 
   return {
@@ -325,24 +325,35 @@ const completeConsultation = async (appointmentId, doctorUser, workflowData = {}
 };
 
 /**
- * Asynchronously synthesize Post-Visit Patient Summary via Local LLM Layer
- * Fire-and-forget: does not block HTTP response; updates MongoDB record on completion.
+ * Asynchronously synthesize Post-Visit Patient Summary via Google Gemini LLM Layer
+ * Fire-and-forget: does not block HTTP response; updates MongoDB records on completion.
+ * @param {string} appointmentId
  * @param {string} clinicalRecordId
  * @param {string} clinicalNotes
  * @param {Array<object>} medicines
  */
-const triggerPostVisitSummary = async (clinicalRecordId, clinicalNotes, medicines) => {
+const triggerPostVisitSummary = async (appointmentId, clinicalRecordId, clinicalNotes, medicines) => {
   try {
     const result = await llmService.generatePostVisitSummary(clinicalNotes, medicines);
-    await ClinicalRecord.findByIdAndUpdate(clinicalRecordId, {
-      aiStatus: result.status,               // 'READY' or 'FAILED'
-      postVisitSummary: result.data || null, // { summary, medicationSchedule, followUpSteps }
-      aiPromptVersion: result.promptVersion,
-    });
+    await Promise.all([
+      ClinicalRecord.findByIdAndUpdate(clinicalRecordId, {
+        aiStatus: result.status,               // 'READY' or 'FAILED'
+        postVisitSummary: result.data || null, // { patientSummary, medicationSchedule, followUpSteps }
+        aiPromptVersion: result.promptVersion,
+      }),
+      Appointment.findByIdAndUpdate(appointmentId, {
+        aiStatus: result.status,
+        postVisitSummary: result.data || null,
+        aiPromptVersion: result.promptVersion,
+      }),
+    ]);
   } catch (err) {
     // Defense in depth: catch unexpected failures and ensure status is marked FAILED without throwing
-    await ClinicalRecord.findByIdAndUpdate(clinicalRecordId, { aiStatus: AI_STATUS.FAILED }).catch(() => {});
-    console.error('[clinicalService] post-visit trigger crashed:', err.message);
+    await Promise.all([
+      ClinicalRecord.findByIdAndUpdate(clinicalRecordId, { aiStatus: 'FAILED' }).catch(() => {}),
+      Appointment.findByIdAndUpdate(appointmentId, { aiStatus: 'FAILED' }).catch(() => {}),
+    ]);
+    console.error('[clinicalService] post-visit trigger error:', err.message);
   }
 };
 

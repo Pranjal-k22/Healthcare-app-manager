@@ -74,6 +74,14 @@ const appointmentSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.Mixed,
       default: null,
     },
+    aiPreVisitSummary: {
+      type: mongoose.Schema.Types.Mixed,
+      default: null,
+    },
+    postVisitSummary: {
+      type: mongoose.Schema.Types.Mixed,
+      default: null,
+    },
     aiStatus: {
       type: String,
       enum: ['PENDING', 'READY', 'FAILED'],

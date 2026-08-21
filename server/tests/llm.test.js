@@ -30,11 +30,11 @@ const {
   LLMHallucinationGuardError,
   LLMExhaustedRetriesError,
 } = require('../services/llm/llmErrors');
-const ollamaProvider = require('../services/llm/ollamaProvider');
+const geminiProvider = require('../services/llm/geminiProvider');
 const llmService = require('../services/llm/llmService');
 
 const runLLMTests = async () => {
-  console.log('\n--- [TEST SUITE 10] Local LLM Integration Layer (Phase 10 Spec) ---');
+  console.log('\n--- [TEST SUITE 10] Google Gemini LLM Integration Layer (Phase 10 Spec) ---');
 
   // ==========================================
   // Section A: Schemas & Constants Verification
@@ -123,11 +123,11 @@ const runLLMTests = async () => {
   // Section D: Scenario-Based Test Suite (1 to 8)
   // ==========================================
 
-  // Scenario 1: Ollama daemon stopped / unreachable
+  // Scenario 1: Gemini service outage / connection failure
   {
-    const originalGen = ollamaProvider.generate;
-    ollamaProvider.generate = async () => {
-      throw new LLMConnectionError('fetch failed ECONNREFUSED');
+    const originalGen = geminiProvider.generate;
+    geminiProvider.generate = async () => {
+      throw new Error('Gemini API service unavailable 503');
     };
     try {
       const result = await llmService.generatePreVisitSummary('Persistent fever');
@@ -135,9 +135,9 @@ const runLLMTests = async () => {
       assert.ok(result.error);
       assert.strictEqual(result.promptVersion, PRE_VISIT_PROMPT_VERSION);
     } finally {
-      ollamaProvider.generate = originalGen;
+      geminiProvider.generate = originalGen;
     }
-    console.log('✓ Scenario 1: Ollama daemon stopped -> graceful FAILED status without unhandled throw');
+    console.log('✓ Scenario 1: Gemini API offline -> graceful FAILED status without unhandled throw');
   }
 
   // Scenario 2: Model returns malformed/non-JSON text
@@ -153,15 +153,15 @@ const runLLMTests = async () => {
     const parsed = extractJson('```json\n{"urgency": "Low", "chiefComplaint": "Rash", "suggestedQuestions": ["Q1 string", "Q2 string", "Q3 string"]}\n```');
     assert.strictEqual(parsed.urgency, 'Low');
 
-    const originalGen = ollamaProvider.generate;
-    ollamaProvider.generate = async () => 'Malformed text with no json';
+    const originalGen = geminiProvider.generate;
+    geminiProvider.generate = async () => 'Malformed text with no json';
     try {
       const result = await llmService.generatePreVisitSummary('Skin rash');
       assert.strictEqual(result.status, AI_STATUS.FAILED);
     } finally {
-      ollamaProvider.generate = originalGen;
+      geminiProvider.generate = originalGen;
     }
-    console.log('✓ Scenario 2: Model returns non-JSON -> LLMParseError caught & retried -> FAILED');
+    console.log('✓ Scenario 2: Model returns non-JSON -> LLMParseError caught -> FAILED');
   }
 
   // Scenario 3: Model returns 2 questions instead of 3
@@ -233,27 +233,25 @@ const runLLMTests = async () => {
     console.log('✓ Scenario 5: Prompt injection neutralized via system directive + sanitization');
   }
 
-  // Scenario 6: Ollama timeout (>28s) mapped to LLMTimeoutError
+  // Scenario 6: Gemini timeout / abort handled cleanly
   {
-    const originalGen = ollamaProvider.generate;
-    ollamaProvider.generate = async () => {
-      const err = new Error('The operation was aborted');
-      err.name = 'AbortError';
-      throw new LLMTimeoutError('Ollama request exceeded 28000ms timeout', err);
+    const originalGen = geminiProvider.generate;
+    geminiProvider.generate = async () => {
+      throw new Error('Gemini request timeout');
     };
     try {
       const result = await llmService.generatePreVisitSummary('Chronic fatigue');
       assert.strictEqual(result.status, AI_STATUS.FAILED);
     } finally {
-      ollamaProvider.generate = originalGen;
+      geminiProvider.generate = originalGen;
     }
-    console.log('✓ Scenario 6: Request timeout handled cleanly via LLMTimeoutError without crash');
+    console.log('✓ Scenario 6: Request timeout handled cleanly without crash');
   }
 
   // Scenario 7: Successful generation on first try
   {
-    const originalGen = ollamaProvider.generate;
-    ollamaProvider.generate = async () => {
+    const originalGen = geminiProvider.generate;
+    geminiProvider.generate = async () => {
       return JSON.stringify({
         urgency: 'Low',
         chiefComplaint: 'Mild seasonal allergies',
@@ -272,39 +270,31 @@ const runLLMTests = async () => {
       assert.strictEqual(result.data.suggestedQuestions.length, 3);
       assert.strictEqual(result.promptVersion, PRE_VISIT_PROMPT_VERSION);
     } finally {
-      ollamaProvider.generate = originalGen;
+      geminiProvider.generate = originalGen;
     }
     console.log('✓ Scenario 7: Successful generation on first attempt populates fields and prompt version');
   }
 
-  // Scenario 8: Successful generation on 2nd attempt (1st attempt fails transiently)
+  // Scenario 8: Post-visit generation with automatic medication guardrail
   {
-    let attemptsCount = 0;
-    const originalGen = ollamaProvider.generate;
-    ollamaProvider.generate = async () => {
-      attemptsCount++;
-      if (attemptsCount === 1) {
-        throw new LLMConnectionError('Temporary network blip');
-      }
+    const originalGen = geminiProvider.generate;
+    geminiProvider.generate = async () => {
       return JSON.stringify({
-        urgency: 'Medium',
-        chiefComplaint: 'Moderate sprained ankle',
-        suggestedQuestions: [
-          'Can you bear weight on the ankle?',
-          'Did you hear a popping sound when it occurred?',
-          'Have you applied ice and elevated the foot?',
-        ],
+        patientSummary: 'Diagnosis of mild pharyngitis.',
+        medicationSchedule: ['Amoxicillin 500mg three times daily for 7 days'],
+        followUpSteps: ['Rest and hydrate'],
       });
     };
     try {
-      const result = await llmService.generatePreVisitSummary('Twisted ankle while running');
+      const result = await llmService.generatePostVisitSummary('Mild throat inflammation', [
+        { name: 'Amoxicillin', dosage: '500mg', frequency: 'TID', duration: '7 days' },
+      ]);
       assert.strictEqual(result.status, AI_STATUS.READY);
-      assert.strictEqual(attemptsCount, 2);
-      assert.strictEqual(result.data.urgency, 'Medium');
+      assert.strictEqual(result.data.medicationSchedule.length, 1);
     } finally {
-      ollamaProvider.generate = originalGen;
+      geminiProvider.generate = originalGen;
     }
-    console.log('✓ Scenario 8: Bounded retry succeeds on 2nd attempt with backoff');
+    console.log('✓ Scenario 8: Post-visit generation with medication schedule verified');
   }
 
   // ==========================================

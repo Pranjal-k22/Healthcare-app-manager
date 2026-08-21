@@ -233,9 +233,9 @@ const dispatchAppointmentBooked = async (appointment) => {
     }).catch(() => {});
 
     const doctorPayload = {
-      recipientName: `Dr. ${doctorName}`,
+      recipientName: doctorDisplay,
       recipientRole: 'DOCTOR',
-      doctorName,
+      doctorName: cleanDoctorName,
       patientName,
       specialisation: 'Specialist Physician',
       date,
