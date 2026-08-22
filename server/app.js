@@ -73,6 +73,10 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Dev-Only Testing Endpoints (Disabled in Production)
+const devRoutes = require('./routes/devRoutes');
+app.use('/api/dev', devRoutes);
+
 // Mount Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/doctors', doctorRoutes);
@@ -85,10 +89,6 @@ app.use('/api', clinicalRoutes);
 app.use('/api/patient', profileRoutes);
 app.use('/api/patient', billingRoutes);
 app.use('/api/patient', prescriptionRoutes);
-
-// Dev-Only Testing Endpoints (Disabled in Production)
-const devRoutes = require('./routes/devRoutes');
-app.use('/api/dev', devRoutes);
 
 // Error Handling Middleware
 app.use(notFound);

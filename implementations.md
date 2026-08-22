@@ -35,6 +35,7 @@
 29. [docs/DEPLOYMENT.md](#doc-docs-deployment-md)
 30. [docs/DEMO_GUIDE.md](#doc-docs-demo-guide-md)
 31. [docs/PRESENTATION_POINTS.md](#doc-docs-presentation-points-md)
+32. [Phase 12 — Extended Platform Features (Latest Session)](#doc-phase12-implementation)
 
 
 
@@ -3678,3 +3679,344 @@ HealthPulse is an enterprise-grade full-stack MERN clinic management and patient
 - **Fault-Tolerant Integrations**: Non-blocking Google Calendar synchronization and resilient email dispatchers with exponential backoff.
 - **Automated Medication Adherence**: Scheduled dose reminders and patient action logging.
 - **Comprehensive Testing & Security**: 10 automated test suites, Helmet headers, rate limiting, and IDOR protection.
+
+---
+
+<a id="doc-phase12-implementation"></a>
+
+# Document 32: Phase 12 — Extended Platform Features (Latest Session)
+
+*Implemented: 2026-08-21 → 2026-08-22 | Status: ✅ Complete & Verified*
+
+---
+
+## Overview
+
+Phase 12 adds five major capability groups on top of the existing Phase 1–11 foundation:
+
+| # | Feature Group | Status |
+|---|---|---|
+| 1 | Dual-Engine LLM (Gemini + Local Ollama) | ✅ Done |
+| 2 | Admin Self-Registration & Doctor Provisioning Flow | ✅ Done |
+| 3 | Doctor Password Change | ✅ Done |
+| 4 | GitHub Actions CI Pipeline Fix | ✅ Done |
+| 5 | Admin: Complete Doctor Profile Removal | ✅ Done |
+
+---
+
+## Feature 1 — Dual-Engine LLM (Google Gemini + Local Ollama)
+
+### What Was Built
+The LLM service layer was unified to support **two AI backends** with automatic failover:
+
+| Mode | Provider | Model | When Used |
+|---|---|---|---|
+| `gemini` | Google Gemini API | `gemini-1.5-flash` | Cloud mode, fastest |
+| `ollama` | Local Ollama daemon | `qwen2.5-coder:7b` | Privacy mode, offline |
+| `auto` | Gemini → Ollama fallback | both | Default production mode |
+
+Both backends support **Pre-Visit Summaries** and **Post-Visit Summaries**.
+
+### Pre-Visit Summary
+- **Trigger**: Doctor opens appointment consultation room
+- **Input**: Patient symptoms string (`appointment.symptoms`)
+- **Output** (schema-enforced):
+  ```json
+  {
+    "urgency": "Low | Medium | High",
+    "chiefComplaint": "One-line clinical statement",
+    "suggestedQuestions": ["Question 1", "Question 2", "Question 3"]
+  }
+  ```
+- **Guardrail**: Exactly 3 `suggestedQuestions` enforced; retry if count ≠ 3
+
+### Post-Visit Summary
+- **Trigger**: Doctor completes consultation and saves prescription
+- **Input**: Diagnosis, clinical notes, prescription medications list
+- **Output** (schema-enforced):
+  ```json
+  {
+    "patientSummary": "Plain-language explanation for the patient",
+    "medicationSchedule": ["Med 1: dose instructions", "Med 2: ..."],
+    "followUpSteps": ["Step 1", "Step 2", "Step 3"]
+  }
+  ```
+- **Zero-Hallucination Guardrail**: Every prescribed medication name must appear verbatim in `medicationSchedule`; summary is rejected if any are missing
+
+### `aiStatus` Lifecycle
+Added `aiStatus` field to `Appointment` model:
+- `PENDING` → Summary not yet generated
+- `READY` → Summary successfully generated and stored
+- `FAILED` → All LLM attempts failed; UI shows graceful degradation message
+
+### Key Files Changed
+| File | Change |
+|---|---|
+| `server/services/llm/llmService.js` | Unified dual-provider dispatch with retry + fallback logic |
+| `server/models/Appointment.js` | Added `aiStatus`, `preVisitSummary`, `postVisitSummary` schema fields |
+| `server/tests/llm.test.js` | Updated to test both Gemini and Ollama engines |
+| `.env` | Added `GEMINI_API_KEY`, `GEMINI_MODEL`, `OLLAMA_HOST`, `OLLAMA_MODEL`, `LLM_PROVIDER`, `LLM_MAX_ATTEMPTS`, `LLM_BACKOFF_BASE_MS` |
+
+---
+
+## Feature 2 — Admin Self-Registration & Doctor Provisioning Flow
+
+### Admin Registration
+- **Where**: Login page → `"Register as Administrator"` link → Register page
+- **How**: Role selector (Patient / Administrator) on the Register form
+- **Security**: Admin registration requires the `adminSecretKey` passcode (`HealthPulseAdmin2026!`), validated server-side via `process.env.ADMIN_SECRET_KEY`
+- **On Success**: Admin welcome email dispatched via Nodemailer, admin account created with `role: ADMIN`
+
+### Doctor Provisioning by Admin
+When admin creates a new doctor via `POST /api/doctors`:
+1. A `User` account is created with `role: DOCTOR` and a **random temporary password** (12-char alphanumeric)
+2. A `DoctorProfile` is created and linked to the user
+3. The doctor receives an **automated welcome email** to their Gmail containing:
+   - Their login email
+   - Temporary password (plaintext, one-time)
+   - Link to the platform
+   - Instructions to change password after first login
+4. A system **admin alert email** is dispatched to `admin@healthcare.com` confirming the provisioning
+
+### Email Templates Added
+| Template | Recipient | Content |
+|---|---|---|
+| `doctorWelcome` | Provisioned doctor | Temporary credentials + portal link |
+| `adminWelcome` | New admin | Welcome message after self-registration |
+| `doctorProvisionedAdminAlert` | System admin | Notification that a new doctor was provisioned |
+
+### Key Files Changed
+| File | Change |
+|---|---|
+| `client/src/pages/auth/Register.tsx` | Added role selector + admin passcode input field |
+| `client/src/pages/auth/Login.tsx` | Added `"Register as Administrator"` link |
+| `client/src/types/auth.ts` | Added `adminSecretKey` and `role` to `RegisterData` type |
+| `server/controllers/authController.js` | Admin registration flow + validation + welcome email dispatch |
+| `server/services/emailTemplates/index.js` | Added `doctorWelcome`, `adminWelcome`, `doctorProvisionedAdminAlert` templates |
+| `server/services/notificationService.js` | Added `dispatchDoctorWelcome`, `dispatchAdminWelcome`, `dispatchDoctorProvisionedAdminAlert` |
+| `server/services/doctorService.js` | Auto-dispatch welcome email with credentials in `provisionDoctor` |
+
+---
+
+## Feature 3 — Doctor Password Change
+
+### What Was Built
+- **Backend**: `POST /api/auth/change-password` endpoint
+  - Accepts `{ currentPassword, newPassword }`
+  - Verifies `currentPassword` against stored bcrypt hash using `bcryptjs.compare`
+  - Hashes `newPassword` with `bcryptjs.hash(10 rounds)`
+  - Returns `200 OK` or appropriate error
+- **Frontend**: **"Account Security & Password"** card added to `DoctorProfile.tsx`
+  - Current Password input
+  - New Password input
+  - Confirm New Password input (client-side match validation)
+  - Submit button with loading state
+
+### Key Files Changed
+| File | Change |
+|---|---|
+| `server/controllers/authController.js` | Added `changePassword` handler |
+| `server/routes/authRoutes.js` | Mounted `POST /api/auth/change-password` (requires auth) |
+| `client/src/services/authApi.ts` | Added `changePasswordApi(data)` export |
+| `client/src/pages/doctor/DoctorProfile.tsx` | Added Password Management card with form |
+
+---
+
+## Feature 4 — GitHub Actions CI Pipeline Fix
+
+### Problem
+The CI pipeline was failing because `npm test` on the server required a live MongoDB connection, but no MongoDB service was configured in the Actions runner.
+
+### Fix Applied
+Updated `.github/workflows/ci.yml`:
+```yaml
+services:
+  mongodb:
+    image: mongo:6.0
+    ports:
+      - 27017:27017
+    options: >-
+      --health-cmd="mongosh --eval 'db.runCommand({ping:1})'"
+      --health-interval=10s
+      --health-timeout=5s
+      --health-retries=5
+```
+
+Also added the required test environment variables:
+```yaml
+env:
+  MONGO_URI: mongodb://localhost:27017/healthcare_test_db
+  JWT_SECRET: test_jwt_secret_for_ci
+  NODE_ENV: test
+  CLIENT_ORIGIN: http://localhost:5173
+  PORT: 5000
+  ADMIN_SECRET_KEY: HealthPulseAdmin2026!
+```
+
+### Result
+- ✅ All **13 test suites pass** on Node 20 in CI
+- ✅ Concurrency test timezone bug fixed (`toISOString()` → local date components)
+
+### Key Files Changed
+| File | Change |
+|---|---|
+| `.github/workflows/ci.yml` | Added MongoDB 6.0 service container + test env vars |
+| `server/tests/concurrency.test.js` | Fixed UTC timezone date-shift bug in date calculation |
+| `server/tests/llm.test.js` | Updated for dual-engine testing |
+
+---
+
+## Feature 5 — Admin: Complete Doctor Profile Removal
+
+### What Was Built
+A **permanent, cascade-safe doctor deletion** feature accessible to admins from two entry points:
+1. 🗑️ **Red Trash button** on each doctor card in the Manage Doctors page
+2. 🔴 **Danger Zone card** at the bottom of the Edit Doctor page
+
+### Deletion Cascade (atomic, ordered)
+When an admin deletes a doctor, the following happens in sequence:
+
+```
+1. Find DoctorProfile by ID (supports both DoctorProfile _id and User _id)
+2. UPDATE Appointment WHERE doctorId = doctorUserId
+             AND status IN ['BOOKED', 'PENDING', 'RESCHEDULED']
+        SET status = 'CANCELLED',
+            reason = 'Doctor profile removed by hospital administration'
+3. DELETE DoctorLeave WHERE doctorId = doctorUserId
+4. DELETE DoctorProfile WHERE _id = doctorProfileId
+5. DELETE User WHERE _id = doctorUserId
+6. DELETE CalendarConnection WHERE userId = doctorUserId  (graceful skip if absent)
+```
+
+### API Endpoint
+```
+DELETE /api/doctors/:id
+Authorization: Bearer <admin_jwt>
+Role Required: ADMIN
+
+Response 200:
+{
+  "success": true,
+  "message": "Dr. John Smith has been completely removed from the system and database.",
+  "data": {
+    "deletedId": "<doctorProfileId>",
+    "name": "John Smith",
+    "email": "dr.john@hospital.com"
+  }
+}
+```
+
+### UI Behaviour
+- Clicking the trash button opens a **`window.confirm` dialog** with a full impact warning before any destructive action
+- On confirmation, the API call is made and the doctor is **optimistically removed** from the list immediately (no re-fetch needed)
+- On the Edit Doctor page, the Danger Zone card shows the doctor's name in the warning text
+- Both entry points display inline error messages if the deletion fails
+
+### Key Files Changed
+| File | Change | Detail |
+|---|---|---|
+| `server/services/doctorService.js` | Added `deleteDoctorCompletely(id)` | Cascade delete service function with full cleanup |
+| `server/controllers/doctorController.js` | Added `deleteDoctorHandler` | Route handler importing and calling `deleteDoctorCompletely` |
+| `server/routes/doctorRoutes.js` | Mounted `DELETE /:id` | Protected by `requireRole('ADMIN')` |
+| `client/src/services/doctorApi.ts` | Added `deleteDoctor(id)` | Typed API call returning `{ deletedId, name, email, message }` |
+| `client/src/components/doctor/DoctorCard.tsx` | Added `Trash2` icon + `onDeleteDoctor` prop | Red delete button in admin action bar |
+| `client/src/pages/admin/ManageDoctors.tsx` | Added `handleDeleteDoctor` + `isDeletingDoctor` state | Confirmation dialog + optimistic list removal |
+| `client/src/pages/admin/EditDoctor.tsx` | Added Danger Zone card | Red delete section with `AlertTriangle`, `Trash2`, inline error |
+
+---
+
+## Verification Results
+
+### Automated Tests (npm test — server)
+```
+Test Suites: 13 passed, 13 total
+Tests:       47 passed, 47 total
+Time:        1.74s
+```
+
+### Client Production Build (npm run build — client)
+```
+✓ 1645 modules transformed
+dist/assets/index.css   46.46 kB │ gzip:   8.80 kB
+dist/assets/index.js   554.03 kB │ gzip: 136.01 kB
+✓ built in 2.77s
+Exit code: 0 (zero TypeScript/JSX errors)
+```
+
+### Live API Smoke Test (DELETE /api/doctors/:id)
+```json
+DELETE http://localhost:5000/api/doctors/6a889fa60e7bc84c2b610bc8
+Authorization: Bearer <admin_token>
+
+→ 200 OK
+{
+  "success": true,
+  "message": "Dr. Pranjal Karan has been completely removed from the system and database.",
+  "data": {
+    "deletedId": "6a889fa60e7bc84c2b610bc8",
+    "name": "Pranjal Karan",
+    "email": "1975adarsh@gmail.com"
+  }
+}
+
+Doctors before: 5  →  Doctors after: 4  ✅
+```
+
+---
+
+## Updated Environment Variables
+
+The `.env` file now requires the following additional variables beyond the original Phase 1–11 set:
+
+```env
+# Admin Registration Gate
+ADMIN_SECRET_KEY=HealthPulseAdmin2026!
+
+# Google Gemini LLM (Phase 10 / Phase 12)
+GEMINI_API_KEY=<your_gemini_api_key>
+GEMINI_MODEL=gemini-1.5-flash
+
+# Local Ollama LLM (Phase 10 / Phase 12)
+OLLAMA_HOST=http://localhost:11434
+OLLAMA_MODEL=qwen2.5-coder:7b
+OLLAMA_TIMEOUT_MS=60000
+LLM_PROVIDER=auto          # 'gemini' | 'ollama' | 'auto'
+LLM_MAX_ATTEMPTS=2
+LLM_BACKOFF_BASE_MS=300
+
+# Email (Nodemailer Gmail SMTP)
+GMAIL_USER=your@gmail.com
+GMAIL_APP_PASSWORD=xxxx_xxxx_xxxx_xxxx
+EMAIL_FROM_NAME="HealthPulse Hospital"
+SUPPORT_EMAIL=support@healthpulse.com
+ENABLE_EMAIL_NOTIFICATIONS=true
+```
+
+---
+
+## Complete File Change Log (Phase 12)
+
+| File | Type | Summary |
+|---|---|---|
+| `server/services/llm/llmService.js` | MODIFY | Dual-engine Gemini + Ollama provider with failover |
+| `server/models/Appointment.js` | MODIFY | Added `aiStatus`, `preVisitSummary`, `postVisitSummary` schema fields |
+| `server/services/emailTemplates/index.js` | MODIFY | Added 3 new email templates |
+| `server/services/notificationService.js` | MODIFY | Added 3 new dispatch functions |
+| `server/services/doctorService.js` | MODIFY | Added `deleteDoctorCompletely`, auto-dispatch welcome email |
+| `server/controllers/authController.js` | MODIFY | Admin registration + `changePassword` handler |
+| `server/controllers/doctorController.js` | MODIFY | Added `deleteDoctorHandler` |
+| `server/routes/authRoutes.js` | MODIFY | Mounted `POST /change-password` |
+| `server/routes/doctorRoutes.js` | MODIFY | Mounted `DELETE /:id` (ADMIN only) |
+| `server/tests/llm.test.js` | MODIFY | Dual-engine test coverage |
+| `server/tests/concurrency.test.js` | MODIFY | Fixed UTC timezone date bug |
+| `.github/workflows/ci.yml` | MODIFY | MongoDB service container + env vars |
+| `client/src/types/auth.ts` | MODIFY | Added `adminSecretKey`, `role` to `RegisterData` |
+| `client/src/services/authApi.ts` | MODIFY | Added `changePasswordApi` |
+| `client/src/services/doctorApi.ts` | MODIFY | Added `deleteDoctor(id)` |
+| `client/src/pages/auth/Register.tsx` | MODIFY | Role selector + admin passcode field |
+| `client/src/pages/auth/Login.tsx` | MODIFY | Admin registration link |
+| `client/src/pages/doctor/DoctorProfile.tsx` | MODIFY | Password change card |
+| `client/src/pages/admin/ManageDoctors.tsx` | MODIFY | Delete handler + state |
+| `client/src/pages/admin/EditDoctor.tsx` | MODIFY | Danger Zone card with permanent delete |
+| `client/src/components/doctor/DoctorCard.tsx` | MODIFY | Trash2 button + `onDeleteDoctor` prop |
+

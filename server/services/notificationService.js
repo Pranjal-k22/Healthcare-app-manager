@@ -3,6 +3,7 @@ const { Notification } = require('../models/Notification');
 const User = require('../models/User');
 const emailService = require('./emailService');
 const emailTemplates = require('./emailTemplates');
+const { queueEmailNotification } = require('./queue/emailQueue');
 
 /**
  * Create a persistent in-app notification
@@ -211,7 +212,7 @@ const dispatchAppointmentBooked = async (appointment) => {
       metadata: { patientName, date, startTime, endTime },
     });
 
-    // 3. Branded Emails (Patient & Doctor)
+    // 3. Queue Branded Emails (Patient & Doctor)
     const patientPayload = {
       recipientName: patientName,
       recipientRole: 'PATIENT',
@@ -223,14 +224,14 @@ const dispatchAppointmentBooked = async (appointment) => {
       fee,
       appointmentId: appointment._id ? appointment._id.toString() : '',
     };
-    const patientMail = emailTemplates.bookingConfirmation(patientPayload);
-    emailService.sendEmail({
+    queueEmailNotification({
       to: patient.email,
-      ...patientMail,
+      recipientName: patientName,
+      templateName: 'bookingConfirmation',
+      templateData: patientPayload,
       appointmentId: appointment._id,
-      notificationType: 'bookingConfirmation',
-      payload: patientPayload,
-    }).catch(() => {});
+      notificationType: 'BOOKING_CONFIRMATION',
+    });
 
     const doctorPayload = {
       recipientName: doctorDisplay,
@@ -242,14 +243,14 @@ const dispatchAppointmentBooked = async (appointment) => {
       time: `${startTime}–${endTime}`,
       appointmentId: appointment._id ? appointment._id.toString() : '',
     };
-    const doctorMail = emailTemplates.bookingConfirmation(doctorPayload);
-    emailService.sendEmail({
+    queueEmailNotification({
       to: doctor.email,
-      ...doctorMail,
+      recipientName: doctorDisplay,
+      templateName: 'bookingConfirmation',
+      templateData: doctorPayload,
       appointmentId: appointment._id,
-      notificationType: 'bookingConfirmation',
-      payload: doctorPayload,
-    }).catch(() => {});
+      notificationType: 'BOOKING_CONFIRMATION',
+    });
   } catch (error) {
     console.error('[NotificationService] Error in dispatchAppointmentBooked:', error.message);
   }
@@ -293,7 +294,7 @@ const dispatchAppointmentCancelled = async (appointment, cancelledByUser = {}) =
       metadata: { patientName: patient.name, date, startTime, reason },
     });
 
-    // 3. Asynchronous Emails
+    // 3. Queue Asynchronous Emails
     const patientPayload = {
       recipientName: patient.name,
       recipientRole: 'PATIENT',
@@ -304,14 +305,14 @@ const dispatchAppointmentCancelled = async (appointment, cancelledByUser = {}) =
       reason,
       appointmentId: appointment._id ? appointment._id.toString() : '',
     };
-    const patientMail = emailTemplates.appointmentCancellation(patientPayload);
-    emailService.sendEmail({
+    queueEmailNotification({
       to: patient.email,
-      ...patientMail,
+      recipientName: patient.name,
+      templateName: 'appointmentCancellation',
+      templateData: patientPayload,
       appointmentId: appointment._id,
-      notificationType: 'appointmentCancellation',
-      payload: patientPayload,
-    }).catch(() => {});
+      notificationType: 'APPOINTMENT_CANCELLATION',
+    });
 
     const doctorPayload = {
       recipientName: `Dr. ${doctor.name}`,
@@ -323,14 +324,14 @@ const dispatchAppointmentCancelled = async (appointment, cancelledByUser = {}) =
       reason,
       appointmentId: appointment._id ? appointment._id.toString() : '',
     };
-    const doctorMail = emailTemplates.appointmentCancellation(doctorPayload);
-    emailService.sendEmail({
+    queueEmailNotification({
       to: doctor.email,
-      ...doctorMail,
+      recipientName: `Dr. ${doctor.name}`,
+      templateName: 'appointmentCancellation',
+      templateData: doctorPayload,
       appointmentId: appointment._id,
-      notificationType: 'appointmentCancellation',
-      payload: doctorPayload,
-    }).catch(() => {});
+      notificationType: 'APPOINTMENT_CANCELLATION',
+    });
   } catch (error) {
     console.error('[NotificationService] Error in dispatchAppointmentCancelled:', error.message);
   }
@@ -374,27 +375,7 @@ const dispatchAppointmentRescheduled = async (newAppointment, oldAppointment) =>
       metadata: { patientName: patient.name, date, startTime, endTime },
     });
 
-    // 3. Emails: cancellation of old slot + confirmation of new slot
-    if (oldAppointment) {
-      const cancelPayload = {
-        recipientName: patient.name,
-        recipientRole: 'PATIENT',
-        doctorName: doctor.name,
-        patientName: patient.name,
-        date: oldAppointment.date,
-        time: oldAppointment.startTime,
-        reason: 'Rescheduled to new time slot',
-      };
-      const cancelMail = emailTemplates.appointmentCancellation(cancelPayload);
-      emailService.sendEmail({
-        to: patient.email,
-        ...cancelMail,
-        appointmentId: oldAppointment._id,
-        notificationType: 'appointmentCancellation',
-        payload: cancelPayload,
-      }).catch(() => {});
-    }
-
+    // 3. Queue Emails
     const bookingPayload = {
       recipientName: patient.name,
       recipientRole: 'PATIENT',
@@ -405,14 +386,33 @@ const dispatchAppointmentRescheduled = async (newAppointment, oldAppointment) =>
       time: `${startTime}–${endTime}`,
       appointmentId: newAppointment._id ? newAppointment._id.toString() : '',
     };
-    const confirmMail = emailTemplates.bookingConfirmation(bookingPayload);
-    emailService.sendEmail({
+    queueEmailNotification({
       to: patient.email,
-      ...confirmMail,
+      recipientName: patient.name,
+      templateName: 'bookingConfirmation',
+      templateData: bookingPayload,
       appointmentId: newAppointment._id,
-      notificationType: 'bookingConfirmation',
-      payload: bookingPayload,
-    }).catch(() => {});
+      notificationType: 'APPOINTMENT_RESCHEDULED',
+    });
+
+    const docReschedulePayload = {
+      recipientName: `Dr. ${doctor.name}`,
+      recipientRole: 'DOCTOR',
+      doctorName: doctor.name,
+      patientName: patient.name,
+      specialisation: 'Specialist Physician',
+      date,
+      time: `${startTime}–${endTime}`,
+      appointmentId: newAppointment._id ? newAppointment._id.toString() : '',
+    };
+    queueEmailNotification({
+      to: doctor.email,
+      recipientName: `Dr. ${doctor.name}`,
+      templateName: 'bookingConfirmation',
+      templateData: docReschedulePayload,
+      appointmentId: newAppointment._id,
+      notificationType: 'APPOINTMENT_RESCHEDULED',
+    });
   } catch (error) {
     console.error('[NotificationService] Error in dispatchAppointmentRescheduled:', error.message);
   }
@@ -474,7 +474,7 @@ const dispatchAppointmentReminder = async (appointment, hoursUntil = 24) => {
       metadata: { doctorName: doctor.name, date, startTime, endTime, hoursUntil },
     });
 
-    // 2. Email Reminder to Patient
+    // 2. Queue Email Reminder to Patient
     const reminderPayload = {
       recipientName: patient.name,
       doctorName: doctor.name,
@@ -484,14 +484,24 @@ const dispatchAppointmentReminder = async (appointment, hoursUntil = 24) => {
       hoursUntil,
       appointmentId: appointment._id ? appointment._id.toString() : '',
     };
-    const reminderMail = emailTemplates.appointmentReminder(reminderPayload);
-    emailService.sendEmail({
+    queueEmailNotification({
       to: patient.email,
-      ...reminderMail,
+      recipientName: patient.name,
+      templateName: 'appointmentReminder',
+      templateData: reminderPayload,
       appointmentId: appointment._id,
-      notificationType: 'appointmentReminder',
-      payload: reminderPayload,
-    }).catch(() => {});
+      notificationType: 'APPOINTMENT_REMINDER',
+    });
+
+    // 3. Queue Email Reminder to Doctor
+    queueEmailNotification({
+      to: doctor.email,
+      recipientName: `Dr. ${doctor.name}`,
+      templateName: 'appointmentReminder',
+      templateData: reminderPayload,
+      appointmentId: appointment._id,
+      notificationType: 'APPOINTMENT_REMINDER',
+    });
   } catch (error) {
     console.error('[NotificationService] Error in dispatchAppointmentReminder:', error.message);
   }
@@ -511,12 +521,12 @@ const dispatchDoctorLeaveConflict = async ({
 }) => {
   try {
     const payload = { patientName, doctorName, date, time, rescheduleLink };
-    const mail = emailTemplates.doctorLeaveConflict(payload);
-    await emailService.sendEmail({
+    queueEmailNotification({
       to: patientEmail,
-      ...mail,
-      notificationType: 'doctorLeaveConflict',
-      payload,
+      recipientName: patientName,
+      templateName: 'doctorLeaveConflict',
+      templateData: payload,
+      notificationType: 'DOCTOR_LEAVE',
     });
   } catch (err) {
     console.error('[NotificationService] Error in dispatchDoctorLeaveConflict:', err.message);
@@ -583,14 +593,13 @@ const dispatchDoctorWelcome = async (doctorUser, temporaryPassword, specializati
       specialization,
     };
 
-    const mail = emailTemplates.doctorWelcome(payload);
-
-    // 1. Send branded credential email
-    await emailService.sendEmail({
+    // 1. Queue credential email via queue
+    queueEmailNotification({
       to: doctorUser.email,
-      ...mail,
-      notificationType: 'doctorWelcome',
-      payload,
+      recipientName: `Dr. ${doctorUser.name}`,
+      templateName: 'doctorWelcome',
+      templateData: payload,
+      notificationType: 'DOCTOR_PROVISIONED',
     });
 
     // 2. In-app notification
@@ -616,12 +625,12 @@ const dispatchAdminWelcome = async (adminUser) => {
       adminName: adminUser.name,
       email: adminUser.email,
     };
-    const mail = emailTemplates.adminWelcome(payload);
-    await emailService.sendEmail({
+    queueEmailNotification({
       to: adminUser.email,
-      ...mail,
-      notificationType: 'adminWelcome',
-      payload,
+      recipientName: adminUser.name,
+      templateName: 'adminWelcome',
+      templateData: payload,
+      notificationType: 'ACCOUNT_PROVISIONED',
     });
   } catch (err) {
     console.error('[NotificationService] Error in dispatchAdminWelcome:', err.message);
@@ -643,15 +652,15 @@ const dispatchDoctorProvisionedAdminAlert = async (doctorUser, specialization, p
       specialization,
       provisionedByName,
     };
-    const mail = emailTemplates.doctorProvisionedAdminAlert(payload);
 
     for (const admin of admins) {
-      emailService.sendEmail({
+      queueEmailNotification({
         to: admin.email,
-        ...mail,
-        notificationType: 'doctorProvisionedAdminAlert',
-        payload,
-      }).catch(() => {});
+        recipientName: admin.name || 'Admin',
+        templateName: 'doctorProvisionedAdminAlert',
+        templateData: payload,
+        notificationType: 'DOCTOR_PROVISIONED',
+      });
 
       createNotification({
         userId: admin._id,
