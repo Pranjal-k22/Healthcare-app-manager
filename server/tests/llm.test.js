@@ -380,6 +380,84 @@ const runLLMTests = async () => {
     console.log('✓ Scenario 9: Gemini key absent -> Gemini marked NOT_CONFIGURED gracefully');
   }
 
+  // Scenario 10: Gemini 404 Model Not Found Guard & Logging
+  {
+    const origFetch = global.fetch;
+    const origKey = process.env.GEMINI_API_KEY;
+    const origErrors = [];
+    const origConsoleError = console.error;
+    console.error = (...args) => {
+      origErrors.push(args.join(' '));
+      origConsoleError(...args);
+    };
+
+    process.env.GEMINI_API_KEY = 'mock-valid-key';
+
+    // Mock fetch returning HTTP 404 with Google NOT_FOUND JSON payload
+    global.fetch = async () => ({
+      ok: false,
+      status: 404,
+      text: async () => JSON.stringify({
+        error: {
+          code: 404,
+          message: "models/gemini-nonexistent is not found for API version v1beta",
+          status: "NOT_FOUND"
+        }
+      })
+    });
+
+    try {
+      // Direct geminiProvider call must throw LLMProviderError with distinct message
+      let caughtErr = null;
+      try {
+        await geminiProvider.generate('Test prompt', { model: 'gemini-nonexistent' });
+      } catch (err) {
+        caughtErr = err;
+      }
+
+      assert.ok(caughtErr instanceof LLMProviderError, 'Must throw LLMProviderError on 404');
+      assert.strictEqual(caughtErr.status, 404);
+      assert.ok(
+        caughtErr.message.includes("[Gemini] Model 'gemini-nonexistent' not found"),
+        `Error message must contain distinct model not found text: ${caughtErr.message}`
+      );
+      assert.ok(
+        origErrors.some((log) => log.includes("[Gemini] Model 'gemini-nonexistent' not found")),
+        'Must log distinct error via console.error'
+      );
+
+      // Verify graceful degradation in llmService without crashing
+      const originalOllamaGen = ollamaProvider.generate;
+      ollamaProvider.generate = async () =>
+        JSON.stringify({
+          urgency: 'Low',
+          chiefComplaint: 'Ollama: Mild headache',
+          suggestedQuestions: [
+            'How long has the headache lasted?',
+            'Are you experiencing any sensitivity to light?',
+            'Have you taken any pain relievers today?',
+          ],
+        });
+
+      try {
+        const result = await llmService.generatePreVisitSummary('Mild headache');
+        assert.strictEqual(result.status, AI_STATUS.READY);
+        assert.strictEqual(result.gemini.status, AI_STATUS.FAILED);
+        assert.ok(
+          result.gemini.error.includes("Model 'gemini-nonexistent' not found") ||
+            result.gemini.error.includes("Model '")
+        );
+      } finally {
+        ollamaProvider.generate = originalOllamaGen;
+      }
+    } finally {
+      global.fetch = origFetch;
+      process.env.GEMINI_API_KEY = origKey;
+      console.error = origConsoleError;
+    }
+    console.log('✓ Scenario 10: Gemini 404 Model Not Found -> Distinct error logged + graceful FAILED degradation');
+  }
+
   // ==========================================
   // Section E: Model Schema Definitions
   // ==========================================
@@ -394,7 +472,7 @@ const runLLMTests = async () => {
   assert.strictEqual(ClinicalRecord.schema.paths.aiStatus.defaultValue, 'PENDING');
   console.log('✓ Mongoose schema fields for AI status, summaries, and prompt versions verified');
 
-  console.log('✓ [PASS] All 9 Hybrid Dual-Engine LLM Integration Test Scenarios Passed Cleanly!\n');
+  console.log('✓ [PASS] All 10 Hybrid Dual-Engine LLM Integration Test Scenarios Passed Cleanly!\n');
 };
 
 module.exports = runLLMTests;

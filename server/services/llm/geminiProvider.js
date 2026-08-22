@@ -5,7 +5,7 @@
 const { LLMConnectionError, LLMTimeoutError, LLMProviderError } = require('./llmErrors');
 
 const DEFAULT_TIMEOUT_MS = Number(process.env.GEMINI_TIMEOUT_MS || 20000);
-const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-1.5-flash';
+const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-3.6-flash';
 
 /**
  * Sends a single generation request to Google Gemini API
@@ -78,15 +78,26 @@ async function generate(prompt, opts = {}) {
     let cleanMessage = `Gemini API error HTTP ${response.status}`;
     try {
       const parsedErr = JSON.parse(errorBody);
-      if (parsedErr?.error?.message) {
-        if (response.status === 429) {
-          cleanMessage = `Gemini API rate limit / quota exceeded (HTTP 429). Google free-tier quota reached. Please retry in a few moments or check Local Ollama.`;
-        } else {
-          cleanMessage = `Gemini API (${parsedErr.error.status || response.status}): ${parsedErr.error.message}`;
-        }
+      const isNotFound =
+        response.status === 404 ||
+        parsedErr?.error?.status === 'NOT_FOUND' ||
+        /not found/i.test(parsedErr?.error?.message || '');
+
+      if (isNotFound) {
+        cleanMessage = `[Gemini] Model '${model}' not found — check GEMINI_MODEL is a valid, current model identifier (HTTP 404: ${parsedErr?.error?.message || 'Model not found'})`;
+        console.error(`[Gemini] Model '${model}' not found — check GEMINI_MODEL is a valid, current model identifier`);
+      } else if (response.status === 429) {
+        cleanMessage = `Gemini API rate limit / quota exceeded (HTTP 429). Google free-tier quota reached. Please retry in a few moments or check Local Ollama.`;
+      } else if (parsedErr?.error?.message) {
+        cleanMessage = `Gemini API (${parsedErr.error.status || response.status}): ${parsedErr.error.message}`;
       }
     } catch {
-      cleanMessage = `Gemini API error HTTP ${response.status}: ${errorBody}`;
+      if (response.status === 404 || /not found/i.test(errorBody)) {
+        cleanMessage = `[Gemini] Model '${model}' not found — check GEMINI_MODEL is a valid, current model identifier (HTTP 404)`;
+        console.error(`[Gemini] Model '${model}' not found — check GEMINI_MODEL is a valid, current model identifier`);
+      } else {
+        cleanMessage = `Gemini API error HTTP ${response.status}: ${errorBody}`;
+      }
     }
 
     throw new LLMProviderError(cleanMessage, {
