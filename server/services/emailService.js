@@ -18,9 +18,10 @@ const getTransporter = () => {
   if (config.ENABLE_EMAIL_NOTIFICATIONS && user && pass) {
     transporter = nodemailer.createTransport({
       host: 'smtp.gmail.com',
-      port: 465,
-      secure: true, // TLS
-      family: 4,    // Force IPv4 socket — prevents ENETUNREACH on Render (no outbound IPv6)
+      port: 587,
+      secure: false,      // STARTTLS (port 587) — Render blocks port 465 (SSL)
+      requireTLS: true,   // Enforce TLS upgrade after connection
+      family: 4,          // Force IPv4 socket — prevents ENETUNREACH on Render (no outbound IPv6)
       auth: {
         user,
         pass,
