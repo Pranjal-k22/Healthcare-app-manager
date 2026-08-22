@@ -77,37 +77,8 @@ const changePassword = async (req, res, next) => {
   }
 };
 
-/**
- * POST /api/patient/profile/avatar
- */
-const uploadAvatar = async (req, res, next) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({
-        success: false,
-        message: 'No avatar file uploaded. Supported formats: JPG, PNG, WEBP (max 2MB)',
-      });
-    }
-
-    const avatarUrl = `/uploads/avatars/${req.file.filename}`;
-    const updatedProfile = await profileService.updatePatientAvatar(
-      req.user.id || req.user._id,
-      avatarUrl
-    );
-
-    res.status(200).json({
-      success: true,
-      message: 'Avatar uploaded successfully',
-      data: updatedProfile,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
 module.exports = {
   getProfile,
   updateProfile,
   changePassword,
-  uploadAvatar,
 };

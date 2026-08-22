@@ -220,7 +220,7 @@ export const WorkingHoursForm: React.FC<WorkingHoursFormProps> = ({
 
       {/* Days List Container */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-        {DAYS.map(({ key, label, short }) => {
+        {DAYS.map(({ key, label }) => {
           const config = workingHours[key] || { enabled: false, start: null, end: null };
           const isInvalid =
             config.enabled &&

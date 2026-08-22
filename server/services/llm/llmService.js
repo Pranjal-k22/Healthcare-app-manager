@@ -1,8 +1,7 @@
 // server/services/llm/llmService.js
-// Dual-Engine Clinical LLM Service supporting both Google Gemini (@google/generative-ai)
-// and Local Ollama (qwen2.5-coder / mistral / llama3) with automatic fallback and zero-hallucination guardrails.
+// 100% Local Clinical LLM Service using on-device Ollama (qwen2.5-coder / mistral / llama3)
+// with zero-hallucination guardrails and strict patient privacy guarantees.
 
-const geminiProvider = require('./geminiProvider');
 const ollamaProvider = require('./ollamaProvider');
 const {
   buildPreVisitPrompt,
@@ -14,53 +13,14 @@ const { extractJson, validatePreVisit, validatePostVisit } = require('./validato
 const { AI_STATUS } = require('./schemas');
 
 /**
- * Unified dispatch helper: executes prompt against Gemini or Ollama based on LLM_PROVIDER
- * config with intelligent fallback when provider === 'auto' (the default).
+ * Executes prompt against Local Ollama daemon.
  *
  * @param {{ system: string, user: string }} prompt
- * @param {'gemini'|'ollama'|'auto'} [forcedProvider]
  * @returns {Promise<{ rawText: string, providerUsed: string }>}
  */
-async function executeDualEnginePrompt(prompt, forcedProvider) {
-  const providerMode = (forcedProvider || process.env.LLM_PROVIDER || 'auto').toLowerCase();
-
-  // Mode 1: Gemini explicitly requested
-  if (providerMode === 'gemini') {
-    const rawText = await geminiProvider.generate(
-      `${prompt.system}\n\n${prompt.user}`
-    );
-    return { rawText, providerUsed: 'gemini' };
-  }
-
-  // Mode 2: Ollama explicitly requested
-  if (providerMode === 'ollama') {
-    const rawText = await ollamaProvider.generate(prompt);
-    return { rawText, providerUsed: 'ollama' };
-  }
-
-  // Mode 3: 'auto' (Gemini first with Ollama fallback, or Ollama first if no Gemini key)
-  const hasGeminiKey = Boolean(process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY.trim());
-
-  if (hasGeminiKey) {
-    try {
-      const rawText = await geminiProvider.generate(
-        `${prompt.system}\n\n${prompt.user}`
-      );
-      return { rawText, providerUsed: 'gemini' };
-    } catch (geminiErr) {
-      console.warn(`[LLM Service] Gemini attempt failed (${geminiErr.message}), falling back to Local Ollama...`);
-      try {
-        const rawText = await ollamaProvider.generate(prompt);
-        return { rawText, providerUsed: 'ollama' };
-      } catch (ollamaErr) {
-        throw new Error(`Both Gemini (${geminiErr.message}) and Local Ollama (${ollamaErr.message}) failed.`);
-      }
-    }
-  } else {
-    // No Gemini key configured; use Local Ollama directly
-    const rawText = await ollamaProvider.generate(prompt);
-    return { rawText, providerUsed: 'ollama' };
-  }
+async function executeLocalPrompt(prompt) {
+  const rawText = await ollamaProvider.generate(prompt);
+  return { rawText, providerUsed: 'ollama' };
 }
 
 /**
@@ -86,7 +46,7 @@ exports.generatePreVisitSummary = async (symptoms, provider) => {
   const prompt = buildPreVisitPrompt(symptoms);
 
   try {
-    const { rawText, providerUsed } = await executeDualEnginePrompt(prompt, provider);
+    const { rawText, providerUsed } = await executeLocalPrompt(prompt);
     const parsed = extractJson(rawText);
 
     // Validate structured shape
@@ -111,14 +71,13 @@ exports.generatePreVisitSummary = async (symptoms, provider) => {
 
 /**
  * FEATURE 2: POST-VISIT SUMMARY GENERATION (WITH MEDICATION GUARDRAIL)
- * Supports both Google Gemini and Local Ollama.
+ * Runs strictly on local Ollama daemon for 100% patient privacy.
  *
  * @param {string} clinicalNotes - Doctor clinical observations and findings
  * @param {Array} [prescriptions] - Prescribed medicines
- * @param {'gemini'|'ollama'|'auto'} [provider]
  * @returns {Promise<{ status: 'READY'|'FAILED', data: object|null, promptVersion: string, provider?: string, error?: string }>}
  */
-exports.generatePostVisitSummary = async (clinicalNotes, prescriptions = [], provider) => {
+exports.generatePostVisitSummary = async (clinicalNotes, prescriptions = []) => {
   const promptVersion = POST_VISIT_PROMPT_VERSION;
   const notesText = clinicalNotes || 'Consultation completed.';
   const rxArray = Array.isArray(prescriptions) ? prescriptions : prescriptions ? [prescriptions] : [];
@@ -126,7 +85,7 @@ exports.generatePostVisitSummary = async (clinicalNotes, prescriptions = [], pro
   const prompt = buildPostVisitPrompt(notesText, rxArray);
 
   try {
-    const { rawText, providerUsed } = await executeDualEnginePrompt(prompt, provider);
+    const { rawText, providerUsed } = await executeLocalPrompt(prompt);
     const parsed = extractJson(rawText);
 
     // Normalize property names (patientSummary vs summary)
@@ -183,5 +142,5 @@ exports.generatePostVisitSummary = async (clinicalNotes, prescriptions = [], pro
 module.exports = {
   generatePreVisitSummary: exports.generatePreVisitSummary,
   generatePostVisitSummary: exports.generatePostVisitSummary,
-  executeDualEnginePrompt,
+  executeLocalPrompt,
 };

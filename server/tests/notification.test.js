@@ -27,6 +27,9 @@ const runNotificationTests = async () => {
     'APPOINTMENT_REMINDER',
     'PRESCRIPTION_AVAILABLE',
     'MEDICATION_REMINDER',
+    'ACCOUNT_PROVISIONED',
+    'DOCTOR_PROVISIONED',
+    'SYSTEM_ALERT',
   ]);
   console.log('✓ Notification model schema paths and notification types enum verified');
 

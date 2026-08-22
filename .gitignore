@@ -12,9 +12,6 @@ node_modules/
 server/.env
 client/.env
 
-# Tasks & Internal Working Files (Non-tracking)
-tasks/
-
 # Uploads & Media Assets
 uploads/
 server/uploads/

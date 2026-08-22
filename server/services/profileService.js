@@ -92,28 +92,8 @@ const changePatientPassword = async (userId, currentPassword, newPassword) => {
   return user.toJSON();
 };
 
-/**
- * Update patient avatar URL
- * @param {string} userId
- * @param {string} avatarUrl
- * @returns {Promise<object>}
- */
-const updatePatientAvatar = async (userId, avatarUrl) => {
-  const user = await User.findById(userId);
-  if (!user) {
-    const error = new Error('User profile not found');
-    error.statusCode = 404;
-    throw error;
-  }
-
-  user.avatarUrl = avatarUrl;
-  await user.save();
-  return user.toJSON();
-};
-
 module.exports = {
   getPatientProfile,
   updatePatientProfile,
   changePatientPassword,
-  updatePatientAvatar,
 };

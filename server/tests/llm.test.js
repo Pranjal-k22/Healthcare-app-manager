@@ -30,11 +30,11 @@ const {
   LLMHallucinationGuardError,
   LLMExhaustedRetriesError,
 } = require('../services/llm/llmErrors');
-const geminiProvider = require('../services/llm/geminiProvider');
+const ollamaProvider = require('../services/llm/ollamaProvider');
 const llmService = require('../services/llm/llmService');
 
 const runLLMTests = async () => {
-  console.log('\n--- [TEST SUITE 10] Google Gemini LLM Integration Layer (Phase 10 Spec) ---');
+  console.log('\n--- [TEST SUITE 10] Local Ollama LLM Integration Layer (Phase 10 Spec) ---');
 
   // ==========================================
   // Section A: Schemas & Constants Verification
@@ -123,21 +123,21 @@ const runLLMTests = async () => {
   // Section D: Scenario-Based Test Suite (1 to 8)
   // ==========================================
 
-  // Scenario 1: Gemini service outage / connection failure
+  // Scenario 1: Ollama daemon outage / connection failure
   {
-    const originalGen = geminiProvider.generate;
-    geminiProvider.generate = async () => {
-      throw new Error('Gemini API service unavailable 503');
+    const originalGen = ollamaProvider.generate;
+    ollamaProvider.generate = async () => {
+      throw new Error('Ollama service unavailable 503');
     };
     try {
-      const result = await llmService.generatePreVisitSummary('Persistent fever', 'gemini');
+      const result = await llmService.generatePreVisitSummary('Persistent fever');
       assert.strictEqual(result.status, AI_STATUS.FAILED);
       assert.ok(result.error);
       assert.strictEqual(result.promptVersion, PRE_VISIT_PROMPT_VERSION);
     } finally {
-      geminiProvider.generate = originalGen;
+      ollamaProvider.generate = originalGen;
     }
-    console.log('✓ Scenario 1: Gemini API offline -> graceful FAILED status without unhandled throw');
+    console.log('✓ Scenario 1: Ollama daemon offline -> graceful FAILED status without unhandled throw');
   }
 
   // Scenario 2: Model returns malformed/non-JSON text
@@ -153,13 +153,13 @@ const runLLMTests = async () => {
     const parsed = extractJson('```json\n{"urgency": "Low", "chiefComplaint": "Rash", "suggestedQuestions": ["Q1 string", "Q2 string", "Q3 string"]}\n```');
     assert.strictEqual(parsed.urgency, 'Low');
 
-    const originalGen = geminiProvider.generate;
-    geminiProvider.generate = async () => 'Malformed text with no json';
+    const originalGen = ollamaProvider.generate;
+    ollamaProvider.generate = async () => 'Malformed text with no json';
     try {
-      const result = await llmService.generatePreVisitSummary('Skin rash', 'gemini');
+      const result = await llmService.generatePreVisitSummary('Skin rash');
       assert.strictEqual(result.status, AI_STATUS.FAILED);
     } finally {
-      geminiProvider.generate = originalGen;
+      ollamaProvider.generate = originalGen;
     }
     console.log('✓ Scenario 2: Model returns non-JSON -> LLMParseError caught -> FAILED');
   }
@@ -233,25 +233,25 @@ const runLLMTests = async () => {
     console.log('✓ Scenario 5: Prompt injection neutralized via system directive + sanitization');
   }
 
-  // Scenario 6: Gemini timeout / abort handled cleanly
+  // Scenario 6: Request timeout / abort handled cleanly
   {
-    const originalGen = geminiProvider.generate;
-    geminiProvider.generate = async () => {
-      throw new Error('Gemini request timeout');
+    const originalGen = ollamaProvider.generate;
+    ollamaProvider.generate = async () => {
+      throw new Error('Ollama request timeout');
     };
     try {
-      const result = await llmService.generatePreVisitSummary('Chronic fatigue', 'gemini');
+      const result = await llmService.generatePreVisitSummary('Chronic fatigue');
       assert.strictEqual(result.status, AI_STATUS.FAILED);
     } finally {
-      geminiProvider.generate = originalGen;
+      ollamaProvider.generate = originalGen;
     }
     console.log('✓ Scenario 6: Request timeout handled cleanly without crash');
   }
 
   // Scenario 7: Successful generation on first try
   {
-    const originalGen = geminiProvider.generate;
-    geminiProvider.generate = async () => {
+    const originalGen = ollamaProvider.generate;
+    ollamaProvider.generate = async () => {
       return JSON.stringify({
         urgency: 'Low',
         chiefComplaint: 'Mild seasonal allergies',
@@ -263,22 +263,22 @@ const runLLMTests = async () => {
       });
     };
     try {
-      const result = await llmService.generatePreVisitSummary('Sneezing and runny nose', 'gemini');
+      const result = await llmService.generatePreVisitSummary('Sneezing and runny nose');
       assert.strictEqual(result.status, AI_STATUS.READY);
       assert.strictEqual(result.data.urgency, 'Low');
       assert.strictEqual(result.data.chiefComplaint, 'Mild seasonal allergies');
       assert.strictEqual(result.data.suggestedQuestions.length, 3);
       assert.strictEqual(result.promptVersion, PRE_VISIT_PROMPT_VERSION);
     } finally {
-      geminiProvider.generate = originalGen;
+      ollamaProvider.generate = originalGen;
     }
     console.log('✓ Scenario 7: Successful generation on first attempt populates fields and prompt version');
   }
 
   // Scenario 8: Post-visit generation with automatic medication guardrail
   {
-    const originalGen = geminiProvider.generate;
-    geminiProvider.generate = async () => {
+    const originalGen = ollamaProvider.generate;
+    ollamaProvider.generate = async () => {
       return JSON.stringify({
         summary: 'Diagnosis of mild pharyngitis.',
         medicationSchedule: 'Amoxicillin 500mg three times daily for 7 days',
@@ -288,13 +288,12 @@ const runLLMTests = async () => {
     try {
       const result = await llmService.generatePostVisitSummary(
         'Mild throat inflammation',
-        [{ name: 'Amoxicillin', dosage: '500mg', frequency: 'TID', duration: '7 days' }],
-        'gemini'
+        [{ name: 'Amoxicillin', dosage: '500mg', frequency: 'TID', duration: '7 days' }]
       );
       assert.strictEqual(result.status, AI_STATUS.READY);
       assert.ok(result.data.medicationSchedule);
     } finally {
-      geminiProvider.generate = originalGen;
+      ollamaProvider.generate = originalGen;
     }
     console.log('✓ Scenario 8: Post-visit generation with medication schedule verified');
   }

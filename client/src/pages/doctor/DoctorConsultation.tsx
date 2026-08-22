@@ -139,9 +139,9 @@ export const DoctorConsultation: React.FC = () => {
 
       if (result.postVisitSummary) {
         setPostVisitAiSummary(result.postVisitSummary);
-        setSuccessMsg('✨ Post-Visit AI Care Plan & Medication Guidance synthesized with Google Gemini!');
+        setSuccessMsg('✨ Post-Visit AI Care Plan & Medication Guidance synthesized successfully!');
       } else {
-        setError('Google Gemini returned an unexpected response structure.');
+        setError('Local AI returned an unexpected response structure.');
       }
     } catch (err: any) {
       setError(err.response?.data?.message || err.message || 'Failed to generate Post-Visit AI summary.');
@@ -879,7 +879,7 @@ export const DoctorConsultation: React.FC = () => {
                   Post-Visit AI Care Plan & Patient Guidance
                 </h3>
                 <span style={{ fontSize: '0.7rem', padding: '0.15rem 0.5rem', borderRadius: '999px', background: '#ccfbf1', color: '#0f766e', fontWeight: 700 }}>
-                  Google Gemini
+                  Local AI (Ollama)
                 </span>
               </div>
               <span style={{ fontSize: '0.78rem', color: '#64748b' }}>
@@ -897,56 +897,47 @@ export const DoctorConsultation: React.FC = () => {
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '0.5rem',
-                padding: '0.6rem 1.25rem',
-                borderRadius: '8px',
+                padding: '0.65rem 1.25rem',
+                borderRadius: '10px',
                 border: 'none',
-                background: !clinicalNotes.trim() ? '#cbd5e1' : 'linear-gradient(135deg, #0d9488, #0f766e)',
-                color: '#ffffff',
-                fontSize: '0.88rem',
                 fontWeight: 700,
-                cursor: !clinicalNotes.trim() ? 'not-allowed' : 'pointer',
-                boxShadow: !clinicalNotes.trim() ? 'none' : '0 4px 12px rgba(13, 148, 136, 0.25)',
-                transition: 'all 0.15s ease',
+                fontSize: '0.88rem',
+                background: clinicalNotes.trim() ? '#0f766e' : '#94a3b8',
+                color: '#ffffff',
+                cursor: clinicalNotes.trim() && !isGeneratingPostAi ? 'pointer' : 'not-allowed',
+                boxShadow: clinicalNotes.trim() ? '0 4px 12px rgba(15, 118, 110, 0.25)' : 'none',
+                transition: 'all 0.2s',
               }}
             >
-              {isGeneratingPostAi ? (
-                <>
-                  <div className="spinner" style={{ width: '15px', height: '15px', borderWidth: '2px' }} />
-                  <span>Synthesizing with Gemini...</span>
-                </>
-              ) : (
-                <>
-                  <Sparkles size={16} />
-                  <span>{postVisitAiSummary ? 'Regenerate Post-Visit AI' : '✨ Generate Post-Visit AI Summary'}</span>
-                </>
-              )}
+              <Sparkles size={16} />
+              <span>{isGeneratingPostAi ? 'Synthesizing Care Plan...' : '✨ Generate Post-Visit AI Summary'}</span>
             </button>
           )}
         </div>
 
+        {/* AI Result Card or Placeholder */}
         {postVisitAiSummary ? (
           <div
             style={{
               padding: '1.25rem',
-              background: '#ffffff',
-              borderRadius: '10px',
-              border: '1px solid #ccfbf1',
+              borderRadius: '12px',
+              background: '#f0fdfa',
+              border: '1px solid #99f6e4',
               display: 'flex',
               flexDirection: 'column',
               gap: '1rem',
             }}
           >
-            {/* Patient Friendly Summary */}
             <div>
-              <h4 style={{ fontSize: '0.82rem', fontWeight: 800, color: '#0d9488', textTransform: 'uppercase', letterSpacing: '0.04em', margin: '0 0 0.35rem 0' }}>
-                Visit Summary & Care Explanation
-              </h4>
-              <p style={{ margin: 0, color: '#1e293b', fontSize: '0.92rem', lineHeight: 1.6 }}>
-                {postVisitAiSummary.patientSummary || postVisitAiSummary.summary}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#0f766e', fontWeight: 700, fontSize: '0.85rem', marginBottom: '0.35rem' }}>
+                <FileText size={15} />
+                <span>Patient-Friendly Visit Summary</span>
+              </div>
+              <p style={{ margin: 0, color: '#134e4a', fontSize: '0.92rem', lineHeight: 1.55 }}>
+                {postVisitAiSummary.summary || postVisitAiSummary.patientSummary || 'No summary text generated.'}
               </p>
             </div>
 
-            {/* Medication Instructions & Schedule */}
             {postVisitAiSummary.medicationSchedule && (
               <div style={{ padding: '0.85rem 1rem', borderRadius: '8px', background: '#f0fdf4', border: '1px solid #bbf7d0' }}>
                 <h4 style={{ fontSize: '0.82rem', fontWeight: 800, color: '#15803d', textTransform: 'uppercase', letterSpacing: '0.04em', margin: '0 0 0.45rem 0' }}>

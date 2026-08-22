@@ -1,7 +1,4 @@
 const express = require('express');
-const path = require('path');
-const fs = require('fs');
-const multer = require('multer');
 const rateLimit = require('express-rate-limit');
 const { protect } = require('../middleware/authMiddleware');
 const { requireRole } = require('../middleware/roleMiddleware');
@@ -9,7 +6,6 @@ const {
   getProfile,
   updateProfile,
   changePassword,
-  uploadAvatar,
 } = require('../controllers/profileController');
 const {
   getStatus: getCalendarStatus,
@@ -17,40 +13,6 @@ const {
 } = require('../controllers/calendarController');
 
 const router = express.Router();
-
-// Ensure upload directory exists
-const avatarUploadDir = path.join(__dirname, '../uploads/avatars');
-if (!fs.existsSync(avatarUploadDir)) {
-  fs.mkdirSync(avatarUploadDir, { recursive: true });
-}
-
-// Multer Storage Configuration
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, avatarUploadDir);
-  },
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase();
-    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-    cb(null, `avatar-${req.user.id || req.user._id}-${uniqueSuffix}${ext}`);
-  },
-});
-
-// Multer File Filter & Limits
-const upload = multer({
-  storage,
-  limits: { fileSize: 2 * 1024 * 1024 }, // 2MB Max
-  fileFilter: (req, file, cb) => {
-    const allowedExtensions = /jpeg|jpg|png|webp/;
-    const extname = allowedExtensions.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = allowedExtensions.test(file.mimetype);
-
-    if (extname && mimetype) {
-      return cb(null, true);
-    }
-    cb(new Error('Only JPEG, JPG, PNG, and WEBP image files are allowed (max 2MB)'));
-  },
-});
 
 // Rate limiter for change-password endpoint
 const passwordChangeLimiter = rateLimit({
@@ -71,7 +33,6 @@ router.use(requireRole('PATIENT'));
 router.get('/profile', getProfile);
 router.put('/profile', updateProfile);
 router.post('/profile/change-password', passwordChangeLimiter, changePassword);
-router.post('/profile/avatar', upload.single('avatar'), uploadAvatar);
 
 // Google Calendar Patient Endpoints
 router.get('/google-calendar/status', getCalendarStatus);

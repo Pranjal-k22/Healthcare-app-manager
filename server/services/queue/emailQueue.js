@@ -1,51 +1,7 @@
-const { Queue, Worker } = require('bullmq');
-const Redis = require('ioredis');
 const NotificationLog = require('../../models/NotificationLog');
 const { sendEmail } = require('../emailService');
 const emailTemplates = require('../emailTemplates');
 const config = require('../../config/env');
-
-let emailBullQueue = null;
-let isRedisAvailable = false;
-
-const redisConnection = new Redis(process.env.REDIS_URL || 'redis://localhost:6379', {
-  lazyConnect: true,
-  maxRetriesPerRequest: 1,
-  retryStrategy: () => null,
-});
-
-redisConnection
-  .connect()
-  .then(() => {
-    isRedisAvailable = true;
-    console.log('[EmailQueue] Redis connected successfully. Initializing BullMQ email queue...');
-    emailBullQueue = new Queue('healthpulse-email-queue', {
-      connection: redisConnection,
-      defaultJobOptions: {
-        attempts: 3,
-        backoff: {
-          type: 'exponential',
-          delay: 2000,
-        },
-        removeOnComplete: 100,
-        removeOnFail: 500,
-      },
-    });
-
-    // Start BullMQ Worker
-    new Worker(
-      'healthpulse-email-queue',
-      async (job) => {
-        console.log(`[EmailWorker] Processing BullMQ job ${job.id} [${job.name}]`);
-        return await processNotificationJob(job.data);
-      },
-      { connection: redisConnection }
-    );
-  })
-  .catch(() => {
-    isRedisAvailable = false;
-    console.log('[EmailQueue] Redis not detected locally. Operating in Persistent Async DB Queue mode.');
-  });
 
 /**
  * Process a notification payload with idempotency check, template rendering, and error isolation
@@ -111,24 +67,19 @@ const processNotificationJob = async (payload) => {
 
 /**
  * Public enqueue function used by appointment, leave, and reminder controllers
+ * Dispatches asynchronously via Node.js setImmediate (Never blocks HTTP response)
  * @param {object} jobData - { to, recipientName, templateName, templateData, appointmentId, notificationType }
  */
 const queueEmailNotification = async (jobData) => {
   try {
-    if (isRedisAvailable && emailBullQueue) {
-      await emailBullQueue.add(jobData.notificationType || 'SEND_EMAIL', jobData);
-      console.log(`[EmailQueue] Job added to BullMQ: ${jobData.notificationType} -> ${jobData.to}`);
-    } else {
-      // Async in-process dispatch (Never blocks HTTP response)
-      setImmediate(async () => {
-        try {
-          await processNotificationJob(jobData);
-        } catch (err) {
-          console.error(`[EmailQueue] Background worker error: ${err.message}`);
-        }
-      });
-      console.log(`[EmailQueue] Notification scheduled asynchronously: ${jobData.notificationType} -> ${jobData.to}`);
-    }
+    setImmediate(async () => {
+      try {
+        await processNotificationJob(jobData);
+      } catch (err) {
+        console.error(`[EmailQueue] Background worker error: ${err.message}`);
+      }
+    });
+    console.log(`[EmailQueue] Notification scheduled asynchronously: ${jobData.notificationType || 'EMAIL'} -> ${jobData.to}`);
     return { queued: true };
   } catch (queueErr) {
     console.error(`[EmailQueue] Warning creating queue job: ${queueErr.message}`);

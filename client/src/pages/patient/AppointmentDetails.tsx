@@ -316,7 +316,7 @@ export const AppointmentDetails: React.FC = () => {
                     Pre-Visit AI Symptom Summary
                   </h3>
                   <span style={{ fontSize: '0.7rem', padding: '0.15rem 0.5rem', borderRadius: '999px', background: '#ffffff', color: '#0284c7', fontWeight: 800, border: '1px solid #bae6fd' }}>
-                    Google Gemini
+                    Local AI (Ollama)
                   </span>
                 </div>
                 <span style={{ fontSize: '0.76rem', color: '#0369a1', opacity: 0.85 }}>
@@ -477,7 +477,7 @@ export const AppointmentDetails: React.FC = () => {
                     Post-Visit Patient Summary & Care Plan
                   </h3>
                   <span style={{ fontSize: '0.7rem', padding: '0.15rem 0.5rem', borderRadius: '999px', background: '#ffffff', color: '#059669', fontWeight: 800, border: '1px solid #a7f3d0' }}>
-                    Google Gemini
+                    Local AI (Ollama)
                   </span>
                 </div>
                 <span style={{ fontSize: '0.76rem', color: '#047857', opacity: 0.85 }}>

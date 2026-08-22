@@ -38,30 +38,13 @@ const register = async (req, res, next) => {
       });
     }
 
-    let finalRole = 'PATIENT';
-    if (role === 'ADMIN') {
-      const validSecret = process.env.ADMIN_SECRET_KEY || 'HealthPulseAdmin2026!';
-      if (!adminSecretKey || adminSecretKey.trim() !== validSecret.trim()) {
-        return res.status(403).json({
-          success: false,
-          message: 'Invalid Admin Secret Key. Please provide the authorized admin passcode.',
-        });
-      }
-      finalRole = 'ADMIN';
-    }
-
-    // Create user entity
+    // Create patient entity (Admins are provisioned strictly via seed script)
     const user = await User.create({
       name: name.trim(),
       email: normalizedEmail,
       password,
-      role: finalRole,
+      role: 'PATIENT',
     });
-
-    // Send welcome email
-    if (finalRole === 'ADMIN') {
-      notificationService.dispatchAdminWelcome(user).catch(() => {});
-    }
 
     const token = generateToken(user._id, user.role);
 

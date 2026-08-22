@@ -20,9 +20,6 @@ const { notFound, errorHandler } = require('./middleware/errorMiddleware');
 
 const app = express();
 
-// Serve Static Uploads (Avatars, documents)
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
 // Security Headers (Helmet)
 app.use(
   helmet({

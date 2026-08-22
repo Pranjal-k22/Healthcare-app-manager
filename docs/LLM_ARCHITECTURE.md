@@ -63,6 +63,7 @@ Local LLM (llama3 / qwen2.5 / mistral)
   - `medicationSchedule`: String
   - `followUpSteps`: String
   - Zero-hallucination check: 100% of prescribed medicine names must appear in combined summary text.
+- **Prompt Engineering & Safety Note**: The core directive matches the brief (`"Convert these clinical notes into a patient-friendly summary with medication schedule and follow-up steps: <notes>"`), augmented with prescribed medications and JSON schema constraints specifically to guarantee zero-hallucination validation and deterministic output.
 - **Target Storage**: `ClinicalRecord.postVisitSummary` + `ClinicalRecord.aiStatus` + `ClinicalRecord.aiPromptVersion`.
 - **UI Visibility**: Rendered exclusively in the Patient Appointment Record view.
 

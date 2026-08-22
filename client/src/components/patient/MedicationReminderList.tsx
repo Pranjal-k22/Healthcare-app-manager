@@ -16,8 +16,6 @@ import {
   X,
   XCircle,
   Calendar,
-  Sparkles,
-  RefreshCw,
   BellRing,
 } from 'lucide-react';
 

@@ -18,8 +18,6 @@ export interface RegisterData {
   name: string;
   email: string;
   password: string;
-  role?: UserRole;
-  adminSecretKey?: string;
 }
 
 export interface AuthResponse {

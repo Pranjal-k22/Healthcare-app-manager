@@ -60,21 +60,3 @@ export const changePatientPassword = async (
   );
   return response.data.data;
 };
-
-/**
- * Upload patient avatar image
- */
-export const uploadPatientAvatar = async (
-  formData: FormData
-): Promise<UserProfileData> => {
-  const response = await apiClient.post<{ success: boolean; data: UserProfileData }>(
-    '/patient/profile/avatar',
-    formData,
-    {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    }
-  );
-  return response.data.data;
-};
