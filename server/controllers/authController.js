@@ -50,7 +50,7 @@ const register = async (req, res, next) => {
 
     return res.status(201).json({
       success: true,
-      message: `${finalRole === 'ADMIN' ? 'Administrator' : 'Patient'} account registered successfully`,
+      message: `${user.role === 'ADMIN' ? 'Administrator' : 'Patient'} account registered successfully`,
       token,
       user: {
         _id: user._id,
