@@ -5,7 +5,7 @@
 const { LLMConnectionError, LLMTimeoutError, LLMProviderError } = require('./llmErrors');
 
 const DEFAULT_TIMEOUT_MS = Number(process.env.GEMINI_TIMEOUT_MS || 20000);
-const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-3.6-flash';
+const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite';
 
 /**
  * Sends a single generation request to Google Gemini API
