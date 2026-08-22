@@ -1,75 +1,76 @@
 const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 const NotificationLog = require('../models/NotificationLog');
 const config = require('../config/env');
 
-let transporter = null;
+// --- Resend HTTP API client (primary — works from Render/cloud IPs via HTTPS) ---
+let resendClient = null;
 
-/**
- * Initialize or return singleton Nodemailer transporter (created once at module load)
- */
-const getTransporter = () => {
-  if (transporter) {
-    return transporter;
+const getResendClient = () => {
+  if (resendClient) return resendClient;
+  if (config.RESEND_API_KEY) {
+    resendClient = new Resend(config.RESEND_API_KEY);
+    console.log('[EmailService] Resend HTTP API client initialized');
   }
-
-  const user = config.GMAIL_USER || config.SMTP_USER;
-  const pass = config.GMAIL_APP_PASSWORD || config.SMTP_PASS;
-
-  if (config.ENABLE_EMAIL_NOTIFICATIONS && user && pass) {
-    transporter = nodemailer.createTransport({
-      host: 'smtp.gmail.com',
-      port: 587,
-      secure: false,      // STARTTLS (port 587) — Render blocks port 465 (SSL)
-      requireTLS: true,   // Enforce TLS upgrade after connection
-      family: 4,          // Force IPv4 socket — prevents ENETUNREACH on Render (no outbound IPv6)
-      auth: {
-        user,
-        pass,
-      },
-    });
-    console.log(`[EmailService] Nodemailer initialized with Gmail SMTP (${user})`);
-  } else {
-    // Development / Mock Transporter
-    transporter = {
-      sendMail: async (mailOptions) => {
-        console.log(
-          `[EmailService MOCK] [To: ${mailOptions.to}] [Subject: "${mailOptions.subject}"]`
-        );
-        return {
-          messageId: `mock-email-${Date.now()}-${Math.random().toString(36).substring(7)}`,
-          accepted: [mailOptions.to],
-        };
-      },
-      verify: async () => {
-        return true;
-      },
-    };
-    console.log('[EmailService] Running in Development / Mock Mode (Emails logged to console)');
-  }
-
-  return transporter;
+  return resendClient;
 };
 
-// Initialize transporter at module load
-getTransporter();
+// --- Nodemailer mock transporter (local dev fallback when RESEND_API_KEY is absent) ---
+let mockTransporter = null;
+
+const getMockTransporter = () => {
+  if (mockTransporter) return mockTransporter;
+  mockTransporter = {
+    sendMail: async (mailOptions) => {
+      console.log(
+        `[EmailService MOCK] [To: ${mailOptions.to}] [Subject: "${mailOptions.subject}"]`
+      );
+      return {
+        messageId: `mock-email-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+        accepted: [mailOptions.to],
+      };
+    },
+    verify: async () => true,
+  };
+  console.log('[EmailService] Running in Development / Mock Mode (Emails logged to console)');
+  return mockTransporter;
+};
+
+// Kept for backward compat — returns mock in dev, null in prod (prod uses resendClient directly)
+const getTransporter = () => {
+  if (!config.RESEND_API_KEY) {
+    return getMockTransporter();
+  }
+  return null; // prod path uses resendClient
+};
+
+// Initialize at module load
+getResendClient() || getMockTransporter();
 
 /**
- * Verify transporter at server startup (logs clear warning, never crashes)
+ * Verify email delivery capability at server startup (never crashes the server)
  */
 const verifyTransporter = async () => {
-  const activeTransporter = getTransporter();
-  if (activeTransporter && typeof activeTransporter.verify === 'function') {
+  if (!config.ENABLE_EMAIL_NOTIFICATIONS) {
+    console.log('[EmailService] Email notifications disabled — skipping verification');
+    return true;
+  }
+
+  if (config.RESEND_API_KEY) {
+    // Resend: verify by pinging their API (lightweight domains list call)
     try {
-      await activeTransporter.verify();
+      const client = getResendClient();
+      await client.domains.list(); // Returns 200 if key is valid
       console.log('[EmailService] SMTP connection verified successfully with Gmail.');
       return true;
-    } catch (error) {
-      console.warn(
-        `[EmailService] SMTP verification warning: ${error.message}. Check GMAIL_USER and GMAIL_APP_PASSWORD.`
-      );
+    } catch (err) {
+      console.warn(`[EmailService] Resend API key verification warning: ${err.message}`);
       return false;
     }
   }
+
+  // Dev mock — always passes
+  console.log('[EmailService] Running in mock mode — verification skipped');
   return true;
 };
 
@@ -94,19 +95,43 @@ const sendEmail = async ({
   }
 
   const recipient = to.trim().toLowerCase();
-  const mailOptions = {
-    from: config.EMAIL_FROM,
-    to: recipient,
-    subject: subject || 'HealthPulse Hospital Notification',
-    html: html || `<p>${text || subject}</p>`,
-    text: text || subject,
-  };
-
-  const activeTransporter = getTransporter();
+  const fromAddress = config.EMAIL_FROM || '"HealthPulse Hospital" <onboarding@resend.dev>';
+  const emailSubject = subject || 'HealthPulse Hospital Notification';
+  const emailHtml = html || `<p>${text || subject}</p>`;
+  const emailText = text || subject;
 
   try {
-    const info = await activeTransporter.sendMail(mailOptions);
-    console.log(`[EmailService] Email delivered to ${recipient} (ID: ${info.messageId || 'OK'})`);
+    let messageId;
+
+    if (config.RESEND_API_KEY) {
+      // --- Primary: Resend HTTP API (works from Render — HTTPS, no SMTP port issues) ---
+      const client = getResendClient();
+      const { data, error } = await client.emails.send({
+        from: fromAddress,
+        to: recipient,
+        subject: emailSubject,
+        html: emailHtml,
+        text: emailText,
+      });
+
+      if (error) {
+        throw new Error(error.message || JSON.stringify(error));
+      }
+
+      messageId = data?.id || 'resend-ok';
+    } else {
+      // --- Fallback: Mock transporter (local dev) ---
+      const mock = getMockTransporter();
+      const info = await mock.sendMail({
+        from: fromAddress, to: recipient,
+        subject: emailSubject, html: emailHtml, text: emailText,
+      });
+      messageId = info.messageId;
+    }
+
+    console.log(`[EmailService] Email delivered to ${recipient} (ID: ${messageId})`);
+
+
 
     // Write success to NotificationLog
     let logEntry = null;
@@ -128,7 +153,7 @@ const sendEmail = async ({
 
     return {
       success: true,
-      messageId: info.messageId,
+      messageId,
       logId: logEntry ? logEntry._id : null,
     };
   } catch (sendError) {
@@ -146,7 +171,7 @@ const sendEmail = async ({
         recipientName: recipientName || payload.recipientName || '',
         notificationType,
         appointmentId,
-        subject: mailOptions.subject,
+        subject: emailSubject,
         payload,
         status: 'failed',
         attempts,
