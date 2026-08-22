@@ -11,6 +11,8 @@ node_modules/
 .env.production.local
 server/.env
 client/.env
+deployment.md
+DEPLOYMENT.md
 
 # Uploads & Media Assets
 uploads/
