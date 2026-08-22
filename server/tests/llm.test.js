@@ -31,10 +31,11 @@ const {
   LLMExhaustedRetriesError,
 } = require('../services/llm/llmErrors');
 const ollamaProvider = require('../services/llm/ollamaProvider');
+const geminiProvider = require('../services/llm/geminiProvider');
 const llmService = require('../services/llm/llmService');
 
 const runLLMTests = async () => {
-  console.log('\n--- [TEST SUITE 10] Local Ollama LLM Integration Layer (Phase 10 Spec) ---');
+  console.log('\n--- [TEST SUITE 10] Hybrid Dual-Engine LLM Integration Layer (Phase 10 Spec) ---');
 
   // ==========================================
   // Section A: Schemas & Constants Verification
@@ -120,24 +121,36 @@ const runLLMTests = async () => {
   console.log('✓ Error hierarchy taxonomy and retryable flags verified');
 
   // ==========================================
-  // Section D: Scenario-Based Test Suite (1 to 8)
+  // Section D: Scenario-Based Dual-Engine Suite
   // ==========================================
 
-  // Scenario 1: Ollama daemon outage / connection failure
+  // Scenario 1: Total outage (Both Ollama & Gemini fail)
   {
     const originalGen = ollamaProvider.generate;
+    const originalGeminiGen = geminiProvider.generate;
+    const origKey = process.env.GEMINI_API_KEY;
+    process.env.GEMINI_API_KEY = 'mock-key';
+
     ollamaProvider.generate = async () => {
-      throw new Error('Ollama service unavailable 503');
+      throw new Error('Ollama connection refused 11434');
     };
+    geminiProvider.generate = async () => {
+      throw new Error('Gemini network unreachable 503');
+    };
+
     try {
       const result = await llmService.generatePreVisitSummary('Persistent fever');
       assert.strictEqual(result.status, AI_STATUS.FAILED);
+      assert.strictEqual(result.ollama.status, AI_STATUS.FAILED);
+      assert.strictEqual(result.gemini.status, AI_STATUS.FAILED);
       assert.ok(result.error);
       assert.strictEqual(result.promptVersion, PRE_VISIT_PROMPT_VERSION);
     } finally {
       ollamaProvider.generate = originalGen;
+      geminiProvider.generate = originalGeminiGen;
+      process.env.GEMINI_API_KEY = origKey;
     }
-    console.log('✓ Scenario 1: Ollama daemon offline -> graceful FAILED status without unhandled throw');
+    console.log('✓ Scenario 1: Both engines fail -> graceful FAILED status without unhandled throw');
   }
 
   // Scenario 2: Model returns malformed/non-JSON text
@@ -157,11 +170,11 @@ const runLLMTests = async () => {
     ollamaProvider.generate = async () => 'Malformed text with no json';
     try {
       const result = await llmService.generatePreVisitSummary('Skin rash');
-      assert.strictEqual(result.status, AI_STATUS.FAILED);
+      assert.strictEqual(result.ollama.status, AI_STATUS.FAILED);
     } finally {
       ollamaProvider.generate = originalGen;
     }
-    console.log('✓ Scenario 2: Model returns non-JSON -> LLMParseError caught -> FAILED');
+    console.log('✓ Scenario 2: Model returns non-JSON -> LLMParseError caught cleanly');
   }
 
   // Scenario 3: Model returns 2 questions instead of 3
@@ -233,69 +246,138 @@ const runLLMTests = async () => {
     console.log('✓ Scenario 5: Prompt injection neutralized via system directive + sanitization');
   }
 
-  // Scenario 6: Request timeout / abort handled cleanly
+  // Scenario 6: Simultaneous Parallel Execution: Both Ollama and Gemini Succeed
   {
-    const originalGen = ollamaProvider.generate;
+    const originalOllamaGen = ollamaProvider.generate;
+    const originalGeminiGen = geminiProvider.generate;
+    const origKey = process.env.GEMINI_API_KEY;
+    process.env.GEMINI_API_KEY = 'mock-key';
+
     ollamaProvider.generate = async () => {
-      throw new Error('Ollama request timeout');
+      return JSON.stringify({
+        urgency: 'Medium',
+        chiefComplaint: 'Ollama: Acute bronchitis symptoms',
+        suggestedQuestions: ['Question 1 for doctor', 'Question 2 for doctor', 'Question 3 for doctor'],
+      });
     };
+
+    geminiProvider.generate = async () => {
+      return JSON.stringify({
+        urgency: 'Medium',
+        chiefComplaint: 'Gemini: Bronchial infection evaluation',
+        suggestedQuestions: ['Gemini Q1 for doctor', 'Gemini Q2 for doctor', 'Gemini Q3 for doctor'],
+      });
+    };
+
     try {
-      const result = await llmService.generatePreVisitSummary('Chronic fatigue');
-      assert.strictEqual(result.status, AI_STATUS.FAILED);
+      const result = await llmService.generatePreVisitSummary('Persistent cough and chest congestion');
+      assert.strictEqual(result.status, AI_STATUS.READY);
+      assert.strictEqual(result.ollama.status, AI_STATUS.READY);
+      assert.strictEqual(result.gemini.status, AI_STATUS.READY);
+      assert.strictEqual(result.ollama.data.chiefComplaint, 'Ollama: Acute bronchitis symptoms');
+      assert.strictEqual(result.gemini.data.chiefComplaint, 'Gemini: Bronchial infection evaluation');
     } finally {
-      ollamaProvider.generate = originalGen;
+      ollamaProvider.generate = originalOllamaGen;
+      geminiProvider.generate = originalGeminiGen;
+      process.env.GEMINI_API_KEY = origKey;
     }
-    console.log('✓ Scenario 6: Request timeout handled cleanly without crash');
+    console.log('✓ Scenario 6: Parallel Execution: Both Ollama and Gemini succeed and populate dual results');
   }
 
-  // Scenario 7: Successful generation on first try
+  // Scenario 7: Ollama Fails, Gemini Succeeds -> Overall READY with Ollama marked FAILED
   {
-    const originalGen = ollamaProvider.generate;
+    const originalOllamaGen = ollamaProvider.generate;
+    const originalGeminiGen = geminiProvider.generate;
+    const origKey = process.env.GEMINI_API_KEY;
+    process.env.GEMINI_API_KEY = 'mock-key';
+
+    ollamaProvider.generate = async () => {
+      throw new Error('Ollama daemon unavailable');
+    };
+
+    geminiProvider.generate = async () => {
+      return JSON.stringify({
+        urgency: 'High',
+        chiefComplaint: 'Gemini: Acute severe abdominal pain',
+        suggestedQuestions: ['Gemini Q1 for physician', 'Gemini Q2 for physician', 'Gemini Q3 for physician'],
+      });
+    };
+
+    try {
+      const result = await llmService.generatePreVisitSummary('Severe sudden lower quadrant pain');
+      assert.strictEqual(result.status, AI_STATUS.READY);
+      assert.strictEqual(result.ollama.status, AI_STATUS.FAILED);
+      assert.strictEqual(result.gemini.status, AI_STATUS.READY);
+      assert.strictEqual(result.gemini.data.urgency, 'High');
+      assert.strictEqual(result.urgency, 'High');
+    } finally {
+      ollamaProvider.generate = originalOllamaGen;
+      geminiProvider.generate = originalGeminiGen;
+      process.env.GEMINI_API_KEY = origKey;
+    }
+    console.log('✓ Scenario 7: Ollama fails + Gemini succeeds -> Overall READY with per-engine status');
+  }
+
+  // Scenario 8: Gemini Fails, Ollama Succeeds -> Overall READY with Gemini marked FAILED
+  {
+    const originalOllamaGen = ollamaProvider.generate;
+    const originalGeminiGen = geminiProvider.generate;
+    const origKey = process.env.GEMINI_API_KEY;
+    process.env.GEMINI_API_KEY = 'mock-key';
+
     ollamaProvider.generate = async () => {
       return JSON.stringify({
         urgency: 'Low',
-        chiefComplaint: 'Mild seasonal allergies',
-        suggestedQuestions: [
-          'Are your symptoms worse outdoors?',
-          'Have you tried antihistamines before?',
-          'Do your eyes itch or water frequently?',
-        ],
+        chiefComplaint: 'Ollama: Mild allergic rhinitis',
+        suggestedQuestions: ['Question 1 for doctor', 'Question 2 for doctor', 'Question 3 for doctor'],
       });
     };
+
+    geminiProvider.generate = async () => {
+      throw new Error('Gemini API quota exceeded 429');
+    };
+
     try {
-      const result = await llmService.generatePreVisitSummary('Sneezing and runny nose');
+      const result = await llmService.generatePreVisitSummary('Mild pollen allergy');
       assert.strictEqual(result.status, AI_STATUS.READY);
-      assert.strictEqual(result.data.urgency, 'Low');
-      assert.strictEqual(result.data.chiefComplaint, 'Mild seasonal allergies');
-      assert.strictEqual(result.data.suggestedQuestions.length, 3);
-      assert.strictEqual(result.promptVersion, PRE_VISIT_PROMPT_VERSION);
+      assert.strictEqual(result.ollama.status, AI_STATUS.READY);
+      assert.strictEqual(result.gemini.status, AI_STATUS.FAILED);
+      assert.strictEqual(result.ollama.data.urgency, 'Low');
     } finally {
-      ollamaProvider.generate = originalGen;
+      ollamaProvider.generate = originalOllamaGen;
+      geminiProvider.generate = originalGeminiGen;
+      process.env.GEMINI_API_KEY = origKey;
     }
-    console.log('✓ Scenario 7: Successful generation on first attempt populates fields and prompt version');
+    console.log('✓ Scenario 8: Gemini fails + Ollama succeeds -> Overall READY with per-engine status');
   }
 
-  // Scenario 8: Post-visit generation with automatic medication guardrail
+  // Scenario 9: Gemini Key Absent / LLM_MODE=local-only -> Gemini NOT_CONFIGURED without crash
   {
-    const originalGen = ollamaProvider.generate;
+    const originalOllamaGen = ollamaProvider.generate;
+    const origKey = process.env.GEMINI_API_KEY;
+    delete process.env.GEMINI_API_KEY;
+
     ollamaProvider.generate = async () => {
       return JSON.stringify({
-        summary: 'Diagnosis of mild pharyngitis.',
-        medicationSchedule: 'Amoxicillin 500mg three times daily for 7 days',
-        followUpSteps: 'Rest and hydrate',
+        summary: 'Clinical diagnosis of viral pharyngitis.',
+        medicationSchedule: 'Take Paracetamol 500mg as needed for throat soreness',
+        followUpSteps: 'Warm salt water gargle and rest',
       });
     };
+
     try {
       const result = await llmService.generatePostVisitSummary(
-        'Mild throat inflammation',
-        [{ name: 'Amoxicillin', dosage: '500mg', frequency: 'TID', duration: '7 days' }]
+        'Sore throat and mild erythema',
+        [{ name: 'Paracetamol', dosage: '500mg', frequency: 'PRN', duration: '3 days' }]
       );
       assert.strictEqual(result.status, AI_STATUS.READY);
-      assert.ok(result.data.medicationSchedule);
+      assert.strictEqual(result.ollama.status, AI_STATUS.READY);
+      assert.strictEqual(result.gemini.status, 'NOT_CONFIGURED');
     } finally {
-      ollamaProvider.generate = originalGen;
+      ollamaProvider.generate = originalOllamaGen;
+      process.env.GEMINI_API_KEY = origKey;
     }
-    console.log('✓ Scenario 8: Post-visit generation with medication schedule verified');
+    console.log('✓ Scenario 9: Gemini key absent -> Gemini marked NOT_CONFIGURED gracefully');
   }
 
   // ==========================================
@@ -312,7 +394,7 @@ const runLLMTests = async () => {
   assert.strictEqual(ClinicalRecord.schema.paths.aiStatus.defaultValue, 'PENDING');
   console.log('✓ Mongoose schema fields for AI status, summaries, and prompt versions verified');
 
-  console.log('✓ [PASS] All 8 Local LLM Integration Test Scenarios Passed Cleanly!\n');
+  console.log('✓ [PASS] All 9 Hybrid Dual-Engine LLM Integration Test Scenarios Passed Cleanly!\n');
 };
 
 module.exports = runLLMTests;

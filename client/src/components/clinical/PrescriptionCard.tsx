@@ -1,6 +1,7 @@
 import React from 'react';
 import { Prescription } from '../../types/clinical';
-import { Clock, Info, Pill } from 'lucide-react';
+import { Clock, Info, Pill, Calendar, FileCheck } from 'lucide-react';
+import './PrescriptionCard.css';
 
 interface PrescriptionCardProps {
   prescription: Prescription;
@@ -12,62 +13,72 @@ export const PrescriptionCard: React.FC<PrescriptionCardProps> = ({
   const medicines = prescription.medicines || [];
 
   return (
-    <div className="glass-card prescription-card">
+    <div className="prescription-card">
       <div className="prescription-card-header">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+        <div className="rx-brand-group">
           <div className="rx-badge">Rx</div>
           <div>
-            <h3 style={{ fontSize: '1.15rem', fontWeight: 800 }}>Medical Prescription</h3>
-            <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+            <h3 className="rx-title">Medical Prescription</h3>
+            <span className="rx-subtitle">
               Doctor-certified medication regimen
             </span>
           </div>
         </div>
 
         {prescription.createdAt && (
-          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-            Issued: {new Date(prescription.createdAt).toLocaleDateString()}
+          <div className="rx-meta-pill">
+            <Calendar size={13} />
+            <span>Issued: {new Date(prescription.createdAt).toLocaleDateString()}</span>
           </div>
         )}
       </div>
 
       {medicines.length === 0 ? (
-        <div style={{ padding: '1.5rem', textAlign: 'center', color: 'var(--text-muted)' }}>
-          No specific medications were prescribed for this consultation.
+        <div className="rx-empty-state">
+          <FileCheck size={28} style={{ opacity: 0.5, marginBottom: '0.5rem' }} />
+          <div>No specific medications were prescribed for this consultation.</div>
         </div>
       ) : (
         <div className="prescription-medicines-table">
           <div className="rx-table-header">
-            <span>Medication & Dosage</span>
-            <span>Frequency</span>
-            <span>Duration</span>
-            <span>Instructions</span>
+            <div>Medication & Dosage</div>
+            <div>Frequency</div>
+            <div>Duration</div>
+            <div>Clinical Instructions</div>
           </div>
 
           <div className="rx-table-body">
             {medicines.map((med, i) => (
               <div key={med._id || i} className="rx-table-row">
+                {/* 1. Medication & Dosage */}
                 <div className="rx-cell-name">
-                  <Pill size={14} color="#10b981" style={{ flexShrink: 0 }} />
-                  <div>
-                    <strong className="rx-med-title">{med.name}</strong>
-                    <span className="rx-dosage-text">{med.dosage}</span>
+                  <div className="rx-pill-icon-wrap">
+                    <Pill size={15} />
+                  </div>
+                  <div className="rx-med-info">
+                    <span className="rx-med-title">{med.name}</span>
+                    {med.dosage && (
+                      <span className="rx-dosage-chip">{med.dosage}</span>
+                    )}
                   </div>
                 </div>
 
+                {/* 2. Frequency */}
                 <div className="rx-cell-freq">
-                  <span className="rx-pill-badge">{med.frequency}</span>
+                  <span className="rx-pill-badge">{med.frequency || 'As directed'}</span>
                 </div>
 
+                {/* 3. Duration */}
                 <div className="rx-cell-dur">
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                    <Clock size={13} color="var(--text-muted)" />
-                    <span>{med.duration}</span>
+                  <div className="rx-duration-text">
+                    <Clock size={14} style={{ color: 'var(--text-secondary, #64748b)' }} />
+                    <span>{med.duration || 'Full course'}</span>
                   </div>
                 </div>
 
+                {/* 4. Instructions */}
                 <div className="rx-cell-inst">
-                  <span>{med.instructions || 'As directed by physician'}</span>
+                  <span>{med.instructions || 'Take as instructed by physician'}</span>
                 </div>
               </div>
             ))}
@@ -77,13 +88,13 @@ export const PrescriptionCard: React.FC<PrescriptionCardProps> = ({
 
       {prescription.additionalInstructions && (
         <div className="rx-additional-notes">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.35rem' }}>
-            <Info size={14} color="var(--primary)" />
-            <strong style={{ fontSize: '0.85rem', color: 'var(--text-primary)' }}>
+          <div className="rx-notes-header">
+            <Info size={15} style={{ color: '#0284c7' }} />
+            <span className="rx-notes-title">
               Doctor's General Advice & Instructions:
-            </strong>
+            </span>
           </div>
-          <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+          <p className="rx-notes-body">
             {prescription.additionalInstructions}
           </p>
         </div>

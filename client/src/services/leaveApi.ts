@@ -83,3 +83,25 @@ export const getAllDoctorLeavesAdmin = async (params: {
 
   return response.data.data;
 };
+
+/**
+ * Admin: Approve or Reject a doctor leave request
+ */
+export const updateDoctorLeaveStatusAdmin = async (
+  leaveId: string,
+  data: {
+    status: 'APPROVED' | 'REJECTED';
+    adminNotes?: string;
+  }
+): Promise<{ leave: DoctorLeaveItem; message: string }> => {
+  const response = await apiClient.patch<{
+    success: boolean;
+    data: DoctorLeaveItem;
+    message: string;
+  }>(`/admin/leaves/${leaveId}/status`, data);
+
+  return {
+    leave: response.data.data,
+    message: response.data.message || 'Leave status updated successfully',
+  };
+};

@@ -1,10 +1,40 @@
 export type AppointmentStatus = 'BOOKED' | 'COMPLETED' | 'CANCELLED';
 export type AiStatus = 'PENDING' | 'READY' | 'FAILED';
 
-export interface PreVisitSummary {
+export interface DualEngineResult<T> {
+  status: 'READY' | 'FAILED' | 'NOT_CONFIGURED' | 'PENDING';
+  data: T | null;
+  error?: string | null;
+}
+
+export interface PreVisitSummaryData {
   urgency: 'Low' | 'Medium' | 'High';
   chiefComplaint: string;
   suggestedQuestions: string[];
+}
+
+export interface PreVisitSummary extends Partial<PreVisitSummaryData> {
+  urgency?: 'Low' | 'Medium' | 'High';
+  chiefComplaint?: string;
+  suggestedQuestions?: string[];
+  ollama?: DualEngineResult<PreVisitSummaryData>;
+  gemini?: DualEngineResult<PreVisitSummaryData>;
+}
+
+export interface PostVisitSummaryData {
+  patientSummary?: string;
+  summary: string;
+  medicationSchedule: string[];
+  followUpSteps: string[];
+}
+
+export interface PostVisitSummary extends Partial<PostVisitSummaryData> {
+  patientSummary?: string;
+  summary?: string;
+  medicationSchedule?: string[];
+  followUpSteps?: string[];
+  ollama?: DualEngineResult<PostVisitSummaryData>;
+  gemini?: DualEngineResult<PostVisitSummaryData>;
 }
 
 export interface AvailableSlot {
@@ -30,7 +60,7 @@ export interface Appointment {
   patientNotes?: string;
   symptoms?: string;
   preVisitSummary?: PreVisitSummary | null;
-  postVisitSummary?: any;
+  postVisitSummary?: PostVisitSummary | any;
   aiStatus?: AiStatus;
   createdAt: string;
   updatedAt: string;

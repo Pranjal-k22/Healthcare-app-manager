@@ -16,6 +16,8 @@
 - **Payload Size Limits**: Strict `1mb` JSON body limits on `express.json()`.
 
 ## 4. Protected Health Information (PHI) & AI Privacy
-- **100% Local Inference**: Zero clinical symptoms or medical records are transmitted to third-party cloud AI vendors.
+- **Hybrid Dual-Engine AI Architecture**: HealthPulse operates an intelligent dual-engine architecture combining On-Device Local AI (Ollama) with Google Gemini Cloud AI running simultaneously in parallel.
+  - In `LLM_MODE=dual` (default), patient symptoms and doctor clinical observations are processed concurrently by local Ollama and Google Gemini API for redundant verification and cross-checking.
+  - In `LLM_MODE=local-only`, external cloud API transmission is completely disabled and only on-device local Ollama inference executes.
 - **Log Sanitization**: Sensitive medical text, passwords, and tokens are omitted from server log outputs.
 - **Calendar Redaction**: Calendar sync credentials (`accessToken`, `refreshToken`) are never returned in plain text to the frontend.

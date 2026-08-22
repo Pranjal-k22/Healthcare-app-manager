@@ -47,7 +47,45 @@ const runEmailTests = async () => {
   const pwdChange = emailTemplates.passwordChanged({ recipientName: 'Sarah Connor' });
   assert.ok(pwdChange.subject && pwdChange.html && pwdChange.text, 'passwordChanged must return subject, html, text');
 
-  console.log('✓ All 6 branded email templates (HTML & plain-text fallbacks) validated');
+  const rxEmail = emailTemplates.prescriptionIssued({
+    recipientName: 'Sarah Connor',
+    doctorName: 'Marcus Vance',
+    specialisation: 'Cardiology',
+    medicines: [{ name: 'Metoprolol 50mg', dosage: '50mg', frequency: '1 tablet daily', duration: '14 days', instructions: 'Take with food' }],
+    instructions: 'Monitor resting heart rate',
+    durationDays: 14,
+  });
+  assert.ok(rxEmail.subject && rxEmail.html && rxEmail.text, 'prescriptionIssued must return subject, html, text');
+  assert.ok(rxEmail.html.includes('Metoprolol 50mg'), 'Prescription email must include medicine name');
+
+  // Validate Doctor Leave Request Alert to Admin
+  const leaveReqEmail = emailTemplates.doctorLeaveRequestedAdminAlert({
+    doctorName: 'Marcus Vance',
+    doctorEmail: 'dr.marcus@healthpulse.com',
+    specialization: 'Cardiology',
+    startDate: '2026-09-10',
+    endDate: '2026-09-15',
+    reason: 'Annual Medical Conference',
+  });
+  assert.ok(leaveReqEmail.subject && leaveReqEmail.html && leaveReqEmail.text, 'doctorLeaveRequestedAdminAlert must return subject, html, text');
+  assert.ok(leaveReqEmail.subject.includes('Leave Application from Dr. Marcus Vance'), 'Subject must contain doctor name');
+  assert.ok(leaveReqEmail.html.includes('Annual Medical Conference'), 'HTML must include leave reason');
+
+  // Validate Doctor Leave Decision Alert to Doctor
+  const leaveDecisionEmail = emailTemplates.doctorLeaveDecisionDoctorAlert({
+    doctorName: 'Marcus Vance',
+    startDate: '2026-09-10',
+    endDate: '2026-09-15',
+    status: 'APPROVED',
+    reason: 'Annual Medical Conference',
+    adminNotes: 'Approved by Medical Director',
+    approvedByName: 'Super Admin',
+  });
+  assert.ok(leaveDecisionEmail.subject && leaveDecisionEmail.html && leaveDecisionEmail.text, 'doctorLeaveDecisionDoctorAlert must return subject, html, text');
+  assert.ok(leaveDecisionEmail.subject.includes('Approved ✅'), 'Subject must indicate approval');
+  assert.ok(leaveDecisionEmail.html.includes('Approved by Medical Director'), 'HTML must include admin remarks');
+
+  console.log('✓ All branded email templates (including doctor leave request & confirmation alerts) validated');
 
   // 2. NotificationLog Schema Paths & Status Enums
   assert.ok(NotificationLog.schema.paths.recipientEmail, 'Must have recipientEmail');

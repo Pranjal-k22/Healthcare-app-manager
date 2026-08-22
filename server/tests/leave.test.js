@@ -64,6 +64,13 @@ const runLeaveTests = async () => {
   assert.strictEqual(hasAppointmentConflict, true, 'Active appointment during leave window must trigger conflict');
   console.log('✓ Appointment conflict detection and patient visit preservation verified');
 
+  // 5. Verify Leave Service & Controller Exports
+  const leaveService = require('../services/leaveService');
+  const leaveController = require('../controllers/leaveController');
+  assert.ok(typeof leaveService.updateDoctorLeaveStatusAdmin === 'function', 'leaveService must export updateDoctorLeaveStatusAdmin');
+  assert.ok(typeof leaveController.updateLeaveStatusAdminHandler === 'function', 'leaveController must export updateLeaveStatusAdminHandler');
+  console.log('✓ Leave service and controller admin approval handlers verified');
+
   console.log('✓ [PASS] All Doctor Leave & Conflict Reliability Tests Passed!');
 };
 

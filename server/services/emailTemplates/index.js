@@ -582,6 +582,209 @@ const doctorProvisionedAdminAlert = (data) => {
   return { subject, html, text };
 };
 
+/**
+ * 10. Prescription Issued / Medicine Prescribed Template
+ */
+const prescriptionIssued = (data) => {
+  const {
+    recipientName = 'Patient',
+    doctorName = 'Physician',
+    specialisation = 'General Practice',
+    medicines = [],
+    instructions = '',
+    durationDays,
+    appointmentId,
+  } = data;
+
+  const subject = `Your Medical Prescription & Care Plan — Dr. ${doctorName}`;
+
+  const medicinesRowsHtml = Array.isArray(medicines) && medicines.length > 0
+    ? medicines.map((m, idx) => `
+      <tr style="border-bottom: 1px solid ${BRAND.borderColor};">
+        <td style="padding: 10px 8px; font-weight: 600; color: ${BRAND.textDark};">${idx + 1}. ${m.name || 'Medication'}</td>
+        <td style="padding: 10px 8px; color: ${BRAND.textDark};">${m.dosage || '—'}</td>
+        <td style="padding: 10px 8px; color: ${BRAND.textDark};">${m.frequency || '—'}</td>
+        <td style="padding: 10px 8px; color: ${BRAND.textDark};">${m.duration || (durationDays ? `${durationDays} days` : '—')}</td>
+        <td style="padding: 10px 8px; color: ${BRAND.textMuted}; font-size: 13px;">${m.instructions || 'As directed'}</td>
+      </tr>
+    `).join('')
+    : `<tr><td colspan="5" style="padding: 12px; color: ${BRAND.textMuted}; text-align: center;">See portal for itemized medication schedule</td></tr>`;
+
+  const contentHtml = `
+    <h2 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 700; color: ${BRAND.primaryDark};">Prescription & Medication Plan</h2>
+    <p style="margin: 0 0 16px 0;">Hello <strong>${recipientName}</strong>,</p>
+    <p style="margin: 0 0 20px 0;">Following your recent medical consultation, <strong>Dr. ${doctorName}</strong> (${specialisation}) has issued an official medical prescription and care plan:</p>
+
+    <div style="background-color: #FFFFFF; border: 1px solid ${BRAND.borderColor}; border-radius: 8px; overflow: hidden; margin-bottom: 20px;">
+      <div style="background-color: ${BRAND.bgLight}; padding: 12px 16px; border-bottom: 1px solid ${BRAND.borderColor}; font-weight: 700; color: ${BRAND.textDark};">
+        📋 Prescribed Medications
+      </div>
+      <div style="overflow-x: auto;">
+        <table border="0" cellpadding="0" cellspacing="0" width="100%" style="font-size: 13.5px; text-align: left;">
+          <thead>
+            <tr style="background-color: #F1F5F9; color: ${BRAND.textMuted}; font-size: 12px; text-transform: uppercase;">
+              <th style="padding: 8px;">Medicine</th>
+              <th style="padding: 8px;">Dosage</th>
+              <th style="padding: 8px;">Frequency</th>
+              <th style="padding: 8px;">Duration</th>
+              <th style="padding: 8px;">Instructions</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${medicinesRowsHtml}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    ${instructions ? `
+    <div style="background-color: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 8px; padding: 14px 18px; margin-bottom: 20px;">
+      <strong style="color: #166534; font-size: 13px; display: block; margin-bottom: 4px;">Doctor's Clinical Advice:</strong>
+      <p style="margin: 0; color: #14532D; font-size: 14px;">${instructions}</p>
+    </div>
+    ` : ''}
+
+    <p style="margin: 0 0 8px 0; font-size: 14px; color: ${BRAND.textMuted};">
+      Your personalized digital medication schedule and dose adherence reminders are now active in your patient dashboard.
+    </p>
+  `;
+
+  const html = renderEmailLayout({
+    title: subject,
+    preheader: `Dr. ${doctorName} has issued your medical prescription and care instructions.`,
+    contentHtml,
+    ctaText: 'View Medication Schedule in Portal',
+    ctaUrl: '/patient/prescriptions',
+  });
+
+  const textMedicines = Array.isArray(medicines)
+    ? medicines.map(m => `- ${m.name} (${m.dosage || ''}): ${m.frequency || ''} for ${m.duration || ''}. Instructions: ${m.instructions || 'As directed'}`).join('\n')
+    : 'View portal for itemized list.';
+
+  const text = `Hello ${recipientName},\n\nDr. ${doctorName} has issued your prescription:\n\n${textMedicines}\n\nDoctor Instructions: ${instructions || 'Follow package instructions'}\n\nHealthPulse Hospital Clinical Systems`;
+
+  return { subject, html, text };
+};
+
+/**
+ * 11. Admin Notification: Doctor Submitted Leave Request (Pending Review)
+ */
+const doctorLeaveRequestedAdminAlert = (data) => {
+  const { doctorName, doctorEmail, specialization = 'General Medicine', startDate, endDate, reason } = data;
+  const subject = `Action Required: Leave Application from Dr. ${doctorName} (${startDate} to ${endDate})`;
+
+  const contentHtml = `
+    <h2 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 700; color: ${BRAND.textDark};">Doctor Leave Application Submitted</h2>
+    <p style="margin: 0 0 16px 0;">Hello Administrator,</p>
+    <p style="margin: 0 0 20px 0;"><strong>Dr. ${doctorName}</strong> has submitted a new leave request requiring your administrative review and approval.</p>
+
+    <div style="background-color: ${BRAND.bgLight}; border: 1px solid ${BRAND.borderColor}; border-radius: 10px; padding: 20px; margin-bottom: 24px;">
+      <table border="0" cellpadding="0" cellspacing="0" width="100%" style="font-size: 14.5px; line-height: 24px;">
+        <tr>
+          <td style="width: 140px; color: ${BRAND.textMuted};"><strong>Doctor:</strong></td>
+          <td style="color: ${BRAND.textDark}; font-weight: 700;">Dr. ${doctorName} (${specialization})</td>
+        </tr>
+        <tr>
+          <td style="color: ${BRAND.textMuted};"><strong>Email:</strong></td>
+          <td style="color: ${BRAND.textDark};">${doctorEmail}</td>
+        </tr>
+        <tr>
+          <td style="color: ${BRAND.textMuted};"><strong>Leave Period:</strong></td>
+          <td style="color: #0284c7; font-weight: 700;">${startDate === endDate ? startDate : `${startDate} to ${endDate}`}</td>
+        </tr>
+        <tr>
+          <td style="color: ${BRAND.textMuted};"><strong>Reason / Notes:</strong></td>
+          <td style="color: ${BRAND.textDark};">${reason}</td>
+        </tr>
+        <tr>
+          <td style="color: ${BRAND.textMuted};"><strong>Initial Status:</strong></td>
+          <td><span style="background: #FEF3C7; color: #D97706; padding: 2px 8px; border-radius: 4px; font-weight: 700; font-size: 12px;">PENDING APPROVAL</span></td>
+        </tr>
+      </table>
+    </div>
+
+    <p style="margin: 0 0 16px 0; font-size: 14px; color: ${BRAND.textMuted};">
+      Approving this request will automatically block patient booking slots on the doctor's calendar for the selected period.
+    </p>
+  `;
+
+  const html = renderEmailLayout({
+    title: subject,
+    preheader: `Dr. ${doctorName} requested leave from ${startDate} to ${endDate}. Review in Admin Portal.`,
+    contentHtml,
+    ctaText: 'Review Leave Application in Portal',
+    ctaUrl: '/admin/manage-doctors',
+  });
+
+  const text = `Hello Admin,\n\nDr. ${doctorName} (${specialization}) has applied for leave from ${startDate} to ${endDate}.\nReason: ${reason}\n\nPlease review and approve/reject this request in the Admin Dashboard: ${config.FRONTEND_URL || 'http://localhost:5173'}/admin/manage-doctors\n\nHealthPulse Hospital Clinical Systems`;
+
+  return { subject, html, text };
+};
+
+/**
+ * 12. Doctor Notification: Leave Request Decision (Approved or Rejected by Admin)
+ */
+const doctorLeaveDecisionDoctorAlert = (data) => {
+  const { doctorName, startDate, endDate, status, reason, adminNotes, approvedByName } = data;
+  const isApproved = status === 'APPROVED';
+  const subject = `Leave Request ${isApproved ? 'Approved ✅' : 'Declined ❌'}: ${startDate === endDate ? startDate : `${startDate} to ${endDate}`}`;
+
+  const contentHtml = `
+    <h2 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 700; color: ${isApproved ? '#059669' : '#dc2626'};">
+      Leave Request ${isApproved ? 'Approved' : 'Declined'}
+    </h2>
+    <p style="margin: 0 0 16px 0;">Dear <strong>Dr. ${doctorName}</strong>,</p>
+    <p style="margin: 0 0 20px 0;">
+      Your leave application for the period <strong>${startDate === endDate ? startDate : `${startDate} to ${endDate}`}</strong> has been reviewed by <strong>${approvedByName || 'Hospital Administration'}</strong> and marked as:
+    </p>
+
+    <div style="background-color: ${isApproved ? '#ECFDF5' : '#FEF2F2'}; border: 1.5px solid ${isApproved ? '#A7F3D0' : '#FECACA'}; border-radius: 10px; padding: 20px; margin-bottom: 24px;">
+      <table border="0" cellpadding="0" cellspacing="0" width="100%" style="font-size: 14.5px; line-height: 24px;">
+        <tr>
+          <td style="width: 140px; color: ${BRAND.textMuted};"><strong>Decision Status:</strong></td>
+          <td>
+            <span style="background: ${isApproved ? '#10B981' : '#EF4444'}; color: #ffffff; padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 12px; letter-spacing: 0.5px;">
+              ${status}
+            </span>
+          </td>
+        </tr>
+        <tr>
+          <td style="color: ${BRAND.textMuted};"><strong>Leave Period:</strong></td>
+          <td style="color: ${BRAND.textDark}; font-weight: 700;">${startDate === endDate ? startDate : `${startDate} to ${endDate}`}</td>
+        </tr>
+        <tr>
+          <td style="color: ${BRAND.textMuted};"><strong>Your Stated Reason:</strong></td>
+          <td style="color: ${BRAND.textDark};">${reason}</td>
+        </tr>
+        ${adminNotes ? `
+        <tr>
+          <td style="color: ${BRAND.textMuted};"><strong>Admin Remarks:</strong></td>
+          <td style="color: ${BRAND.textDark}; font-style: italic;">"${adminNotes}"</td>
+        </tr>
+        ` : ''}
+      </table>
+    </div>
+
+    <p style="margin: 0 0 16px 0; font-size: 14px; color: ${BRAND.textMuted};">
+      ${isApproved
+        ? 'Your public appointment calendar has been updated and patient booking slots during this period are now blocked.'
+        : 'If you have any questions regarding this decision, please reach out to the Medical Director or Hospital Administration.'}
+    </p>
+  `;
+
+  const html = renderEmailLayout({
+    title: subject,
+    preheader: `Your leave request for ${startDate} to ${endDate} was ${status.toLowerCase()} by administration.`,
+    contentHtml,
+    ctaText: 'View Leave Schedule in Doctor Profile',
+    ctaUrl: '/doctor/profile',
+  });
+
+  const text = `Dear Dr. ${doctorName},\n\nYour leave application for ${startDate} to ${endDate} has been ${status} by administration.\nReason: ${reason}\n${adminNotes ? `Admin Remarks: ${adminNotes}\n` : ''}\nView your schedule at ${config.FRONTEND_URL || 'http://localhost:5173'}/doctor/profile\n\nHealthPulse Hospital Clinical Systems`;
+
+  return { subject, html, text };
+};
+
 module.exports = {
   renderEmailLayout,
   bookingConfirmation,
@@ -593,4 +796,7 @@ module.exports = {
   doctorWelcome,
   adminWelcome,
   doctorProvisionedAdminAlert,
+  prescriptionIssued,
+  doctorLeaveRequestedAdminAlert,
+  doctorLeaveDecisionDoctorAlert,
 };

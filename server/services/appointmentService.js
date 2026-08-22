@@ -734,9 +734,17 @@ const getAllAppointmentsAdmin = async (filters = {}) => {
 const triggerPreVisitSummary = async (appointmentId, symptoms) => {
   try {
     const result = await llmService.generatePreVisitSummary(symptoms);
+    const summaryPayload = result.data
+      ? {
+          ...result.data,
+          ollama: result.ollama,
+          gemini: result.gemini,
+        }
+      : null;
+
     await Appointment.findByIdAndUpdate(appointmentId, {
       aiStatus: result.status,               // 'READY' or 'FAILED'
-      preVisitSummary: result.data || null,  // { urgency, chiefComplaint, suggestedQuestions }
+      preVisitSummary: summaryPayload,       // Full dual-engine payload
       aiPromptVersion: result.promptVersion,
     });
   } catch (err) {

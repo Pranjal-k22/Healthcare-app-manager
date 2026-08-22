@@ -1,8 +1,8 @@
-# Local LLM Architecture & Safety Guardrails (Phase 10)
+# Hybrid Dual-Engine LLM Architecture & Safety Guardrails
 
 ## 1. Architectural Overview
 
-HealthPulse integrates a local Ollama LLM strictly as an **explanation and clinical-assistance layer**, never as an authoritative clinical decision-maker or prescriber.
+HealthPulse integrates a **hybrid dual-engine LLM architecture** executing **Local Ollama** (on-device) and **Google Gemini** (cloud API) simultaneously in parallel via `Promise.allSettled` strictly as an **explanation, verification, and clinical-assistance layer**, never as an authoritative clinical decision-maker or prescriber.
 
 ```text
 React (Client)
@@ -12,18 +12,16 @@ Express Controllers & Services (appointmentService.js / clinicalService.js)
       │  (Fire-and-forget asynchronous triggers)
       ▼
 server/services/llm/
-  ├── llmService.js       (Orchestrator: 2-attempt bounded retry, exponential backoff, never throws)
-  ├── ollamaProvider.js   (Thin HTTP client for Ollama /api/chat with AbortController timeout)
+  ├── llmService.js       (Parallel Dual-Engine Orchestrator via Promise.allSettled)
+  ├── ollamaProvider.js   (Thin HTTP client for Local Ollama /api/chat with timeout)
+  ├── geminiProvider.js   (REST API client for Google Gemini 1.5 Flash via native fetch)
   ├── prompts.js          (Verbatim prompt templates + system safety directive + sanitization)
   ├── schemas.js          (AI_STATUS enum, URGENCY_LEVELS, JSON schema contracts)
   ├── validator.js        (JSON extraction, schema validation, zero-hallucination medicine check)
-  └── llmErrors.js        (Custom error hierarchy: connection, timeout, provider, parse, validation, hallucination, exhausted)
-      │
-      ▼
-Ollama Daemon (http://localhost:11434/api/chat)
-      │
-      ▼
-Local LLM (llama3 / qwen2.5 / mistral)
+  └── llmErrors.js        (Custom error hierarchy: connection, timeout, provider, parse, validation, hallucination)
+      │                                       │
+      ▼ (In Parallel)                         ▼ (In Parallel)
+Local Ollama (http://localhost:11434)   Google Gemini API (gemini-1.5-flash)
 ```
 
 ---

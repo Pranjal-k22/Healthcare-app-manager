@@ -8,6 +8,7 @@ const {
   checkConflictsHandler,
   cancelLeaveHandler,
   getAllLeavesAdminHandler,
+  updateLeaveStatusAdminHandler,
 } = require('../controllers/leaveController');
 
 // All leave operations require authentication
@@ -21,5 +22,6 @@ router.patch('/doctor/leaves/:id/cancel', requireRole('DOCTOR', 'ADMIN'), cancel
 
 // Admin Leave Endpoints
 router.get('/admin/leaves', requireRole('ADMIN'), getAllLeavesAdminHandler);
+router.patch('/admin/leaves/:id/status', requireRole('ADMIN'), updateLeaveStatusAdminHandler);
 
 module.exports = router;

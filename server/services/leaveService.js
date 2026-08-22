@@ -2,6 +2,8 @@ const mongoose = require('mongoose');
 const DoctorLeave = require('../models/DoctorLeave');
 const Appointment = require('../models/Appointment');
 const DoctorProfile = require('../models/DoctorProfile');
+const User = require('../models/User');
+const notificationService = require('./notificationService');
 
 /**
  * Validate ISO date string (YYYY-MM-DD)
@@ -95,7 +97,7 @@ const getOverlappingLeave = async (doctorId, startDate, endDate, excludeLeaveId 
 };
 
 /**
- * Create a new doctor leave request
+ * Create a new doctor leave request (status: PENDING awaiting Admin approval)
  * @param {string} doctorId - Authenticated doctor's User ID
  * @param {object} leaveData - { startDate, endDate, reason }
  * @returns {Promise<object>}
@@ -132,14 +134,33 @@ const createDoctorLeave = async (doctorId, leaveData) => {
     throw error;
   }
 
-  // 3. Persist Leave
+  // 3. Persist Leave with PENDING status
   const leave = await DoctorLeave.create({
     doctorId,
     startDate,
     endDate,
     reason: reason.trim(),
-    status: 'APPROVED',
+    status: 'PENDING',
   });
+
+  // 4. Asynchronously notify Admins of the new leave request
+  (async () => {
+    try {
+      const [doctorUser, profile] = await Promise.all([
+        User.findById(doctorId).select('name email'),
+        DoctorProfile.findOne({ doctorId }).select('specialization'),
+      ]);
+      if (doctorUser) {
+        await notificationService.dispatchDoctorLeaveRequestedAdminAlert(
+          leave,
+          doctorUser,
+          profile?.specialization || 'General Medicine'
+        );
+      }
+    } catch (err) {
+      console.error('[LeaveService] Failed to dispatch leave request alert:', err.message);
+    }
+  })();
 
   return leave;
 };
@@ -216,7 +237,7 @@ const isDoctorOnLeave = async (doctorId, date) => {
 };
 
 /**
- * Admin: Get all doctor leaves
+ * Admin: Get all doctor leaves with doctor user details
  */
 const getAllLeavesAdmin = async (filter = {}) => {
   const query = {};
@@ -229,7 +250,80 @@ const getAllLeavesAdmin = async (filter = {}) => {
 
   return await DoctorLeave.find(query)
     .populate('doctorId', 'name email')
-    .sort({ startDate: -1 });
+    .populate('approvedBy', 'name email')
+    .populate('rejectedBy', 'name email')
+    .sort({ createdAt: -1 });
+};
+
+/**
+ * Admin: Approve or Reject a doctor leave request
+ * @param {string} leaveId
+ * @param {object} updateData - { status: 'APPROVED' | 'REJECTED', adminNotes?: string }
+ * @param {object} adminUser - Authenticated Admin
+ * @returns {Promise<object>}
+ */
+const updateDoctorLeaveStatusAdmin = async (leaveId, updateData, adminUser) => {
+  if (!mongoose.Types.ObjectId.isValid(leaveId)) {
+    const error = new Error('Invalid Leave ID');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const { status, adminNotes = '' } = updateData;
+  if (!['APPROVED', 'REJECTED'].includes(status)) {
+    const error = new Error('Status must be either APPROVED or REJECTED');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const leave = await DoctorLeave.findById(leaveId);
+  if (!leave) {
+    const error = new Error('Leave record not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  if (leave.status === 'CANCELLED') {
+    const error = new Error('Cannot modify a cancelled leave record');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  leave.status = status;
+  if (status === 'APPROVED') {
+    leave.approvedBy = adminUser._id;
+    leave.approvedAt = new Date();
+    leave.rejectedBy = null;
+    leave.rejectedAt = null;
+    leave.rejectionReason = '';
+  } else {
+    leave.rejectedBy = adminUser._id;
+    leave.rejectedAt = new Date();
+    leave.rejectionReason = adminNotes.trim() || 'Declined by Administrator';
+    leave.approvedBy = null;
+    leave.approvedAt = null;
+  }
+
+  await leave.save();
+
+  // Asynchronously dispatch decision confirmation email to the doctor
+  (async () => {
+    try {
+      const doctorUser = await User.findById(leave.doctorId).select('name email');
+      if (doctorUser) {
+        await notificationService.dispatchDoctorLeaveDecisionDoctorAlert(
+          leave,
+          doctorUser,
+          adminUser,
+          adminNotes
+        );
+      }
+    } catch (err) {
+      console.error('[LeaveService] Failed to dispatch leave decision alert:', err.message);
+    }
+  })();
+
+  return leave;
 };
 
 module.exports = {
@@ -242,4 +336,5 @@ module.exports = {
   cancelDoctorLeave,
   isDoctorOnLeave,
   getAllLeavesAdmin,
+  updateDoctorLeaveStatusAdmin,
 };

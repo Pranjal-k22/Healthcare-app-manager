@@ -13,6 +13,7 @@ import { Appointment } from '../../types/appointment';
 import { MedicineItem } from '../../types/clinical';
 import { AppointmentStatusBadge } from '../../components/appointment/AppointmentStatusBadge';
 import { PrescriptionEditor } from '../../components/clinical/PrescriptionEditor';
+import { DualPreVisitSummaryView, DualPostVisitSummaryView } from '../../components/clinical/DualAiSummaryView';
 import {
   Activity,
   AlertCircle,
@@ -21,7 +22,6 @@ import {
   CheckCircle2,
   Clock,
   FileSpreadsheet,
-  HelpCircle,
   Mail,
   Save,
   ShieldCheck,
@@ -447,164 +447,13 @@ export const DoctorConsultation: React.FC = () => {
         </div>
       </div>
 
-      {/* Pre-Visit AI Clinical Intake Summary Card */}
+      {/* Pre-Visit AI Clinical Intake Summary Card (Dual-Engine) */}
       {appointment.aiStatus === 'READY' && appointment.preVisitSummary ? (
-        <div
-          style={{
-            marginBottom: '1.75rem',
-            padding: '1.5rem',
-            background: 'linear-gradient(135deg, #f0fdfa 0%, #f0f9ff 50%, #ffffff 100%)',
-            borderRadius: '14px',
-            border: '1.5px solid #38bdf8',
-            boxShadow: '0 8px 24px rgba(14, 165, 233, 0.08)',
-          }}
-        >
-          {/* Card Header with Sparkles & Urgency Pill */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1.25rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <div
-                style={{
-                  width: '40px',
-                  height: '40px',
-                  borderRadius: '10px',
-                  background: 'linear-gradient(135deg, #0ea5e9, #0284c7)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: '#ffffff',
-                  boxShadow: '0 4px 12px rgba(14, 165, 233, 0.25)',
-                }}
-              >
-                <Sparkles size={20} />
-              </div>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
-                    Pre-Visit AI Clinical Summary
-                  </h3>
-                  <span style={{ fontSize: '0.7rem', fontWeight: 700, padding: '0.15rem 0.5rem', borderRadius: '999px', background: 'rgba(14, 165, 233, 0.15)', color: '#0369a1' }}>
-                    Local LLM Assisted
-                  </span>
-                </div>
-                <span style={{ fontSize: '0.78rem', color: '#64748b' }}>
-                  Synthesized triage intelligence for attending physician
-                </span>
-              </div>
-            </div>
-
-            {/* Urgency Badge */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-              <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 600 }}>
-                Triage Urgency:
-              </span>
-              <span
-                style={{
-                  fontSize: '0.82rem',
-                  fontWeight: 800,
-                  padding: '0.35rem 0.9rem',
-                  borderRadius: '999px',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.06em',
-                  background:
-                    appointment.preVisitSummary.urgency === 'High'
-                      ? '#fef2f2'
-                      : appointment.preVisitSummary.urgency === 'Medium'
-                      ? '#fffbeb'
-                      : '#ecfdf5',
-                  color:
-                    appointment.preVisitSummary.urgency === 'High'
-                      ? '#dc2626'
-                      : appointment.preVisitSummary.urgency === 'Medium'
-                      ? '#d97706'
-                      : '#059669',
-                  border: `1.5px solid ${
-                    appointment.preVisitSummary.urgency === 'High'
-                      ? '#fca5a5'
-                      : appointment.preVisitSummary.urgency === 'Medium'
-                      ? '#fcd34d'
-                      : '#6ee7b7'
-                  }`,
-                  boxShadow:
-                    appointment.preVisitSummary.urgency === 'High'
-                      ? '0 0 10px rgba(239, 68, 68, 0.2)'
-                      : 'none',
-                }}
-              >
-                {appointment.preVisitSummary.urgency}
-              </span>
-            </div>
-          </div>
-
-          {/* Synthesized Chief Complaint Callout */}
-          <div
-            style={{
-              marginBottom: '1.25rem',
-              padding: '1rem 1.15rem',
-              borderRadius: '10px',
-              background: '#ffffff',
-              border: '1px solid #bae6fd',
-              boxShadow: '0 2px 8px rgba(14, 165, 233, 0.04)',
-            }}
-          >
-            <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#0284c7', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '0.3rem' }}>
-              Synthesized Chief Complaint
-            </span>
-            <p style={{ margin: 0, fontSize: '0.98rem', fontWeight: 700, color: '#0f172a', lineHeight: 1.45 }}>
-              {appointment.preVisitSummary.chiefComplaint}
-            </p>
-          </div>
-
-          {/* Suggested Exploration Questions */}
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.65rem' }}>
-              <HelpCircle size={15} color="#0284c7" />
-              <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                Suggested Exploration Questions for Consultation
-              </span>
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
-              {appointment.preVisitSummary.suggestedQuestions.map((q, idx) => (
-                <div
-                  key={idx}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'flex-start',
-                    gap: '0.75rem',
-                    padding: '0.75rem 1rem',
-                    background: '#ffffff',
-                    borderRadius: '10px',
-                    border: '1px solid #e0f2fe',
-                    boxShadow: '0 1px 4px rgba(15, 23, 42, 0.03)',
-                    transition: 'all 0.15s ease',
-                  }}
-                >
-                  <span
-                    style={{
-                      width: '22px',
-                      height: '22px',
-                      borderRadius: '50%',
-                      background: 'linear-gradient(135deg, #0062cc, #0284c7)',
-                      color: '#ffffff',
-                      fontSize: '0.75rem',
-                      fontWeight: 800,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0,
-                      marginTop: '0.1rem',
-                    }}
-                  >
-                    {idx + 1}
-                  </span>
-                  <span style={{ fontSize: '0.92rem', color: '#1e293b', fontWeight: 500, lineHeight: 1.5 }}>
-                    {q}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+        <DualPreVisitSummaryView
+          summary={appointment.preVisitSummary}
+          onRefresh={handleGenerateAiSummary}
+          isRefreshing={isGeneratingAi}
+        />
       ) : appointment.aiStatus === 'FAILED' ? (
         <div
           style={{
@@ -917,66 +766,11 @@ export const DoctorConsultation: React.FC = () => {
 
         {/* AI Result Card or Placeholder */}
         {postVisitAiSummary ? (
-          <div
-            style={{
-              padding: '1.25rem',
-              borderRadius: '12px',
-              background: '#f0fdfa',
-              border: '1px solid #99f6e4',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '1rem',
-            }}
-          >
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#0f766e', fontWeight: 700, fontSize: '0.85rem', marginBottom: '0.35rem' }}>
-                <FileText size={15} />
-                <span>Patient-Friendly Visit Summary</span>
-              </div>
-              <p style={{ margin: 0, color: '#134e4a', fontSize: '0.92rem', lineHeight: 1.55 }}>
-                {postVisitAiSummary.summary || postVisitAiSummary.patientSummary || 'No summary text generated.'}
-              </p>
-            </div>
-
-            {postVisitAiSummary.medicationSchedule && (
-              <div style={{ padding: '0.85rem 1rem', borderRadius: '8px', background: '#f0fdf4', border: '1px solid #bbf7d0' }}>
-                <h4 style={{ fontSize: '0.82rem', fontWeight: 800, color: '#15803d', textTransform: 'uppercase', letterSpacing: '0.04em', margin: '0 0 0.45rem 0' }}>
-                  Prescribed Medication Instructions & Schedule
-                </h4>
-                {Array.isArray(postVisitAiSummary.medicationSchedule) ? (
-                  <ul style={{ margin: 0, paddingLeft: '1.25rem', color: '#166534', fontSize: '0.9rem', lineHeight: 1.55 }}>
-                    {postVisitAiSummary.medicationSchedule.map((item: string, idx: number) => (
-                      <li key={idx} style={{ marginBottom: '0.25rem' }}>{item}</li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p style={{ margin: 0, color: '#166534', fontSize: '0.9rem', lineHeight: 1.55 }}>
-                    {String(postVisitAiSummary.medicationSchedule)}
-                  </p>
-                )}
-              </div>
-            )}
-
-            {/* Follow-up Steps & Precautions */}
-            {postVisitAiSummary.followUpSteps && (
-              <div style={{ padding: '0.85rem 1rem', borderRadius: '8px', background: '#fefce8', border: '1px solid #fef08a' }}>
-                <h4 style={{ fontSize: '0.82rem', fontWeight: 800, color: '#a16207', textTransform: 'uppercase', letterSpacing: '0.04em', margin: '0 0 0.45rem 0' }}>
-                  Next Steps & Follow-Up Guidance
-                </h4>
-                {Array.isArray(postVisitAiSummary.followUpSteps) ? (
-                  <ul style={{ margin: 0, paddingLeft: '1.25rem', color: '#854d0e', fontSize: '0.9rem', lineHeight: 1.55 }}>
-                    {postVisitAiSummary.followUpSteps.map((item: string, idx: number) => (
-                      <li key={idx} style={{ marginBottom: '0.25rem' }}>{item}</li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p style={{ margin: 0, color: '#854d0e', fontSize: '0.9rem', lineHeight: 1.55 }}>
-                    {String(postVisitAiSummary.followUpSteps)}
-                  </p>
-                )}
-              </div>
-            )}
-          </div>
+          <DualPostVisitSummaryView
+            summary={postVisitAiSummary}
+            onRefresh={handleGeneratePostVisitAi}
+            isRefreshing={isGeneratingPostAi}
+          />
         ) : (
           <div
             style={{

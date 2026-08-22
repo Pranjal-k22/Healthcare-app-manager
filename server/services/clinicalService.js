@@ -335,15 +335,23 @@ const completeConsultation = async (appointmentId, doctorUser, workflowData = {}
 const triggerPostVisitSummary = async (appointmentId, clinicalRecordId, clinicalNotes, medicines) => {
   try {
     const result = await llmService.generatePostVisitSummary(clinicalNotes, medicines);
+    const summaryPayload = result.data
+      ? {
+          ...result.data,
+          ollama: result.ollama,
+          gemini: result.gemini,
+        }
+      : null;
+
     await Promise.all([
       ClinicalRecord.findByIdAndUpdate(clinicalRecordId, {
         aiStatus: result.status,               // 'READY' or 'FAILED'
-        postVisitSummary: result.data || null, // { patientSummary, medicationSchedule, followUpSteps }
+        postVisitSummary: summaryPayload,      // Full dual-engine payload
         aiPromptVersion: result.promptVersion,
       }),
       Appointment.findByIdAndUpdate(appointmentId, {
         aiStatus: result.status,
-        postVisitSummary: result.data || null,
+        postVisitSummary: summaryPayload,
         aiPromptVersion: result.promptVersion,
       }),
     ]);

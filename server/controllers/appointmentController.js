@@ -305,7 +305,12 @@ const generateAiSummaryHandler = async (req, res, next) => {
 
     const result = await llmService.generatePreVisitSummary(symptoms);
     if (result.status === 'READY') {
-      appointment.preVisitSummary = result.data;
+      const summaryPayload = {
+        ...result.data,
+        ollama: result.ollama,
+        gemini: result.gemini,
+      };
+      appointment.preVisitSummary = summaryPayload;
       appointment.aiStatus = 'READY';
       appointment.aiPromptVersion = result.promptVersion;
       await appointment.save();

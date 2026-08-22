@@ -224,18 +224,25 @@ const generatePostVisitSummaryHandler = async (req, res, next) => {
     }
 
     const result = await llmService.generatePostVisitSummary(clinicalNotes, medicines);
+    const summaryPayload = result.data
+      ? {
+          ...result.data,
+          ollama: result.ollama,
+          gemini: result.gemini,
+        }
+      : null;
 
-    if (result.status === 'READY' && result.data) {
+    if (result.status === 'READY' && summaryPayload) {
       await Promise.all([
         Appointment.findByIdAndUpdate(appointmentId, {
-          postVisitSummary: result.data,
+          postVisitSummary: summaryPayload,
           aiStatus: 'READY',
           aiPromptVersion: result.promptVersion,
         }),
         ClinicalRecord.findOneAndUpdate(
           { appointmentId },
           {
-            postVisitSummary: result.data,
+            postVisitSummary: summaryPayload,
             aiStatus: 'READY',
             aiPromptVersion: result.promptVersion,
           },
@@ -247,7 +254,7 @@ const generatePostVisitSummaryHandler = async (req, res, next) => {
     res.status(200).json({
       success: true,
       data: {
-        postVisitSummary: result.data,
+        postVisitSummary: summaryPayload,
         aiStatus: result.status,
         promptVersion: result.promptVersion,
       },

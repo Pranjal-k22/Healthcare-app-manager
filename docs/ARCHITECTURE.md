@@ -51,9 +51,7 @@
 
 ### 3. Service Layer
 - **Appointment Service (`appointmentService.js`)**: Calculates doctor availability, enforces double-booking prevention, triggers pre-visit LLM synthesis.
-- **Clinical Service (`clinicalService.js`)**: Completes medical consultations, stores structured prescriptions, triggers post-visit LLM summaries.
-- **LLM Service (`llmService.js` ➔ `ollamaProvider.js`)**: Manages local Ollama HTTP requests with 25-30s timeouts, bounded retries (2 attempts with exponential backoff), and JSON/medication presence validation.
-- **Email Service (`emailService.js`)**: Dispatches transactional emails with 3-attempt exponential backoff.
+- **LLM Service (`llmService.js`)**: Manages simultaneous parallel execution of Local Ollama and Google Gemini with bounded timeouts, schema validation, and zero-hallucination medicine presence checking.
 - **Google Calendar Service (`googleCalendarService.js`)**: Manages OAuth2 token refresh, event synchronization, and deletion on cancellation.
 
 ### 4. Persistence Layer (MongoDB)

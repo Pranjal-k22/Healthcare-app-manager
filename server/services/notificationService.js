@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const { Notification } = require('../models/Notification');
 const User = require('../models/User');
+const DoctorProfile = require('../models/DoctorProfile');
 const emailService = require('./emailService');
 const emailTemplates = require('./emailTemplates');
 const { queueEmailNotification } = require('./queue/emailQueue');
@@ -441,6 +442,34 @@ const dispatchPrescriptionAvailable = async (prescription, appointment) => {
       relatedAppointmentId: prescription.appointmentId,
       metadata: { doctorName: doctor.name, prescriptionId: prescription._id },
     });
+
+    // Transactional Hospital Email to Patient with Prescribed Medicines
+    if (patient.email) {
+      let specialisation = 'General Practice';
+      const doctorProfile = await DoctorProfile.findOne({
+        $or: [{ userId: doctor._id }, { doctorId: doctor._id }],
+      }).select('specialization specialisation');
+      if (doctorProfile) {
+        specialisation = doctorProfile.specialization || doctorProfile.specialisation || 'General Practice';
+      }
+
+      await queueEmailNotification({
+        to: patient.email,
+        recipientName: patient.name,
+        templateName: 'prescriptionIssued',
+        templateData: {
+          recipientName: patient.name,
+          doctorName: doctor.name,
+          specialisation,
+          medicines: prescription.medicines || [],
+          instructions: prescription.instructions || '',
+          durationDays: prescription.durationDays,
+          appointmentId: prescription.appointmentId,
+        },
+        appointmentId: prescription.appointmentId,
+        notificationType: 'PRESCRIPTION_AVAILABLE',
+      });
+    }
   } catch (error) {
     console.error('[NotificationService] Error in dispatchPrescriptionAvailable:', error.message);
   }
@@ -675,6 +704,85 @@ const dispatchDoctorProvisionedAdminAlert = async (doctorUser, specialization, p
   }
 };
 
+/**
+ * Dispatch alert to Admins when a Doctor submits a Leave Request (Pending)
+ * @param {object} leave - DoctorLeave document
+ * @param {object} doctorUser - Doctor User object
+ * @param {string} specialization
+ */
+const dispatchDoctorLeaveRequestedAdminAlert = async (leave, doctorUser, specialization = 'General Medicine') => {
+  try {
+    const admins = await User.find({ role: 'ADMIN' }).select('email name');
+    const payload = {
+      doctorName: doctorUser.name,
+      doctorEmail: doctorUser.email,
+      specialization,
+      startDate: leave.startDate,
+      endDate: leave.endDate,
+      reason: leave.reason,
+    };
+
+    for (const admin of admins) {
+      queueEmailNotification({
+        to: admin.email,
+        recipientName: admin.name || 'Hospital Admin',
+        templateName: 'doctorLeaveRequestedAdminAlert',
+        templateData: payload,
+        notificationType: 'LEAVE_REQUESTED',
+      });
+
+      createNotification({
+        userId: admin._id,
+        type: 'LEAVE_REQUESTED',
+        title: 'New Doctor Leave Request Pending Review',
+        message: `Dr. ${doctorUser.name} submitted a leave application for ${leave.startDate === leave.endDate ? leave.startDate : `${leave.startDate} to ${leave.endDate}`}.`,
+        metadata: { leaveId: leave._id, doctorId: doctorUser._id },
+      }).catch(() => {});
+    }
+  } catch (err) {
+    console.error('[NotificationService] Error in dispatchDoctorLeaveRequestedAdminAlert:', err.message);
+  }
+};
+
+/**
+ * Dispatch confirmation email to Doctor when Admin Approves or Rejects Leave
+ * @param {object} leave - DoctorLeave document
+ * @param {object} doctorUser - Doctor User object
+ * @param {object} adminUser - Approving Admin User object
+ * @param {string} decisionNotes - Admin notes / remarks
+ */
+const dispatchDoctorLeaveDecisionDoctorAlert = async (leave, doctorUser, adminUser, decisionNotes = '') => {
+  try {
+    const payload = {
+      doctorName: doctorUser.name,
+      startDate: leave.startDate,
+      endDate: leave.endDate,
+      status: leave.status, // 'APPROVED' or 'REJECTED'
+      reason: leave.reason,
+      adminNotes: decisionNotes || leave.rejectionReason || '',
+      approvedByName: adminUser?.name || 'Hospital Administration',
+    };
+
+    queueEmailNotification({
+      to: doctorUser.email,
+      recipientName: `Dr. ${doctorUser.name}`,
+      templateName: 'doctorLeaveDecisionDoctorAlert',
+      templateData: payload,
+      notificationType: 'LEAVE_DECISION',
+    });
+
+    createNotification({
+      userId: doctorUser._id,
+      type: leave.status === 'APPROVED' ? 'LEAVE_APPROVED' : 'LEAVE_REJECTED',
+      title: `Leave Request ${leave.status === 'APPROVED' ? 'Approved' : 'Declined'}`,
+      message: `Your leave request for ${leave.startDate === leave.endDate ? leave.startDate : `${leave.startDate} to ${leave.endDate}`} was ${leave.status.toLowerCase()} by administration.`,
+      metadata: { leaveId: leave._id, status: leave.status, adminNotes: decisionNotes },
+    }).catch(() => {});
+  } catch (err) {
+    console.error('[NotificationService] Error in dispatchDoctorLeaveDecisionDoctorAlert:', err.message);
+  }
+};
+
 module.exports = {
   createNotification,
   getUserNotifications,
@@ -693,4 +801,6 @@ module.exports = {
   dispatchDoctorWelcome,
   dispatchAdminWelcome,
   dispatchDoctorProvisionedAdminAlert,
+  dispatchDoctorLeaveRequestedAdminAlert,
+  dispatchDoctorLeaveDecisionDoctorAlert,
 };

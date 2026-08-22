@@ -5,30 +5,27 @@
 
 const { LLMConnectionError, LLMTimeoutError, LLMProviderError } = require('./llmErrors');
 
-const OLLAMA_HOST =
-  process.env.OLLAMA_BASE_URL ||
-  process.env.OLLAMA_HOST ||
-  'http://localhost:11434';
-const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'qwen2.5-coder:7b';
-const DEFAULT_TIMEOUT_MS = Number(process.env.OLLAMA_TIMEOUT_MS || 28000); // 25-30s per spec
-
-
 /**
  * Sends a single chat completion request to Ollama and returns the raw text.
  * @param {{system: string, user: string}} prompt
- * @param {{timeoutMs?: number, model?: string}} [opts]
+ * @param {{timeoutMs?: number, model?: string, host?: string}} [opts]
  * @returns {Promise<string>} raw model output text
  */
 async function generate({ system, user }, opts = {}) {
-  const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
-  const model = opts.model ?? OLLAMA_MODEL;
+  const host =
+    opts.host ||
+    process.env.OLLAMA_BASE_URL ||
+    process.env.OLLAMA_HOST ||
+    'http://localhost:11434';
+  const model = opts.model || process.env.OLLAMA_MODEL || 'qwen2.5-coder:7b';
+  const timeoutMs = opts.timeoutMs ?? Number(process.env.OLLAMA_TIMEOUT_MS || 28000);
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
 
   let response;
   try {
-    response = await fetch(`${OLLAMA_HOST}/api/chat`, {
+    response = await fetch(`${host}/api/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       signal: controller.signal,
@@ -50,7 +47,7 @@ async function generate({ system, user }, opts = {}) {
       throw new LLMTimeoutError(`Ollama request exceeded ${timeoutMs}ms timeout`, err);
     }
     // fetch throws TypeError on connection refused / DNS failure
-    throw new LLMConnectionError(`Could not reach Ollama at ${OLLAMA_HOST}`, err);
+    throw new LLMConnectionError(`Could not reach Ollama at ${host}`, err);
   } finally {
     clearTimeout(timer);
   }
@@ -73,11 +70,17 @@ async function generate({ system, user }, opts = {}) {
 }
 
 /** Lightweight health check used by /api/health and startup diagnostics. */
-async function isAvailable() {
+async function isAvailable(opts = {}) {
+  const host =
+    opts.host ||
+    process.env.OLLAMA_BASE_URL ||
+    process.env.OLLAMA_HOST ||
+    'http://localhost:11434';
+
   try {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 3000);
-    const res = await fetch(`${OLLAMA_HOST}/api/tags`, { signal: controller.signal });
+    const res = await fetch(`${host}/api/tags`, { signal: controller.signal });
     clearTimeout(timer);
     return res.ok;
   } catch {
@@ -88,6 +91,4 @@ async function isAvailable() {
 module.exports = {
   generate,
   isAvailable,
-  OLLAMA_HOST,
-  OLLAMA_MODEL,
 };

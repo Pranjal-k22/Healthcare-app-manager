@@ -5,6 +5,7 @@ const {
   cancelDoctorLeave,
   getAllLeavesAdmin,
   validateLeaveDates,
+  updateDoctorLeaveStatusAdmin,
 } = require('../services/leaveService');
 
 /**
@@ -129,10 +130,35 @@ const getAllLeavesAdminHandler = async (req, res, next) => {
   }
 };
 
+/**
+ * @desc    Admin: Approve or Reject a doctor leave request
+ * @route   PATCH /api/admin/leaves/:id/status
+ * @access  Private (Admin only)
+ */
+const updateLeaveStatusAdminHandler = async (req, res, next) => {
+  try {
+    const { status, adminNotes } = req.body;
+    const leave = await updateDoctorLeaveStatusAdmin(
+      req.params.id,
+      { status, adminNotes },
+      req.user
+    );
+
+    res.status(200).json({
+      success: true,
+      message: `Doctor leave request marked as ${status} successfully. Confirmation email sent to doctor.`,
+      data: leave,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   createLeaveHandler,
   getMyLeavesHandler,
   checkConflictsHandler,
   cancelLeaveHandler,
   getAllLeavesAdminHandler,
+  updateLeaveStatusAdminHandler,
 };

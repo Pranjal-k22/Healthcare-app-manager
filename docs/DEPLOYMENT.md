@@ -67,8 +67,11 @@ MongoDB Atlas          Background Cron Jobs       Dedicated Inference
 | `SMTP_USER` | SMTP Username | `apikey` |
 | `SMTP_PASS` | SMTP Secret | `SG.xxxxxxxx...` |
 | `EMAIL_FROM` | Sender address | `"HealthPulse <notifications@yourdomain.com>"` |
+| `LLM_MODE` | Dual-engine or local-only | `dual` |
 | `OLLAMA_HOST` | Ollama daemon address | `http://localhost:11434` |
-| `OLLAMA_MODEL` | Local LLM model tag | `llama3` |
+| `OLLAMA_MODEL` | Local LLM model tag | `llama3` / `qwen2.5-coder:7b` |
+| `GEMINI_API_KEY` | Google Gemini API key (dual mode) | `AIzaSy...` |
+| `GEMINI_MODEL` | Gemini cloud model | `gemini-1.5-flash` |
 
 ---
 
