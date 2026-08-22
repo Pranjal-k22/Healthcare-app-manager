@@ -1,6 +1,6 @@
 const MedicationReminder = require('../../models/MedicationReminder');
 const { Notification } = require('../../models/Notification');
-const { sendEmail } = require('../email/emailService');
+const emailService = require('../email/emailService');
 const config = require('../../config/env');
 
 let medicationJobTimer = null;
@@ -60,7 +60,7 @@ const processDueMedicationReminders = async () => {
             instructions: reminder.instructions,
           };
           const rendered = emailTemplates.medicationReminder(payload);
-          sendEmail({
+          emailService.sendEmail({
             to: reminder.patientId.email,
             ...rendered,
             appointmentId: reminder.appointmentId,

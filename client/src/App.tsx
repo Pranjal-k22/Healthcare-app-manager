@@ -24,6 +24,7 @@ import { CreateDoctor } from './pages/admin/CreateDoctor';
 import { EditDoctor } from './pages/admin/EditDoctor';
 import { ManageDoctorLeave } from './pages/admin/ManageDoctorLeave';
 import { ManageAppointments } from './pages/admin/ManageAppointments';
+import { AllDoctorLeaves } from './pages/admin/AllDoctorLeaves';
 import { NotificationsPage } from './pages/notifications/NotificationsPage';
 import { ROLE_DASHBOARD_ROUTES } from './utils/constants';
 
@@ -214,6 +215,14 @@ export const App: React.FC = () => {
             element={
               <ProtectedRoute allowedRoles={['ADMIN']}>
                 <ManageDoctorLeave />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/doctor-leaves"
+            element={
+              <ProtectedRoute allowedRoles={['ADMIN']}>
+                <AllDoctorLeaves />
               </ProtectedRoute>
             }
           />

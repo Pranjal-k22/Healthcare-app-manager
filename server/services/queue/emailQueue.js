@@ -1,5 +1,5 @@
 const NotificationLog = require('../../models/NotificationLog');
-const { sendEmail } = require('../emailService');
+const emailService = require('../emailService');
 const emailTemplates = require('../emailTemplates');
 const config = require('../../config/env');
 
@@ -51,7 +51,7 @@ const processNotificationJob = async (payload) => {
 
   // 3. Send Email via central EmailService
   console.log(`[EmailWorker] Dispatching ${effectiveType} to ${normalizedTo}`);
-  const result = await sendEmail({
+  const result = await emailService.sendEmail({
     to: normalizedTo,
     subject: rendered.subject,
     html: rendered.html,

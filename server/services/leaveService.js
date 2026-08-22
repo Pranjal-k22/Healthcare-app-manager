@@ -296,6 +296,30 @@ const updateDoctorLeaveStatusAdmin = async (leaveId, updateData, adminUser) => {
     leave.rejectedBy = null;
     leave.rejectedAt = null;
     leave.rejectionReason = '';
+
+    // Cascade Conflict Detection & Cancellation
+    const conflictingAppointments = await Appointment.find({
+      doctorId: leave.doctorId,
+      date: { $gte: leave.startDate, $lte: leave.endDate },
+      status: 'BOOKED',
+    });
+
+    if (conflictingAppointments.length > 0) {
+      for (const appointment of conflictingAppointments) {
+        appointment.status = 'CANCELLED';
+        appointment.cancellationReason = 'DOCTOR_LEAVE';
+        await appointment.save();
+
+        try {
+          await notificationService.dispatchAppointmentCancelled(appointment, { role: 'ADMIN' });
+        } catch (dispatchErr) {
+          console.error(
+            `[LeaveService] Failed to dispatch cancellation notification for appointment ${appointment._id}:`,
+            dispatchErr.message
+          );
+        }
+      }
+    }
   } else {
     leave.rejectedBy = adminUser._id;
     leave.rejectedAt = new Date();
