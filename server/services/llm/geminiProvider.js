@@ -75,7 +75,21 @@ async function generate(prompt, opts = {}) {
 
   if (!response.ok) {
     const errorBody = await response.text().catch(() => '');
-    throw new LLMProviderError(`Gemini API error HTTP ${response.status}: ${errorBody}`, {
+    let cleanMessage = `Gemini API error HTTP ${response.status}`;
+    try {
+      const parsedErr = JSON.parse(errorBody);
+      if (parsedErr?.error?.message) {
+        if (response.status === 429) {
+          cleanMessage = `Gemini API rate limit / quota exceeded (HTTP 429). Google free-tier quota reached. Please retry in a few moments or check Local Ollama.`;
+        } else {
+          cleanMessage = `Gemini API (${parsedErr.error.status || response.status}): ${parsedErr.error.message}`;
+        }
+      }
+    } catch {
+      cleanMessage = `Gemini API error HTTP ${response.status}: ${errorBody}`;
+    }
+
+    throw new LLMProviderError(cleanMessage, {
       status: response.status,
       cause: errorBody,
     });

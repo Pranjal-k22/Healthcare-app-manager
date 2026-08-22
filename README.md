@@ -58,8 +58,11 @@ Background Schedulers             Local Ollama LLM                  Google Calen
 - **MongoDB**: Community Server running locally at `mongodb://127.0.0.1:27017`
 - **Ollama**: Installed from [ollama.com](https://ollama.com) (for local clinical AI features)
 
-### 2. Local Ollama LLM Setup
-HealthPulse uses **100% on-device local inference** to ensure zero patient health information (PHI) ever leaves your local network:
+### 2. Hybrid Dual-Engine Clinical LLM Setup (Ollama + Google Gemini)
+HealthPulse operates a hybrid dual-engine LLM architecture:
+1. **Local Ollama Engine**: Privacy-first, on-device local inference.
+2. **Google Gemini Cloud Engine**: Resilient cloud fallback and parallel execution.
+
 ```bash
 # Step 1: Start the local Ollama background daemon
 ollama serve
@@ -67,7 +70,7 @@ ollama serve
 # Step 2: In a separate terminal, pull the recommended model (Qwen 2.5 Coder 7B or Llama 3)
 ollama pull qwen2.5-coder:7b
 ```
-*(Alternatively, pull `ollama pull llama3` or `ollama pull mistral` and set `OLLAMA_MODEL=llama3` in your `.env`)*.
+*(Alternatively, configure `GEMINI_API_KEY` in your `.env` to enable Gemini cloud generation or dual-engine parallel execution).*
 
 ### 3. Installation & Dependency Setup
 ```bash
@@ -97,12 +100,16 @@ JWT_EXPIRES_IN=7d
 CLIENT_URL=http://localhost:5173
 FRONTEND_URL=http://localhost:5173
 
-# Local Ollama LLM Settings (Phase 10)
+# LLM Settings (Hybrid Dual-Engine: Local Ollama + Google Gemini)
+LLM_MODE=dual # 'dual' (runs Ollama & Gemini in parallel) or 'local-only' (Ollama only)
 OLLAMA_HOST=http://localhost:11434
 OLLAMA_MODEL=qwen2.5-coder:7b
 OLLAMA_TIMEOUT_MS=28000
 LLM_MAX_ATTEMPTS=2
 LLM_BACKOFF_BASE_MS=300
+GEMINI_API_KEY=your_google_gemini_api_key_here
+GEMINI_MODEL=gemini-1.5-flash
+GEMINI_TIMEOUT_MS=20000
 
 # Email Notification Settings (Nodemailer + Gmail SMTP)
 GMAIL_USER=your_address@gmail.com
@@ -110,6 +117,17 @@ GMAIL_APP_PASSWORD=your_16_character_app_password
 EMAIL_FROM_NAME="HealthPulse Hospital"
 SUPPORT_EMAIL=your_address@gmail.com
 ENABLE_EMAIL_NOTIFICATIONS=false
+
+# Google Calendar OAuth Integration
+GOOGLE_CLIENT_ID=your_google_client_id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+GOOGLE_REDIRECT_URI=http://localhost:5000/api/auth/google/callback
+GOOGLE_OAUTH_STATE_SECRET=your_oauth_signing_secret
+TOKEN_ENCRYPTION_KEY=2e0f1ac01662063b65ed3d552ae04248a25dd7dd741ba97622e827cf2bf5a479
+APPOINTMENT_TIMEZONE=UTC
+
+# Billing Configuration
+INVOICE_DUE_DAYS=14
 ```
 
 ### 5. Database Seeders
