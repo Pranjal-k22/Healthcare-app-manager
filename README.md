@@ -101,15 +101,17 @@ CLIENT_URL=http://localhost:5173
 FRONTEND_URL=http://localhost:5173
 
 # LLM Settings (Hybrid Dual-Engine: Local Ollama + Google Gemini)
-LLM_MODE=dual # 'dual' (runs Ollama & Gemini in parallel) or 'local-only' (Ollama only)
+LLM_MODE=dual # 'dual' (runs Ollama & Gemini in parallel / cloud fallback) or 'local-only' (air-gapped Ollama only)
 OLLAMA_HOST=http://localhost:11434
 OLLAMA_MODEL=qwen2.5-coder:7b
 OLLAMA_TIMEOUT_MS=28000
 LLM_MAX_ATTEMPTS=2
 LLM_BACKOFF_BASE_MS=300
-GEMINI_API_KEY=your_google_gemini_api_key_here
+GEMINI_API_KEY=your_google_gemini_api_key_here # Required only if LLM_MODE=dual (used for hosted cloud demo fallback)
 GEMINI_MODEL=gemini-3.5-flash-lite
 GEMINI_TIMEOUT_MS=20000
+
+> ℹ️ **Privacy & Cloud Deployment Note**: In local/on-prem deployment, `LLM_MODE=local-only` ensures zero patient data leaves the server boundary. On the public hosted Render demo, `LLM_MODE=dual` enables AI feature demonstration via Google Gemini (`gemini-3.5-flash-lite`).
 
 # Email Notification Settings (Nodemailer + Gmail SMTP)
 GMAIL_USER=your_address@gmail.com

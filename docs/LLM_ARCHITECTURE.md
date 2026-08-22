@@ -21,12 +21,19 @@ server/services/llm/
   └── llmErrors.js        (Custom error hierarchy: connection, timeout, provider, parse, validation, hallucination)
       │                                       │
       ▼ (In Parallel)                         ▼ (In Parallel)
-Local Ollama (http://localhost:11434)   Google Gemini API (gemini-1.5-flash)
+Local Ollama (http://localhost:11434)   Google Gemini API (gemini-3.5-flash-lite)
 ```
 
 ---
 
-## 2. Non-Negotiable Architectural Constraints
+## 2. Privacy Architecture & Deployment Modes (`LLM_MODE`)
+
+HealthPulse supports two distinct operational modes configurable via environment variables:
+
+| Mode | Target Deployment | Privacy & Data Isolation | Behavior |
+| :--- | :--- | :--- | :--- |
+| **`LLM_MODE=local-only`** | On-Premises Hospital / Strict Air-Gap | **100% Private (Zero Data Egress)**. No patient notes or symptoms ever leave the local network. | Requires active Ollama daemon. Fails fast without attempting external network calls. |
+| **`LLM_MODE=dual`** | Public Cloud Demo (Render / Vercel) / Hybrid | **Cloud Inference Enabled**. On hosted demonstration environments where Ollama compute is not present, queries seamlessly execute via Google Gemini (`gemini-3.5-flash-lite`). | Transmits sanitized symptoms and clinical notes to Google AI Studio API for real-time demo validation. |
 
 1. **Client Isolation**: React never communicates with Ollama directly. All LLM calls originate server-side within Express background triggers.
 2. **Non-Blocking HTTP Responses**: Appointment booking and consultation completion persist to MongoDB and respond to the client immediately (HTTP 201/200) *before* the LLM generation resolves.
