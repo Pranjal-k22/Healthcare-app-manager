@@ -13,6 +13,8 @@ server/.env
 client/.env
 deployment.md
 DEPLOYMENT.md
+audit.md
+AUDIT.md
 
 # Uploads & Media Assets
 uploads/
