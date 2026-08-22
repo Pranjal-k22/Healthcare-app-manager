@@ -2,6 +2,13 @@ const nodemailer = require('nodemailer');
 const NotificationLog = require('../models/NotificationLog');
 const config = require('../config/env');
 
+const dns = require('dns');
+
+// Custom lookup function to force IPv4 DNS resolution (prevents ENETUNREACH on Render)
+const ipv4Lookup = (hostname, options, callback) => {
+  return dns.lookup(hostname, { ...options, family: 4 }, callback);
+};
+
 let transporter = null;
 
 /**
@@ -22,6 +29,7 @@ const getTransporter = () => {
       secure: false,      // STARTTLS (port 587) — Render blocks port 465 (SSL)
       requireTLS: true,   // Enforce TLS upgrade after connection
       family: 4,          // Force IPv4 socket — prevents ENETUNREACH on Render (no outbound IPv6)
+      lookup: ipv4Lookup, // Force IPv4 DNS resolution for this transporter
       auth: {
         user,
         pass,
