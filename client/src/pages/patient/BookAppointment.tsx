@@ -18,6 +18,7 @@ import {
   Clock,
   FileText,
   ShieldCheck,
+  Sparkles,
   Stethoscope,
   DollarSign,
   Building2,
@@ -446,6 +447,28 @@ export const BookAppointment: React.FC = () => {
             required
             maxLength={1000}
           />
+
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: '0.5rem',
+              marginTop: '0.4rem',
+              marginBottom: '1.25rem',
+              padding: '8px 12px',
+              backgroundColor: 'rgba(0, 98, 204, 0.04)',
+              border: '1px solid rgba(0, 98, 204, 0.15)',
+              borderRadius: 'var(--radius-sm)',
+              fontSize: '12px',
+              color: 'var(--text-secondary)',
+              lineHeight: 1.4,
+            }}
+          >
+            <Sparkles size={14} color="var(--primary, #0062cc)" style={{ flexShrink: 0, marginTop: '2px' }} />
+            <span>
+              <strong style={{ color: 'var(--text-primary)' }}>AI Triage Notice:</strong> In this demonstration environment, intake symptoms are synthesized securely via cloud AI (Google Gemini) to prepare preliminary clinical context for your physician.
+            </span>
+          </div>
 
           <Textarea
             id="consultReason"

@@ -564,6 +564,26 @@ export const DoctorConsultation: React.FC = () => {
             maxLength={5000}
             style={{ width: '100%', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.95rem', color: '#0f172a', fontFamily: 'inherit' }}
           />
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: '0.5rem',
+              marginTop: '0.4rem',
+              padding: '8px 12px',
+              backgroundColor: '#f8fafc',
+              border: '1px solid #e2e8f0',
+              borderRadius: '6px',
+              fontSize: '12px',
+              color: '#64748b',
+              lineHeight: 1.4,
+            }}
+          >
+            <Sparkles size={14} color="#0062cc" style={{ flexShrink: 0, marginTop: '2px' }} />
+            <span>
+              <strong style={{ color: '#334155' }}>AI Discharge Synthesis:</strong> In this demonstration environment, finalized clinical notes and medication instructions are synthesized via cloud AI (Google Gemini) to generate patient-friendly discharge summaries.
+            </span>
+          </div>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem', marginBottom: '1.25rem' }}>
