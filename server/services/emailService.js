@@ -17,7 +17,10 @@ const getTransporter = () => {
 
   if (config.ENABLE_EMAIL_NOTIFICATIONS && user && pass) {
     transporter = nodemailer.createTransport({
-      service: 'gmail',
+      host: 'smtp.gmail.com',
+      port: 465,
+      secure: true, // TLS
+      family: 4,    // Force IPv4 socket — prevents ENETUNREACH on Render (no outbound IPv6)
       auth: {
         user,
         pass,
