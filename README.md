@@ -95,7 +95,7 @@ Ensure your `.env` contains:
 PORT=5000
 NODE_ENV=development
 MONGO_URI=mongodb://127.0.0.1:27017/healthcare_appointment_db
-JWT_SECRET=super_secret_healthcare_jwt_key_phase1_2026_change_in_production
+JWT_SECRET=your_super_secret_64_character_hex_jwt_key_here
 JWT_EXPIRES_IN=7d
 CLIENT_URL=http://localhost:5173
 FRONTEND_URL=http://localhost:5173
@@ -108,7 +108,7 @@ OLLAMA_TIMEOUT_MS=28000
 LLM_MAX_ATTEMPTS=2
 LLM_BACKOFF_BASE_MS=300
 GEMINI_API_KEY=your_google_gemini_api_key_here
-GEMINI_MODEL=gemini-1.5-flash
+GEMINI_MODEL=gemini-3.5-flash-lite
 GEMINI_TIMEOUT_MS=20000
 
 # Email Notification Settings (Nodemailer + Gmail SMTP)
