@@ -14,6 +14,7 @@ import { MedicineItem } from '../../types/clinical';
 import { AppointmentStatusBadge } from '../../components/appointment/AppointmentStatusBadge';
 import { PrescriptionEditor } from '../../components/clinical/PrescriptionEditor';
 import { DualPreVisitSummaryView, DualPostVisitSummaryView } from '../../components/clinical/DualAiSummaryView';
+import { formatDateIndian, formatTimeIndian } from '../../utils/dateUtils';
 import {
   Activity,
   AlertCircle,
@@ -400,12 +401,12 @@ export const DoctorConsultation: React.FC = () => {
                 Scheduled Slot
               </span>
               <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', marginTop: '0.1rem', marginBottom: '0.25rem' }}>
-                {appointment.date}
+                {formatDateIndian(appointment.date)}
               </h3>
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', color: '#64748b', fontSize: '0.85rem' }}>
                 <Clock size={13} color="#94a3b8" />
                 <span style={{ fontWeight: 600 }}>
-                  {appointment.startTime} – {appointment.endTime}
+                  {formatTimeIndian(appointment.startTime, false)} – {formatTimeIndian(appointment.endTime, false)} IST
                 </span>
               </div>
             </div>

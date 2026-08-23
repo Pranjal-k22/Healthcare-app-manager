@@ -11,6 +11,7 @@ import Card from '../../components/ui/Card';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { useToast } from '../../components/ui/Toast';
 import { MedicationReminderList } from '../../components/patient/MedicationReminderList';
+import { formatDateIndian, formatTimeIndian } from '../../utils/dateUtils';
 import {
   CalendarCheck,
   CheckCircle2,
@@ -149,11 +150,11 @@ export const PatientDashboard: React.FC = () => {
                 <div className="next-appt-specs">
                   <span className="next-appt-spec-item">
                     <Calendar size={14} color="var(--primary)" />
-                    {nextAppointment.date}
+                    {formatDateIndian(nextAppointment.date)}
                   </span>
                   <span className="next-appt-spec-item">
                     <Clock size={14} color="var(--primary)" />
-                    {nextAppointment.startTime} - {nextAppointment.endTime}
+                    {formatTimeIndian(nextAppointment.startTime, false)} - {formatTimeIndian(nextAppointment.endTime, false)} IST
                   </span>
                   <span className="next-appt-spec-item">
                     <MapPin size={14} color="var(--text-muted)" />

@@ -4,6 +4,7 @@ import { Appointment } from '../../types/appointment';
 import StatusBadge from '../ui/StatusBadge';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
+import { formatDateIndian, formatTimeIndian } from '../../utils/dateUtils';
 import {
   Calendar,
   Clock,
@@ -72,12 +73,12 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({
         <div className="appointment-timing-row">
           <div className="appointment-time-badge">
             <Calendar size={14} color="var(--primary)" />
-            <span>{appointment.date}</span>
+            <span>{formatDateIndian(appointment.date)}</span>
           </div>
           <div className="appointment-time-badge">
             <Clock size={14} color="var(--primary)" />
             <span>
-              {appointment.startTime} – {appointment.endTime}
+              {formatTimeIndian(appointment.startTime, false)} – {formatTimeIndian(appointment.endTime, false)} IST
             </span>
           </div>
         </div>

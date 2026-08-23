@@ -1,6 +1,7 @@
 import React from 'react';
 import { AvailableSlot } from '../../types/appointment';
 import { Clock, Ban, CheckCircle2 } from 'lucide-react';
+import { formatTimeIndian } from '../../utils/dateUtils';
 
 interface SlotPickerProps {
   slots: AvailableSlot[];
@@ -123,12 +124,12 @@ export const SlotPicker: React.FC<SlotPickerProps> = ({
               disabled={!isAvailable}
               title={
                 isAvailable
-                  ? `Book slot ${slot.startTime} – ${slot.endTime}`
+                  ? `Book slot ${formatTimeIndian(slot.startTime, false)} – ${formatTimeIndian(slot.endTime, false)} IST`
                   : 'Slot already booked or unavailable'
               }
             >
-              <span className="slot-chip-time">{slot.startTime}</span>
-              <span className="slot-chip-end">to {slot.endTime}</span>
+              <span className="slot-chip-time">{formatTimeIndian(slot.startTime, false)}</span>
+              <span className="slot-chip-end">to {formatTimeIndian(slot.endTime, false)}</span>
               {isSelected && (
                 <CheckCircle2
                   size={14}

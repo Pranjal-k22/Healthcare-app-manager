@@ -7,6 +7,7 @@ import { ClinicalRecord, Prescription } from '../../types/clinical';
 import { AppointmentStatusBadge } from '../../components/appointment/AppointmentStatusBadge';
 import { PrescriptionCard } from '../../components/clinical/PrescriptionCard';
 import { DualPreVisitSummaryView, DualPostVisitSummaryView } from '../../components/clinical/DualAiSummaryView';
+import { formatDateIndian, formatTimeIndian } from '../../utils/dateUtils';
 import {
   Activity,
   AlertCircle,
@@ -217,14 +218,14 @@ export const AppointmentDetails: React.FC = () => {
                   Consultation Date
                 </span>
                 <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
-                  {appointment.date}
+                  {formatDateIndian(appointment.date)}
                 </h3>
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', color: '#64748b', fontSize: '0.85rem', paddingLeft: '0.25rem' }}>
               <Clock size={14} color="#94a3b8" />
               <span>
-                {appointment.startTime} – {appointment.endTime}
+                {formatTimeIndian(appointment.startTime, false)} – {formatTimeIndian(appointment.endTime, false)} IST
               </span>
             </div>
           </div>

@@ -52,7 +52,7 @@ const config = {
     'default_healthpulse_token_enc_key_2026_32bytes!',
   FRONTEND_URL:
     process.env.FRONTEND_URL || process.env.CLIENT_URL || 'http://localhost:5173',
-  APPOINTMENT_TIMEZONE: process.env.APPOINTMENT_TIMEZONE || 'UTC',
+  APPOINTMENT_TIMEZONE: process.env.APPOINTMENT_TIMEZONE || 'Asia/Kolkata',
 
   // Local Ollama LLM Settings (Phase 10)
   OLLAMA_HOST: process.env.OLLAMA_HOST || process.env.OLLAMA_BASE_URL || 'http://localhost:11434',

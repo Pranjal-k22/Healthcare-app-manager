@@ -137,7 +137,7 @@ GOOGLE_CLIENT_SECRET=your_google_client_secret
 GOOGLE_REDIRECT_URI=http://localhost:5000/api/auth/google/callback
 GOOGLE_OAUTH_STATE_SECRET=your_oauth_signing_secret
 TOKEN_ENCRYPTION_KEY=2e0f1ac01662063b65ed3d552ae04248a25dd7dd741ba97622e827cf2bf5a479
-APPOINTMENT_TIMEZONE=UTC
+APPOINTMENT_TIMEZONE=Asia/Kolkata
 
 # Billing Configuration
 INVOICE_DUE_DAYS=14
