@@ -36,30 +36,41 @@ const configuredClientUrl = (config.CLIENT_URL || '').replace(/\/+$/, '');
 const configuredFrontendUrl = (config.FRONTEND_URL || '').replace(/\/+$/, '');
 
 const allowedOrigins = [
-  configuredClientUrl,
-  configuredFrontendUrl,
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'http://127.0.0.1:5173',
+  'https://health-pulse.app',
+  'https://www.health-pulse.app',
   'https://healthpluse.vercel.app',
   'https://healthcare-app-manager.vercel.app',
-  'http://localhost:5173',
-  'http://127.0.0.1:5173',
+  configuredClientUrl,
+  configuredFrontendUrl,
+  process.env.CLIENT_URL,
+  process.env.CLIENT_WWW_URL,
 ].filter(Boolean);
 
 app.use(
   cors({
-    origin: (origin, callback) => {
-      // Allow requests with no origin (e.g. mobile apps, curl, Postman)
+    origin: function (origin, callback) {
+      // Allow requests with no Origin header (Postman, server-to-server, curl)
       if (!origin) return callback(null, true);
-      
+
       const normalizedOrigin = origin.replace(/\/+$/, '');
+
       if (
+        allowedOrigins.includes(origin) ||
         allowedOrigins.includes(normalizedOrigin) ||
-        /^https:\/\/(healthcare-app-manager|healthpluse)(-[a-z0-9-]+)?\.vercel\.app$/.test(normalizedOrigin)
+        /^https:\/\/(healthcare-app-manager|healthpluse|health-pulse)(-[a-z0-9-]+)?\.(vercel\.app|app)$/.test(normalizedOrigin)
       ) {
         return callback(null, true);
       }
-      return callback(new Error(`CORS blocked request from origin: ${origin}`));
+
+      console.log('[CORS] Blocked origin:', origin);
+      return callback(new Error(`CORS blocked origin: ${origin}`));
     },
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
   })
 );
 
