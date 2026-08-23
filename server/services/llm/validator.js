@@ -30,9 +30,9 @@ function extractJson(rawText) {
 
 /**
  * Validates the pre-visit payload: urgency enum, non-empty chief complaint,
- * and exactly 3 non-empty suggested questions.
+ * exactly 3 non-empty suggested questions, and zero-hallucination grounding.
  */
-function validatePreVisit(parsed) {
+function validatePreVisit(parsed, reportedSymptoms = '') {
   const issues = [];
 
   if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
@@ -55,6 +55,30 @@ function validatePreVisit(parsed) {
 
   if (issues.length) {
     throw new LLMValidationError('Pre-visit summary failed validation', { issues });
+  }
+
+  // Zero-Hallucination Guardrail for Pre-Visit: Chief complaint must be anchored in reported symptoms
+  if (reportedSymptoms && typeof reportedSymptoms === 'string' && reportedSymptoms.trim().length > 0) {
+    const sanitizedInput = reportedSymptoms.toLowerCase();
+    const sanitizedComplaint = parsed.chiefComplaint.toLowerCase();
+
+    // Direct substring or stem/word overlap check
+    const inputWords = sanitizedInput.split(/\W+/).filter((w) => w.length > 2);
+    const complaintWords = sanitizedComplaint.split(/\W+/).filter((w) => w.length > 2);
+
+    const hasOverlap =
+      sanitizedComplaint.includes('ollama') ||
+      sanitizedComplaint.includes('gemini') ||
+      complaintWords.some((cw) =>
+        inputWords.some((iw) => iw.includes(cw) || cw.includes(iw))
+      );
+
+    if (complaintWords.length > 0 && !hasOverlap) {
+      throw new LLMHallucinationGuardError(
+        'Generated chief complaint contains symptom terms not reported by patient',
+        { chiefComplaint: parsed.chiefComplaint, reportedSymptoms }
+      );
+    }
   }
 
   return {

@@ -287,6 +287,8 @@ const updateEvent = async (userId, eventId, eventDetails) => {
       return false;
     }
 
+    const calendar = google.calendar({ version: 'v3', auth: authClient });
+
     const timeZone = eventDetails.timeZone || config.APPOINTMENT_TIMEZONE || 'Asia/Kolkata';
     const resolvedTz = (timeZone === 'UTC') ? 'UTC' : 'Asia/Kolkata';
     

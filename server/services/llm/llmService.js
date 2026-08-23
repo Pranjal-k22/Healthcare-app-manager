@@ -29,11 +29,11 @@ function isGeminiEnabled() {
  * @param {{ system: string, user: string }} prompt
  * @returns {Promise<{ status: 'READY'|'FAILED', data: object|null, error: string|null }>}
  */
-async function executeOllamaPreVisit(prompt) {
+async function executeOllamaPreVisit(prompt, symptoms = '') {
   try {
     const rawText = await ollamaProvider.generate(prompt);
     const parsed = extractJson(rawText);
-    const validated = validatePreVisit(parsed);
+    const validated = validatePreVisit(parsed, symptoms);
     return {
       status: AI_STATUS.READY,
       data: validated,
@@ -52,9 +52,10 @@ async function executeOllamaPreVisit(prompt) {
 /**
  * Executes a pre-visit summary prompt against Google Gemini.
  * @param {{ system: string, user: string }} prompt
+ * @param {string} symptoms
  * @returns {Promise<{ status: 'READY'|'FAILED'|'NOT_CONFIGURED', data: object|null, error: string|null }>}
  */
-async function executeGeminiPreVisit(prompt) {
+async function executeGeminiPreVisit(prompt, symptoms = '') {
   if (!isGeminiEnabled()) {
     return {
       status: 'NOT_CONFIGURED',
@@ -66,7 +67,7 @@ async function executeGeminiPreVisit(prompt) {
   try {
     const rawText = await geminiProvider.generate(prompt);
     const parsed = extractJson(rawText);
-    const validated = validatePreVisit(parsed);
+    const validated = validatePreVisit(parsed, symptoms);
     return {
       status: AI_STATUS.READY,
       data: validated,
@@ -206,8 +207,8 @@ exports.generatePreVisitSummary = async (symptoms) => {
 
   // Execute both engines in parallel
   const [ollamaSettled, geminiSettled] = await Promise.allSettled([
-    executeOllamaPreVisit(prompt),
-    executeGeminiPreVisit(prompt),
+    executeOllamaPreVisit(prompt, symptoms),
+    executeGeminiPreVisit(prompt, symptoms),
   ]);
 
   const ollamaResult = ollamaSettled.status === 'fulfilled'
