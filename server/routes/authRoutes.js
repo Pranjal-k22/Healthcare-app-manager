@@ -13,7 +13,8 @@ const { verifyDoctorOtp } = require('../controllers/doctorResetController');
 const { getConnectUrl, handleCallback } = require('../controllers/calendarController');
 const { protect } = require('../middleware/authMiddleware');
 const {
-  forgotPasswordLimiter,
+  forgotPasswordEmailLimiter,
+  forgotPasswordIpLimiter,
   resetPasswordLimiter,
   verifyDoctorOtpLimiter,
 } = require('../middleware/rateLimit');
@@ -21,7 +22,12 @@ const {
 // Public auth routes
 router.post('/register', register);
 router.post('/login', login);
-router.post('/forgot-password', forgotPasswordLimiter, forgotPassword);
+router.post(
+  '/forgot-password',
+  forgotPasswordIpLimiter,
+  forgotPasswordEmailLimiter,
+  forgotPassword
+);
 router.post('/reset-password', resetPasswordLimiter, resetPassword);
 router.post('/doctor/verify-otp', verifyDoctorOtpLimiter, verifyDoctorOtp);
 router.post('/set-password', setPassword);

@@ -60,8 +60,11 @@ const doctorResetRequestSchema = new mongoose.Schema(
   }
 );
 
-// TTL Index: Auto-evict unreviewed PENDING requests after 24 hours
-doctorResetRequestSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+// Partial TTL Index: Auto-evict unreviewed PENDING requests after 24 hours (preserves APPROVED, DENIED, & COMPLETED audit records)
+doctorResetRequestSchema.index(
+  { expiresAt: 1 },
+  { expireAfterSeconds: 0, partialFilterExpression: { status: 'PENDING' } }
+);
 
 const DoctorResetRequest = mongoose.model('DoctorResetRequest', doctorResetRequestSchema);
 

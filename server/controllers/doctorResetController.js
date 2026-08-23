@@ -74,6 +74,7 @@ const approveDoctorReset = async (req, res, next) => {
     requestDoc.otpHash = hashedOtp;
     requestDoc.otpExpires = otpExpires;
     requestDoc.otpAttempts = 0;
+    requestDoc.expiresAt = undefined; // Clear TTL eviction date to preserve audit log
     requestDoc.reviewedBy = adminUser._id;
     requestDoc.reviewedAt = new Date();
     await requestDoc.save();
@@ -123,6 +124,7 @@ const denyDoctorReset = async (req, res, next) => {
     }
 
     requestDoc.status = 'DENIED';
+    requestDoc.expiresAt = undefined; // Clear TTL eviction date to preserve audit log
     requestDoc.reviewedBy = adminUser._id;
     requestDoc.reviewedAt = new Date();
     await requestDoc.save();
