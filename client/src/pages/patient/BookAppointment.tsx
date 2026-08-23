@@ -30,8 +30,16 @@ export const BookAppointment: React.FC = () => {
 
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [doctor, setDoctor] = useState<Doctor | null>(null);
+
+  // Auto-select nearest working day (if today is Sunday, default to Monday)
   const [selectedDate, setSelectedDate] = useState<string>(() => {
-    return new Date().toISOString().split('T')[0];
+    const today = new Date();
+    if (today.getDay() === 0) { // Sunday -> default to Monday
+      const monday = new Date(today);
+      monday.setDate(today.getDate() + 1);
+      return monday.toISOString().split('T')[0];
+    }
+    return today.toISOString().split('T')[0];
   });
   const [slots, setSlots] = useState<AvailableSlot[]>([]);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
@@ -49,6 +57,21 @@ export const BookAppointment: React.FC = () => {
   const [confirmedAppointment, setConfirmedAppointment] = useState<Appointment | null>(null);
 
   const consultationFee = 75; // Standard consultation fee
+
+  // Helper date generators for quick selector buttons
+  const getTodayStr = () => new Date().toISOString().split('T')[0];
+  const getTomorrowStr = () => {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    return d.toISOString().split('T')[0];
+  };
+  const getNextMondayStr = () => {
+    const d = new Date();
+    const day = d.getDay();
+    const addDays = day === 0 ? 1 : (8 - day);
+    d.setDate(d.getDate() + addDays);
+    return d.toISOString().split('T')[0];
+  };
 
   // Load Doctor Details
   useEffect(() => {
@@ -377,17 +400,70 @@ export const BookAppointment: React.FC = () => {
       {/* Booking Form */}
       <form onSubmit={handleBook}>
         <Card title="Select Date & Time Slot" icon={<Calendar size={18} />} style={{ marginBottom: '1.5rem' }}>
-          <div className="form-group" style={{ maxWidth: '320px' }}>
-            <Input
-              id="appointmentDate"
-              type="date"
-              label="Consultation Date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              min={new Date().toISOString().split('T')[0]}
-              leftIcon={<Calendar size={16} />}
-              required
-            />
+          <div style={{ display: 'flex', alignItems: 'flex-end', gap: '1rem', flexWrap: 'wrap' }}>
+            <div className="form-group" style={{ maxWidth: '300px', marginBottom: 0 }}>
+              <Input
+                id="appointmentDate"
+                type="date"
+                label="Consultation Date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                min={new Date().toISOString().split('T')[0]}
+                leftIcon={<Calendar size={16} />}
+                required
+              />
+            </div>
+
+            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '2px', flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                style={{
+                  padding: '6px 12px',
+                  borderRadius: 'var(--radius-md)',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  border: selectedDate === getTodayStr() ? '1.5px solid var(--primary)' : '1px solid var(--border)',
+                  backgroundColor: selectedDate === getTodayStr() ? 'rgba(0, 98, 204, 0.1)' : 'var(--surface)',
+                  color: selectedDate === getTodayStr() ? 'var(--primary)' : 'var(--text-secondary)',
+                  cursor: 'pointer',
+                }}
+                onClick={() => setSelectedDate(getTodayStr())}
+              >
+                Today ({getTodayStr().slice(5)})
+              </button>
+              <button
+                type="button"
+                style={{
+                  padding: '6px 12px',
+                  borderRadius: 'var(--radius-md)',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  border: selectedDate === getTomorrowStr() ? '1.5px solid var(--primary)' : '1px solid var(--border)',
+                  backgroundColor: selectedDate === getTomorrowStr() ? 'rgba(0, 98, 204, 0.1)' : 'var(--surface)',
+                  color: selectedDate === getTomorrowStr() ? 'var(--primary)' : 'var(--text-secondary)',
+                  cursor: 'pointer',
+                }}
+                onClick={() => setSelectedDate(getTomorrowStr())}
+              >
+                Tomorrow ({getTomorrowStr().slice(5)})
+              </button>
+              <button
+                type="button"
+                style={{
+                  padding: '6px 12px',
+                  borderRadius: 'var(--radius-md)',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  border: selectedDate === getNextMondayStr() ? '1.5px solid var(--primary)' : '1px solid var(--border)',
+                  backgroundColor: selectedDate === getNextMondayStr() ? 'rgba(0, 98, 204, 0.1)' : 'var(--surface)',
+                  color: selectedDate === getNextMondayStr() ? 'var(--primary)' : 'var(--text-secondary)',
+                  cursor: 'pointer',
+                }}
+                onClick={() => setSelectedDate(getNextMondayStr())}
+              >
+                Next Monday ({getNextMondayStr().slice(5)})
+              </button>
+            </div>
           </div>
 
           <div style={{ marginTop: '1.25rem' }}>
