@@ -183,9 +183,10 @@ const syncAppointmentCreated = async (appointmentId, triggeringUserId) => {
       const doctorProfile = await DoctorProfile.findOne({ userId: appointment.doctorId._id }).lean();
       const clinicLocation = doctorProfile?.clinicAddress || doctorProfile?.clinicName || '';
 
-      const timeZone = config.APPOINTMENT_TIMEZONE;
-      const startDateTime = `${appointment.date}T${appointment.startTime}:00`;
-      const endDateTime = `${appointment.date}T${appointment.endTime}:00`;
+      const timeZone = config.APPOINTMENT_TIMEZONE || 'Asia/Kolkata';
+      const tzOffset = (timeZone === 'Asia/Kolkata' || timeZone === 'IST') ? '+05:30' : (timeZone === 'UTC' ? 'Z' : '+05:30');
+      const startDateTime = `${appointment.date}T${appointment.startTime}:00${tzOffset}`;
+      const endDateTime = `${appointment.date}T${appointment.endTime}:00${tzOffset}`;
 
       const eventPayload = {
         summary: `Medical Consultation - Dr. ${appointment.doctorId.name}`,

@@ -212,19 +212,29 @@ const createEvent = async (userId, eventDetails) => {
 
     const calendar = google.calendar({ version: 'v3', auth: authClient });
 
-    const timeZone = eventDetails.timeZone || config.APPOINTMENT_TIMEZONE || 'UTC';
+    const timeZone = eventDetails.timeZone || config.APPOINTMENT_TIMEZONE || 'Asia/Kolkata';
+    const resolvedTz = (timeZone === 'UTC') ? 'UTC' : 'Asia/Kolkata';
+    
+    const ensureIsoOffset = (dtStr, tz) => {
+      if (!dtStr) return dtStr;
+      if (/([+-]\d{2}:\d{2}|Z)$/.test(dtStr)) return dtStr;
+      return `${dtStr}${tz === 'UTC' ? 'Z' : '+05:30'}`;
+    };
+
+    const startDateTime = ensureIsoOffset(eventDetails.startDateTime, resolvedTz);
+    const endDateTime = ensureIsoOffset(eventDetails.endDateTime, resolvedTz);
 
     const eventPayload = {
       summary: eventDetails.summary || 'Medical Appointment',
       description: eventDetails.description || 'HealthPulse Healthcare Appointment',
       location: eventDetails.location || '',
       start: {
-        dateTime: eventDetails.startDateTime,
-        timeZone,
+        dateTime: startDateTime,
+        timeZone: resolvedTz,
       },
       end: {
-        dateTime: eventDetails.endDateTime,
-        timeZone,
+        dateTime: endDateTime,
+        timeZone: resolvedTz,
       },
       reminders: {
         useDefault: false,
@@ -273,20 +283,29 @@ const updateEvent = async (userId, eventId, eventDetails) => {
       return false;
     }
 
-    const calendar = google.calendar({ version: 'v3', auth: authClient });
-    const timeZone = eventDetails.timeZone || config.APPOINTMENT_TIMEZONE || 'UTC';
+    const timeZone = eventDetails.timeZone || config.APPOINTMENT_TIMEZONE || 'Asia/Kolkata';
+    const resolvedTz = (timeZone === 'UTC') ? 'UTC' : 'Asia/Kolkata';
+    
+    const ensureIsoOffset = (dtStr, tz) => {
+      if (!dtStr) return dtStr;
+      if (/([+-]\d{2}:\d{2}|Z)$/.test(dtStr)) return dtStr;
+      return `${dtStr}${tz === 'UTC' ? 'Z' : '+05:30'}`;
+    };
+
+    const startDateTime = ensureIsoOffset(eventDetails.startDateTime, resolvedTz);
+    const endDateTime = ensureIsoOffset(eventDetails.endDateTime, resolvedTz);
 
     const eventPayload = {
       summary: eventDetails.summary,
       description: eventDetails.description,
       location: eventDetails.location || '',
       start: {
-        dateTime: eventDetails.startDateTime,
-        timeZone,
+        dateTime: startDateTime,
+        timeZone: resolvedTz,
       },
       end: {
-        dateTime: eventDetails.endDateTime,
-        timeZone,
+        dateTime: endDateTime,
+        timeZone: resolvedTz,
       },
     };
 

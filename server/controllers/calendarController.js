@@ -62,8 +62,10 @@ const handleCallback = async (req, res, next) => {
       }).populate('doctorId', 'name').populate('patientId', 'name');
 
       for (const app of futureAppointments) {
-        const startDateTime = `${app.date}T${app.startTime}:00`;
-        const endDateTime = `${app.date}T${app.endTime}:00`;
+        const timeZone = config.APPOINTMENT_TIMEZONE || 'Asia/Kolkata';
+        const tzOffset = (timeZone === 'Asia/Kolkata' || timeZone === 'IST') ? '+05:30' : (timeZone === 'UTC' ? 'Z' : '+05:30');
+        const startDateTime = `${app.date}T${app.startTime}:00${tzOffset}`;
+        const endDateTime = `${app.date}T${app.endTime}:00${tzOffset}`;
         calendarService.createEvent(result.userId, {
           summary: `Medical Consultation - Dr. ${app.doctorId?.name || 'Practitioner'}`,
           description: `HealthPulse Appointment Reference: ${app._id}\nReason: ${app.reason || 'General Consultation'}`,

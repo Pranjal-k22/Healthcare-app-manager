@@ -24,9 +24,10 @@ const syncAppointmentCreated = async (appointmentId) => {
 
     const doctorProfile = await DoctorProfile.findOne({ doctorId: appointment.doctorId._id }).lean();
     const clinicLocation = doctorProfile?.clinicAddress || doctorProfile?.clinicName || 'HealthPulse Medical Center';
-    const timeZone = config.APPOINTMENT_TIMEZONE || 'UTC';
-    const startDateTime = `${appointment.date}T${appointment.startTime}:00`;
-    const endDateTime = `${appointment.date}T${appointment.endTime}:00`;
+    const timeZone = config.APPOINTMENT_TIMEZONE || 'Asia/Kolkata';
+    const tzOffset = (timeZone === 'Asia/Kolkata' || timeZone === 'IST') ? '+05:30' : (timeZone === 'UTC' ? 'Z' : '+05:30');
+    const startDateTime = `${appointment.date}T${appointment.startTime}:00${tzOffset}`;
+    const endDateTime = `${appointment.date}T${appointment.endTime}:00${tzOffset}`;
 
     const candidateUsers = [
       { userId: appointment.patientId._id.toString(), isDoctor: false },
