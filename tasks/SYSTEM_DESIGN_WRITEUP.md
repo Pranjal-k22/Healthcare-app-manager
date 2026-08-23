@@ -1,7 +1,7 @@
 # System Design Write-Up: Healthcare Appointment & Follow-up Manager
 
 **Author**: HealthPulse Architecture Team  
-**Word Count**: ~755 words  
+**Word Count**: ~780 words  
 **Core Design Topics**: Concurrency Control, Ephemeral Slot Reservation, Leave & Cascade Conflict Management, Notification Reliability, and LLM Guardrails.
 
 ---
@@ -71,6 +71,7 @@ Network timeouts and SMTP rate limits must never compromise core clinical transa
 1. **Transactional Decoupling**: Email transmissions and Google Calendar sync execute asynchronously via HTTPS API (Resend Node.js SDK over port 443). Failures never roll back database writes or block user HTTP responses.
 2. **Persistent Audit Logging**: Every dispatch creates a `NotificationLog` record tracking recipient, template, payload, status (`sent`, `failed`, `dead`), and attempt counter.
 3. **Exponential Backoff Worker & Dead-Letter Queue**: The background `emailRetryJob` periodically queries `NotificationLog` where `status: 'failed'` and `nextRetryAt <= now()`, applying backoff delays ($2^{\text{attempts}}$ minutes) up to 5 retries. Permanently unretryable errors (HTTP 403/422 domain restrictions or malformed addresses) or capped retries transition to status `DEAD` (`dead`) with `nextRetryAt: null`, halting retry log pollution.
+4. **Audit Trail Preservation via Partial TTL Indexing**: In the hybrid password reset system (`DoctorResetRequest`), abandoned `PENDING` requests auto-evict after 24h using a scoped partial TTL index (`partialFilterExpression: { status: 'PENDING' }`). When requests transition to `APPROVED`, `DENIED`, or `COMPLETED`, `expiresAt` is cleared, ensuring historical audit logs are permanently retained.
 
 ---
 
@@ -79,7 +80,7 @@ Network timeouts and SMTP rate limits must never compromise core clinical transa
 HealthPulse operates a hybrid dual-engine architecture combining **Local Ollama** (on-device, privacy-preserving) and **Google Gemini** (cloud-scale reliability):
 
 1. **Parallel Execution & Resilience**: AI generation executes both engines simultaneously via `Promise.allSettled`. If Ollama is offline (such as on cloud hosting), Gemini resolves the summary gracefully.
-2. **Zero-Hallucination Guardrail (`validator.js`)**: Enforces that **100% of prescribed medicine names** appear verbatim in the post-visit summary before persistence.
+2. **Zero-Hallucination Guardrail (`validator.js`)**: Enforces that **100% of prescribed medicine names** appear verbatim in the post-visit summary before persistence, and validates pre-visit symptom grounding.
 
 ---
 

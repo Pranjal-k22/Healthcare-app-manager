@@ -166,7 +166,7 @@ npm run dev --prefix client
 Open [http://localhost:5173](http://localhost:5173) in your browser.
 
 ### 7. Running Automated Test Suites
-The backend includes 13 deterministic automated test suites:
+The backend includes 15 deterministic automated test suites:
 ```bash
 npm test --prefix server
 ```
@@ -182,6 +182,7 @@ User (PATIENT / DOCTOR / ADMIN)
   ├── DoctorProfile (1:1 via userId)
   │     └── DoctorLeave (1:N via doctorId)
   │
+  ├── DoctorResetRequest (Admin-approved OTP queue for Doctor password resets, Partial TTL)
   ├── Appointment (N:1 Patient, N:1 Doctor)
   │     ├── ClinicalRecord (1:1 via appointmentId)
   │     │     └── Prescription (1:1 via clinicalRecordId)
@@ -197,16 +198,26 @@ User (PATIENT / DOCTOR / ADMIN)
 ### Core Data Models & Index Specifications
 
 #### 1. `User` (`server/models/User.js`)
-* **Fields**: `name`, `email` (unique, lowercase), `password` (bcrypt 10 rounds), `role` (`['PATIENT', 'DOCTOR', 'ADMIN']`), `phone`, `tokenVersion`.
+* **Fields**: `name`, `email` (unique, lowercase), `password` (bcrypt 10 rounds), `role` (`['PATIENT', 'DOCTOR', 'ADMIN']`), `phone`, `tokenVersion`, `passwordResetToken`, `passwordResetExpires`, `activationToken`, `activationExpires`.
 * **Index**: `{ email: 1 }` (Unique).
 
 #### 2. `DoctorProfile` (`server/models/DoctorProfile.js`)
 * **Fields**: `userId` (ref: `User`), `specialization`, `experienceYears`, `consultationFee`, `slotDuration` (15–60 mins), `workingHours` (Mon–Sun daily schedule).
 * **Index**: `{ userId: 1 }` (Unique).
 
-#### 3. `Appointment` (`server/models/Appointment.js`)
+#### 3. `DoctorResetRequest` (`server/models/DoctorResetRequest.js`)
+* **Fields**: `doctor` (ref: `User`), `status` (`['PENDING', 'APPROVED', 'DENIED', 'EXPIRED', 'COMPLETED']`), `otpHash` (SHA-256), `otpExpires`, `otpAttempts`, `requestedAt`, `expiresAt`, `reviewedBy`, `reviewedAt`, `ipAddress`.
+* **Partial TTL Index (Audit Trail Preservation)**:
+  ```javascript
+  doctorResetRequestSchema.index(
+    { expiresAt: 1 },
+    { expireAfterSeconds: 0, partialFilterExpression: { status: 'PENDING' } }
+  );
+  ```
+
+#### 4. `Appointment` (`server/models/Appointment.js`)
 * **Fields**: `doctorId`, `patientId`, `date` (`YYYY-MM-DD`), `startTime` (`HH:mm`), `endTime` (`HH:mm`), `status` (`'BOOKED'`, `'COMPLETED'`, `'CANCELLED'`), `symptoms`, `preVisitSummary`, `postVisitSummary`, `aiStatus`, `aiPromptVersion`, `cancellationReason`.
-* **Reschedule Mechanism**: Rescheduling an appointment does not use a separate status string. The system atomically creates a new appointment document (with status `'BOOKED'`) for the target slot, while transitioning the original appointment to status `'CANCELLED'`.
+* **Reschedule Mechanism**: Rescheduling an appointment atomically creates a new appointment document (with status `'BOOKED'`) for the target slot, while transitioning the original appointment to status `'CANCELLED'`.
 * **Concurrency Hard Constraint**:
   ```javascript
   // Compound Partial Unique Index for Zero Double-Booking
@@ -220,24 +231,24 @@ User (PATIENT / DOCTOR / ADMIN)
   );
   ```
 
-#### 4. `SlotHold` (`server/models/SlotHold.js`)
+#### 5. `SlotHold` (`server/models/SlotHold.js`)
 * **Fields**: `doctorId`, `patientId`, `date`, `startTime`, `endTime`, `holdToken`, `createdAt`, `expiresAt`.
 * **TTL Auto-Purge Index**:
   ```javascript
   slotHoldSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
   ```
 
-#### 5. `DoctorLeave` (`server/models/DoctorLeave.js`)
+#### 6. `DoctorLeave` (`server/models/DoctorLeave.js`)
 * **Fields**: `doctorId`, `startDate`, `endDate`, `reason`, `status` (`'PENDING'`, `'APPROVED'`, `'REJECTED'`), `approvedBy`.
 * **Index**: `{ doctorId: 1, startDate: 1, endDate: 1 }`.
 
-#### 6. `ClinicalRecord` (`server/models/ClinicalRecord.js`)
+#### 7. `ClinicalRecord` (`server/models/ClinicalRecord.js`)
 * **Fields**: `appointmentId`, `doctorId`, `patientId`, `diagnosis`, `clinicalNotes`, `prescriptions` (array), `postVisitSummary`, `aiStatus`.
 
-#### 7. `Prescription` (`server/models/Prescription.js`)
+#### 8. `Prescription` (`server/models/Prescription.js`)
 * **Fields**: `clinicalRecordId`, `appointmentId`, `patientId`, `doctorId`, `medicines` (`[{ name, dosage, frequency, duration, instructions }]`), `durationDays`, `status` (`'active'`, `'completed'`, `'expired'`).
 
-#### 8. `NotificationLog` (`server/models/NotificationLog.js`)
+#### 9. `NotificationLog` (`server/models/NotificationLog.js`)
 * **Fields**: `recipientEmail`, `notificationType`, `appointmentId`, `subject`, `payload`, `status` (`'sent'`, `'failed'`, `'dead'`), `attempts`, `nextRetryAt`, `lastError`.
 
 ---
@@ -247,13 +258,24 @@ User (PATIENT / DOCTOR / ADMIN)
 All API responses follow a standardized JSON envelope:
 `{ success: true, data: { ... } }` or `{ success: false, message: "Error explanation" }`.
 
-### 1. Authentication & Session (`/api/auth`)
+### 1. Authentication & Hybrid Password Reset (`/api/auth`)
 | Method | Endpoint | Auth | Role | Description |
 |:---|:---|:---:|:---:|:---|
 | `POST` | `/api/auth/register` | Public | None | Register new patient account (creates `PATIENT` role) |
 | `POST` | `/api/auth/login` | Public | None | Authenticate user & return signed JWT token |
 | `GET` | `/api/auth/me` | JWT | Any | Retrieve currently authenticated user profile |
-| `POST` | `/api/auth/logout` | JWT | Any | Invalidate current user session |
+| `POST` | `/api/auth/forgot-password` | Public | None | Role-branching password reset request (Self-service link for Patient/Admin; Admin approval for Doctor). Layered 3/hr per-email & 15/hr per-IP rate limiters. |
+| `POST` | `/api/auth/reset-password` | Public | None | Complete self-service password reset using 15-minute token (Patient & Admin only; Doctor blocked) |
+| `POST` | `/api/auth/doctor/verify-otp` | Public | None | Verify doctor 6-digit OTP after admin approval & set new password (max 5 failed attempts lockout) |
+| `POST` | `/api/auth/set-password` | Public | None | Set initial password for newly provisioned doctor account via activation token |
+| `POST` | `/api/auth/change-password` | JWT | Any | Update password for logged-in user (increments `tokenVersion` to revoke active JWTs) |
+
+### 2. Admin Doctor Reset Approval Queue (`/api/admin/doctor-reset-requests`)
+| Method | Endpoint | Auth | Role | Description |
+|:---|:---|:---:|:---:|:---|
+| `GET` | `/api/admin/doctor-reset-requests` | JWT | `ADMIN` | List pending doctor password reset requests |
+| `POST` | `/api/admin/doctor-reset-requests/:id/approve` | JWT | `ADMIN` | Approve doctor reset request, generate 6-digit numeric OTP, store SHA-256 hash, & email OTP |
+| `POST` | `/api/admin/doctor-reset-requests/:id/deny` | JWT | `ADMIN` | Deny doctor reset request & send neutral denial notice |
 
 ### 2. Doctor Rosters & Scheduling (`/api/doctors`)
 | Method | Endpoint | Auth | Role | Description |
