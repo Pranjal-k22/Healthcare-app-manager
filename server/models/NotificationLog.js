@@ -62,6 +62,10 @@ const notificationLogSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    deadAt: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,

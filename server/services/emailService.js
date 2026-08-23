@@ -15,6 +15,103 @@ const getResendClient = () => {
 };
 
 /**
+ * Determine actual recipient for development/test mode overrides
+ */
+const getActualRecipient = (intendedRecipient) => {
+  if (process.env.EMAIL_TEST_MODE === 'true' && process.env.EMAIL_TEST_RECIPIENT) {
+    return process.env.EMAIL_TEST_RECIPIENT;
+  }
+  return intendedRecipient;
+};
+
+/**
+ * Check if a Resend error is unrecoverable / permanent
+ */
+function isPermanentResendError(error) {
+  if (!error) return false;
+  const status = Number(error.statusCode || error.status || error.httpStatus || 0);
+  const code = String(error.name || error.code || '').toLowerCase();
+  const message = String(error.message || '').toLowerCase();
+
+  // Authentication/configuration/request errors
+  if ([400, 401, 403, 404, 405, 422].includes(status)) {
+    return true;
+  }
+  // Resend sandbox limitation
+  if (message.includes('you can only send testing emails to your own email address')) {
+    return true;
+  }
+  // Unverified sender domain
+  if (message.includes('domain') && message.includes('not verified')) {
+    return true;
+  }
+  // Bad request / validation
+  if (
+    code.includes('validation_error') ||
+    code.includes('invalid_parameter') ||
+    code.includes('missing_required') ||
+    message.includes('invalid') ||
+    message.includes('validation') ||
+    message.includes('403') ||
+    message.includes('422')
+  ) {
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Check if a Resend error is transient (retryable)
+ */
+function isTransientResendError(error) {
+  if (!error) return false;
+  const status = Number(error.statusCode || error.status || error.httpStatus || 0);
+  const code = String(error.code || error.name || '').toUpperCase();
+  const message = String(error.message || '').toUpperCase();
+
+  if ([429, 500, 502, 503, 504].includes(status)) {
+    return true;
+  }
+  if (
+    ['ETIMEDOUT', 'ECONNRESET', 'ECONNREFUSED', 'ENETUNREACH', 'EAI_AGAIN'].some((c) =>
+      code.includes(c) || message.includes(c)
+    )
+  ) {
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Standardize provider errors for circuit breaker decisions
+ */
+function normalizeResendError(error) {
+  const providerError = new Error(error?.message || 'Resend email sending failed');
+  providerError.name = 'EmailProviderError';
+  providerError.provider = 'resend';
+  providerError.statusCode = error?.statusCode || error?.status || null;
+  providerError.providerCode = error?.name || error?.code || null;
+  providerError.permanent = isPermanentResendError(error);
+  providerError.transient = isTransientResendError(error);
+  providerError.rawProviderError = error;
+  return providerError;
+}
+
+/**
+ * Calculate progressive exponential retry delay
+ */
+function calculateNextRetry(attempt) {
+  const delays = [
+    60 * 1000, // 1 minute
+    5 * 60 * 1000, // 5 minutes
+    30 * 60 * 1000, // 30 minutes
+    2 * 60 * 60 * 1000, // 2 hours
+  ];
+  const delay = delays[Math.min(attempt - 1, delays.length - 1)];
+  return new Date(Date.now() + delay);
+}
+
+/**
  * Verify Resend SDK configuration at server startup without blocking
  */
 const verifyTransporter = async () => {
@@ -30,7 +127,6 @@ const verifyTransporter = async () => {
  * Core sendEmail function using official Resend Node.js SDK with NotificationLog persistence,
  * exponential backoff, idempotency keys, and non-blocking safety
  * @param {object} params - { to, subject, html, text, appointmentId, notificationType, payload, recipientName, idempotencyKey }
- * @returns {Promise<{ success: boolean, messageId?: string, emailId?: string, logId?: string, error?: string }>}
  */
 const sendEmail = async ({
   to,
@@ -46,15 +142,16 @@ const sendEmail = async ({
 }) => {
   if (!to || (typeof to !== 'string' && !Array.isArray(to))) {
     console.warn('[EmailService] sendEmail skipped: No recipient email provided');
-    return { success: false, error: 'Recipient email missing' };
+    return { success: false, error: 'Recipient email missing', permanent: true };
   }
 
-  const recipientList = Array.isArray(to) ? to : [to.trim().toLowerCase()];
-  const recipientStr = recipientList.join(', ');
+  const rawRecipient = Array.isArray(to) ? to.join(', ') : to.trim().toLowerCase();
+  const actualRecipient = getActualRecipient(rawRecipient);
+  console.log(`[EMAIL] intended=${rawRecipient}, actual=${actualRecipient}`);
 
   const mailPayload = {
     from: config.EMAIL_FROM || 'HealthPulse <onboarding@resend.dev>',
-    to: recipientList,
+    to: [actualRecipient],
     subject: subject || 'HealthPulse Hospital Notification',
     html: html || `<p>${text || subject}</p>`,
     ...(text && { text }),
@@ -66,14 +163,14 @@ const sendEmail = async ({
 
   // If email notifications are disabled or API key is missing, execute in Mock Mode
   if (!config.ENABLE_EMAIL_NOTIFICATIONS || !config.RESEND_API_KEY) {
-    console.log(`[EmailService MOCK] [To: ${recipientStr}] [Subject: "${mailPayload.subject}"]`);
+    console.log(`[EmailService MOCK] intended=${rawRecipient} actual=${actualRecipient} [Subject: "${mailPayload.subject}"]`);
     const mockId = `mock-email-${Date.now()}-${Math.random().toString(36).substring(7)}`;
 
     let logEntry = null;
     if (!isRetry) {
       try {
         logEntry = await NotificationLog.create({
-          recipientEmail: recipientStr,
+          recipientEmail: rawRecipient,
           recipientName: recipientName || payload.recipientName || '',
           notificationType,
           appointmentId,
@@ -91,9 +188,12 @@ const sendEmail = async ({
     return {
       success: true,
       mocked: true,
+      provider: 'resend-mock',
       messageId: mockId,
       emailId: mockId,
       logId: logEntry ? logEntry._id : null,
+      intendedRecipient: rawRecipient,
+      actualRecipient,
     };
   }
 
@@ -105,18 +205,18 @@ const sendEmail = async ({
     const { data, error } = await resend.emails.send(mailPayload, options);
 
     if (error) {
-      throw new Error(error.message || 'Failed to dispatch via Resend API');
+      throw normalizeResendError(error);
     }
 
     const emailId = data.id || `resend-${Date.now()}`;
-    console.log(`[EmailService] Email sent successfully via Resend API to ${recipientStr} (ID: ${emailId})`);
+    console.log(`[EMAIL SUCCESS] intended=${rawRecipient} actual=${actualRecipient} id=${emailId}`);
 
     // Write success to NotificationLog (only if not a retry cycle)
     let logEntry = null;
     if (!isRetry) {
       try {
         logEntry = await NotificationLog.create({
-          recipientEmail: recipientStr,
+          recipientEmail: rawRecipient,
           recipientName: recipientName || payload.recipientName || '',
           notificationType,
           appointmentId,
@@ -133,27 +233,36 @@ const sendEmail = async ({
 
     return {
       success: true,
+      provider: 'resend',
       messageId: emailId,
       emailId,
       logId: logEntry ? logEntry._id : null,
+      intendedRecipient: rawRecipient,
+      actualRecipient,
     };
-  } catch (sendError) {
-    console.error(`[EmailService] Failed to send email to ${recipientStr}: ${sendError.message}`);
+  } catch (rawError) {
+    const normalized = rawError?.name === 'EmailProviderError' ? rawError : normalizeResendError(rawError);
+    console.error('[EMAIL FAILURE]', {
+      intendedRecipient: rawRecipient,
+      actualRecipient,
+      statusCode: normalized.statusCode,
+      providerCode: normalized.providerCode,
+      permanent: normalized.permanent,
+      transient: normalized.transient,
+      message: normalized.message,
+    });
 
     const attempts = 1;
-    const isPermanent =
-      sendError.message &&
-      /testing emails|verify a domain|invalid|validation|403|422/i.test(sendError.message);
+    const isPermanent = normalized.permanent;
 
     const status = isPermanent ? 'dead' : 'failed';
-    const backoffMinutes = Math.min(60, Math.pow(2, attempts));
-    const nextRetryAt = isPermanent ? null : new Date(Date.now() + backoffMinutes * 60 * 1000);
+    const nextRetryAt = isPermanent ? null : calculateNextRetry(attempts);
 
     let logEntry = null;
     if (!isRetry) {
       try {
         logEntry = await NotificationLog.create({
-          recipientEmail: recipientStr,
+          recipientEmail: rawRecipient,
           recipientName: recipientName || payload.recipientName || '',
           notificationType,
           appointmentId,
@@ -161,8 +270,9 @@ const sendEmail = async ({
           payload,
           status,
           attempts,
-          lastError: sendError.message,
+          lastError: normalized.message,
           nextRetryAt,
+          deadAt: isPermanent ? new Date() : null,
         });
       } catch (logErr) {
         console.warn('[EmailService] Warning writing failure NotificationLog:', logErr.message);
@@ -171,7 +281,9 @@ const sendEmail = async ({
 
     return {
       success: false,
-      error: sendError.message,
+      error: normalized.message,
+      normalizedError: normalized,
+      permanent: isPermanent,
       logId: logEntry ? logEntry._id : null,
     };
   }
@@ -181,7 +293,6 @@ const sendEmail = async ({
  * Background Retry Job: Retries failed notifications with exponential backoff
  * Marks notifications as 'dead' after MAX_ATTEMPTS (5) or on permanent failures
  * @param {number} maxBatch - Maximum logs to process per run (default: 20)
- * @returns {Promise<{ retried: number, succeeded: number, markedDead: number }>}
  */
 const retryFailedNotifications = async (maxBatch = 20) => {
   const now = new Date();
@@ -189,12 +300,12 @@ const retryFailedNotifications = async (maxBatch = 20) => {
 
   try {
     const failedLogs = await NotificationLog.find({
-      status: { $in: ['failed', 'FAILED', 'pending', 'PENDING'] },
+      status: 'failed',
+      attempts: { $lt: MAX_ATTEMPTS },
       $or: [
         { nextRetryAt: { $lte: now } },
         { nextRetryAt: null }
       ],
-      attempts: { $lt: MAX_ATTEMPTS },
     }).limit(maxBatch);
 
     if (!failedLogs.length) {
@@ -239,26 +350,32 @@ const retryFailedNotifications = async (maxBatch = 20) => {
         log.nextRetryAt = null;
         await log.save();
         succeeded++;
-        console.log(`[EmailRetryWorker] Retry succeeded for log ${log._id} -> ${log.recipientEmail}`);
+        console.log(`[RETRY SUCCESS] notification=${log._id} -> ${log.recipientEmail}`);
       } else {
+        const normalized = retryResult.normalizedError || normalizeResendError({ message: retryResult.error });
+        const isPermanent = Boolean(retryResult.permanent || normalized.permanent);
+
         log.attempts = currentAttempts;
         log.lastError = retryResult.error || 'Retry failed';
 
         const maxLimit = log.maxAttempts || MAX_ATTEMPTS;
-        const isPermanent =
-          retryResult.error &&
-          /testing emails|verify a domain|invalid|validation|403|422/i.test(retryResult.error);
 
-        if (currentAttempts >= maxLimit || isPermanent) {
+        if (isPermanent) {
           log.status = 'dead';
+          log.deadAt = new Date();
           log.nextRetryAt = null;
           markedDead++;
-          console.warn(
-            `[EmailRetryWorker] Notification ${log._id} reached max attempts or permanent error (${currentAttempts}/${maxLimit}). Marked as DEAD.`
-          );
+          console.error(`[EMAIL DEAD] ${log._id}`, normalized.message);
+        } else if (currentAttempts >= maxLimit) {
+          log.status = 'dead';
+          log.deadAt = new Date();
+          log.nextRetryAt = null;
+          markedDead++;
+          console.error(`[EMAIL DEAD MAX RETRIES] ${log._id}`);
         } else {
-          const backoffMinutes = Math.min(120, Math.pow(2, currentAttempts));
-          log.nextRetryAt = new Date(Date.now() + backoffMinutes * 60 * 1000);
+          log.status = 'failed';
+          log.nextRetryAt = calculateNextRetry(currentAttempts);
+          console.warn(`[EMAIL RETRY SCHEDULED] ${log._id}`, log.nextRetryAt);
         }
 
         await log.save();
@@ -278,6 +395,11 @@ const retryFailedNotifications = async (maxBatch = 20) => {
 
 module.exports = {
   getResendClient,
+  getActualRecipient,
+  isPermanentResendError,
+  isTransientResendError,
+  normalizeResendError,
+  calculateNextRetry,
   verifyTransporter,
   sendEmail,
   retryFailedNotifications,
