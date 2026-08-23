@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { getCalendarConnectionStatus, getGoogleAuthUrl } from '../../services/calendarApi';
 import { CalendarConnectionStatus } from '../../types/calendar';
-import { Calendar, CalendarCheck, CheckCircle2, AlertCircle, ExternalLink, RefreshCw } from 'lucide-react';
+import { Calendar, CalendarCheck, CheckCircle2, ExternalLink, RefreshCw } from 'lucide-react';
 import { useToast } from '../ui/Toast';
 
 export const NavCalendarButton: React.FC = () => {
