@@ -73,7 +73,12 @@ MongoDB Atlas          Background Cron Jobs       Dedicated Inference
 | `GEMINI_API_KEY` | Google Gemini API key (dual mode) | `AIzaSy...` |
 | `GEMINI_MODEL` | Gemini cloud model | `gemini-3.5-flash-lite` |
 
-> ℹ️ **Email & Calendar Setup Note**: HealthPulse uses **Nodemailer + Gmail SMTP** over STARTTLS Port 587 (forced IPv4 socket resolution) for transactional emails. For Google Calendar integration, publish your app in Google Cloud Console using the public Privacy Policy URL: `https://github.com/Pranjal-k22/Healthcare-app-manager/blob/main/PRIVACY.md`.
+> ℹ️ **Google Cloud OAuth 2.0 Production Configuration**:  
+> To connect Google Calendar in production, register the following settings under **Google Cloud Console > APIs & Services > OAuth consent screen & Credentials**:
+> - **Authorized Domains**: `vercel.app`, `onrender.com`, `github.com`
+> - **Authorized Redirect URIs**: `https://healthpulse-api-4vhy.onrender.com/api/auth/google/callback` (Production) and `http://localhost:5000/api/auth/google/callback` (Local)
+> - **Privacy Policy URL**: `https://github.com/Pranjal-k22/Healthcare-app-manager/blob/main/PRIVACY.md`
+> - **Requested Scope**: `https://www.googleapis.com/auth/calendar.events`
 
 ---
 

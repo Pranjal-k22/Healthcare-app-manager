@@ -413,6 +413,10 @@ HealthPulse provides non-blocking, two-way Google Calendar synchronization for p
    TOKEN_ENCRYPTION_KEY=your_32_byte_hex_aes_encryption_key
    ```
 
+> ⚠️ **Evaluator Note on Google Cloud OAuth "Unverified App" Screen**:  
+> Since HealthPulse is an academic/demo application requesting the sensitive `https://www.googleapis.com/auth/calendar.events` scope, Google Cloud OAuth displays a standard **"Google hasn't verified this app"** advisory screen during the Google Calendar connect flow.  
+> **To proceed as an evaluator**: Click **Advanced** $\rightarrow$ Click **"Go to HealthPulse App (unsafe)"** $\rightarrow$ Click **Continue / Allow**. This is safe, expected, and standard for unverified demo OAuth applications in Google Cloud Console.
+
 * **Privacy & Token Security**:
   - OAuth tokens are encrypted at rest in MongoDB using **AES-256-GCM** (`TOKEN_ENCRYPTION_KEY`).
   - Tokens are strictly redacted during API serialization and never transmitted to the client.
