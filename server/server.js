@@ -1,8 +1,3 @@
-const dns = require('dns');
-if (typeof dns.setDefaultResultOrder === 'function') {
-  dns.setDefaultResultOrder('ipv4first');
-}
-
 const app = require('./app');
 const config = require('./config/env');
 const connectDB = require('./config/db');
@@ -25,7 +20,7 @@ const {
 // Connect to Database
 connectDB().then(() => {
   // Verify SMTP Transporter (Non-blocking, logs warning on failure)
-  verifyTransporter().catch(() => {});
+  verifyTransporter().catch(() => { });
 
   // Start Background Jobs after DB is connected
   startReminderJob();
