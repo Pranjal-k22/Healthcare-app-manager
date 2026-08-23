@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const config = require('../config/env');
 const { isValidTimeFormat, isValidDateFormat } = require('./doctorValidator');
 
 const WEEKDAY_NAMES = [
@@ -12,26 +13,32 @@ const WEEKDAY_NAMES = [
 ];
 
 /**
- * Get current system date in YYYY-MM-DD
+ * Get current system date in YYYY-MM-DD formatted for APPOINTMENT_TIMEZONE
  * @returns {string}
  */
 const getTodayDateString = () => {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
+  const tz = config.APPOINTMENT_TIMEZONE || 'Asia/Kolkata';
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: tz,
+  }).format(new Date());
 };
 
 /**
- * Get current system time in HH:mm
+ * Get current system time in HH:mm formatted for APPOINTMENT_TIMEZONE
  * @returns {string}
  */
 const getCurrentTimeString = () => {
-  const now = new Date();
-  const hours = String(now.getHours()).padStart(2, '0');
-  const minutes = String(now.getMinutes()).padStart(2, '0');
-  return `${hours}:${minutes}`;
+  const tz = config.APPOINTMENT_TIMEZONE || 'Asia/Kolkata';
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: tz,
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).formatToParts(new Date());
+
+  const hour = parts.find((p) => p.type === 'hour')?.value || '00';
+  const minute = parts.find((p) => p.type === 'minute')?.value || '00';
+  return `${hour}:${minute}`;
 };
 
 /**
