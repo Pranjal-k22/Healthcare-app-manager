@@ -432,8 +432,10 @@ HealthPulse uses the official **Resend Node.js SDK** (`resend`) over HTTPS API (
 1. **Resend SDK Integration**: Configured with `RESEND_API_KEY` to dispatch emails via HTTPS POST (`https://api.resend.com/emails`) over standard port 443, eliminating SMTP network socket blocks. Operates with a graceful mock logger when notifications are disabled or keys are unconfigured.
 2. **Idempotency Keys**: Generates unique keys per notification job (`idempotencyKey: bookingconfirmation-${appointmentId}`) to protect against duplicate emails during background retries.
 3. **Persistent Audit Logging**: Every outbound notification creates a `NotificationLog` entry tracking recipient, template, payload, status (`sent`, `failed`, `dead`), and attempt count.
-4. **10-Minute Exponential Backoff Worker**: `emailRetryJob.js` periodically queries failed emails with attempts `< 5`, applying delay ($2^{\text{attempts}}$ minutes) before retrying.
-5. **Supported Templates**:
+4. **10-Minute Exponential Backoff Worker & Dead-Letter Queue**: `emailRetryJob.js` periodically queries failed emails with attempts `< 5`, applying exponential delay ($2^{\text{attempts}}$ minutes) before retrying. Notifications reaching max attempts or hitting unrecoverable delivery errors are capped with status `DEAD` (`dead`) and `nextRetryAt: null` to eliminate infinite retry loops.
+5. **Free-Tier Testing Domain Limitation & Delivery Scope**: All testing and verification were conducted using the Resend account owner's registered email (`pranjalkaran2004@gmail.com`) due to Resend free-tier domain restrictions on the `onboarding@resend.dev` sender address. In a production deployment, a custom sending domain would be verified in Resend (`resend.com/domains`) for unrestricted global delivery.
+6. **Empirical Failure-Handling & Dead-Letter Evidence**: Real-world Resend API HTTP 403 / 422 domain restriction failures encountered when sending to unverified third-party addresses were used as empirical evidence to test and validate the Dead-Letter Queue (DLQ) logic. Unretryable errors and capped retry attempts automatically transition logs to `status: 'dead'` (`DEAD`), preventing background worker log pollution and guaranteeing queue stability.
+7. **Supported Templates**:
    - `bookingConfirmation`: Instant confirmation sent to patient & doctor upon booking.
    - `appointmentReminder`: 24-hour and 1-hour pre-consultation reminders.
    - `appointmentCancellation`: Sent upon cancellation with reason.

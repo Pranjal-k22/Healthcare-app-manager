@@ -91,9 +91,10 @@ When a doctor logs leave, patient appointments are protected from silent cancell
 
 Network timeouts and SMTP rate limits must never compromise core clinical transactions:
 
-1. **Transactional Decoupling**: Email transmissions and Google Calendar sync execute asynchronously via Node.js queues. Failures never roll back database writes or block user HTTP responses.
-2. **Persistent Audit Logging**: Every dispatch creates a `NotificationLog` record tracking recipient, template, payload, status (`sent` / `failed`), and attempt counter.
-3. **Exponential Backoff Worker**: The in-process `emailRetryJob` periodically queries `NotificationLog` where `status: 'failed'` and `nextRetryAt <= now()`, applying backoff delays ($2^{\text{attempts}}$ minutes) up to 5 retries before marking as `dead`.
+1. **Transactional Decoupling**: Email transmissions and Google Calendar sync execute asynchronously via HTTPS API (Resend SDK). Failures never roll back database writes or block user HTTP responses.
+2. **Persistent Audit Logging**: Every dispatch creates a `NotificationLog` record tracking recipient, template, payload, status (`sent`, `failed`, `dead`), and attempt counter.
+3. **Exponential Backoff Worker & Dead-Letter Queue**: The background `emailRetryJob` periodically queries `NotificationLog` where `status: 'failed'` and `nextRetryAt <= now()`, applying backoff delays ($2^{\text{attempts}}$ minutes) up to 5 retries. Permanently unretryable errors (such as Resend domain restrictions, HTTP 403/422 responses, or malformed email addresses) or notifications exceeding max attempts are immediately capped with status `DEAD` (`dead`) and `nextRetryAt: null`, halting retry log pollution.
+4. **Empirical Failure-Handling & Domain Restriction Evidence**: In accordance with Resend free-tier restrictions (`onboarding@resend.dev`), delivery verification was executed against the verified Resend account owner email (`pranjalkaran2004@gmail.com`). Real-world 403 Forbidden / domain restriction responses encountered when targeting unverified external addresses served as empirical runtime validation for the Dead-Letter Queue and retry worker capping mechanism.
 
 ---
 

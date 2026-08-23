@@ -42,6 +42,7 @@ const sendEmail = async ({
   payload = {},
   recipientName = '',
   idempotencyKey = null,
+  isRetry = false,
 }) => {
   if (!to || (typeof to !== 'string' && !Array.isArray(to))) {
     console.warn('[EmailService] sendEmail skipped: No recipient email provided');
@@ -69,20 +70,22 @@ const sendEmail = async ({
     const mockId = `mock-email-${Date.now()}-${Math.random().toString(36).substring(7)}`;
 
     let logEntry = null;
-    try {
-      logEntry = await NotificationLog.create({
-        recipientEmail: recipientStr,
-        recipientName: recipientName || payload.recipientName || '',
-        notificationType,
-        appointmentId,
-        subject: mailPayload.subject,
-        payload,
-        status: 'sent',
-        attempts: 1,
-        sentAt: new Date(),
-      });
-    } catch (logErr) {
-      console.warn('[EmailService] Warning writing mock NotificationLog:', logErr.message);
+    if (!isRetry) {
+      try {
+        logEntry = await NotificationLog.create({
+          recipientEmail: recipientStr,
+          recipientName: recipientName || payload.recipientName || '',
+          notificationType,
+          appointmentId,
+          subject: mailPayload.subject,
+          payload,
+          status: 'sent',
+          attempts: 1,
+          sentAt: new Date(),
+        });
+      } catch (logErr) {
+        console.warn('[EmailService] Warning writing mock NotificationLog:', logErr.message);
+      }
     }
 
     return {
@@ -108,22 +111,24 @@ const sendEmail = async ({
     const emailId = data.id || `resend-${Date.now()}`;
     console.log(`[EmailService] Email sent successfully via Resend API to ${recipientStr} (ID: ${emailId})`);
 
-    // Write success to NotificationLog
+    // Write success to NotificationLog (only if not a retry cycle)
     let logEntry = null;
-    try {
-      logEntry = await NotificationLog.create({
-        recipientEmail: recipientStr,
-        recipientName: recipientName || payload.recipientName || '',
-        notificationType,
-        appointmentId,
-        subject: mailPayload.subject,
-        payload,
-        status: 'sent',
-        attempts: 1,
-        sentAt: new Date(),
-      });
-    } catch (logErr) {
-      console.warn('[EmailService] Warning writing NotificationLog:', logErr.message);
+    if (!isRetry) {
+      try {
+        logEntry = await NotificationLog.create({
+          recipientEmail: recipientStr,
+          recipientName: recipientName || payload.recipientName || '',
+          notificationType,
+          appointmentId,
+          subject: mailPayload.subject,
+          payload,
+          status: 'sent',
+          attempts: 1,
+          sentAt: new Date(),
+        });
+      } catch (logErr) {
+        console.warn('[EmailService] Warning writing NotificationLog:', logErr.message);
+      }
     }
 
     return {
@@ -136,25 +141,32 @@ const sendEmail = async ({
     console.error(`[EmailService] Failed to send email to ${recipientStr}: ${sendError.message}`);
 
     const attempts = 1;
+    const isPermanent =
+      sendError.message &&
+      /testing emails|verify a domain|invalid|validation|403|422/i.test(sendError.message);
+
+    const status = isPermanent ? 'dead' : 'failed';
     const backoffMinutes = Math.min(60, Math.pow(2, attempts));
-    const nextRetryAt = new Date(Date.now() + backoffMinutes * 60 * 1000);
+    const nextRetryAt = isPermanent ? null : new Date(Date.now() + backoffMinutes * 60 * 1000);
 
     let logEntry = null;
-    try {
-      logEntry = await NotificationLog.create({
-        recipientEmail: recipientStr,
-        recipientName: recipientName || payload.recipientName || '',
-        notificationType,
-        appointmentId,
-        subject: mailPayload.subject,
-        payload,
-        status: 'failed',
-        attempts,
-        lastError: sendError.message,
-        nextRetryAt,
-      });
-    } catch (logErr) {
-      console.warn('[EmailService] Warning writing failure NotificationLog:', logErr.message);
+    if (!isRetry) {
+      try {
+        logEntry = await NotificationLog.create({
+          recipientEmail: recipientStr,
+          recipientName: recipientName || payload.recipientName || '',
+          notificationType,
+          appointmentId,
+          subject: mailPayload.subject,
+          payload,
+          status,
+          attempts,
+          lastError: sendError.message,
+          nextRetryAt,
+        });
+      } catch (logErr) {
+        console.warn('[EmailService] Warning writing failure NotificationLog:', logErr.message);
+      }
     }
 
     return {
@@ -167,7 +179,7 @@ const sendEmail = async ({
 
 /**
  * Background Retry Job: Retries failed notifications with exponential backoff
- * Marks notifications as 'dead' after MAX_ATTEMPTS (5)
+ * Marks notifications as 'dead' after MAX_ATTEMPTS (5) or on permanent failures
  * @param {number} maxBatch - Maximum logs to process per run (default: 20)
  * @returns {Promise<{ retried: number, succeeded: number, markedDead: number }>}
  */
@@ -177,8 +189,11 @@ const retryFailedNotifications = async (maxBatch = 20) => {
 
   try {
     const failedLogs = await NotificationLog.find({
-      status: 'failed',
-      nextRetryAt: { $lte: now },
+      status: { $in: ['failed', 'FAILED', 'pending', 'PENDING'] },
+      $or: [
+        { nextRetryAt: { $lte: now } },
+        { nextRetryAt: null }
+      ],
       attempts: { $lt: MAX_ATTEMPTS },
     }).limit(maxBatch);
 
@@ -193,7 +208,7 @@ const retryFailedNotifications = async (maxBatch = 20) => {
     const emailTemplates = require('./emailTemplates');
 
     for (const log of failedLogs) {
-      const currentAttempts = log.attempts + 1;
+      const currentAttempts = (log.attempts || 0) + 1;
 
       let rendered = null;
       if (log.payload && log.notificationType) {
@@ -213,6 +228,7 @@ const retryFailedNotifications = async (maxBatch = 20) => {
         payload: log.payload,
         recipientName: log.recipientName,
         idempotencyKey: `retry-${currentAttempts}-${log._id}`,
+        isRetry: true,
       });
 
       if (retryResult.success) {
@@ -220,6 +236,7 @@ const retryFailedNotifications = async (maxBatch = 20) => {
         log.attempts = currentAttempts;
         log.sentAt = new Date();
         log.lastError = '';
+        log.nextRetryAt = null;
         await log.save();
         succeeded++;
         console.log(`[EmailRetryWorker] Retry succeeded for log ${log._id} -> ${log.recipientEmail}`);
@@ -227,11 +244,18 @@ const retryFailedNotifications = async (maxBatch = 20) => {
         log.attempts = currentAttempts;
         log.lastError = retryResult.error || 'Retry failed';
 
-        if (currentAttempts >= MAX_ATTEMPTS) {
+        const maxLimit = log.maxAttempts || MAX_ATTEMPTS;
+        const isPermanent =
+          retryResult.error &&
+          /testing emails|verify a domain|invalid|validation|403|422/i.test(retryResult.error);
+
+        if (currentAttempts >= maxLimit || isPermanent) {
           log.status = 'dead';
           log.nextRetryAt = null;
           markedDead++;
-          console.warn(`[EmailRetryWorker] Notification ${log._id} reached max attempts (${MAX_ATTEMPTS}). Marked as DEAD.`);
+          console.warn(
+            `[EmailRetryWorker] Notification ${log._id} reached max attempts or permanent error (${currentAttempts}/${maxLimit}). Marked as DEAD.`
+          );
         } else {
           const backoffMinutes = Math.min(120, Math.pow(2, currentAttempts));
           log.nextRetryAt = new Date(Date.now() + backoffMinutes * 60 * 1000);
