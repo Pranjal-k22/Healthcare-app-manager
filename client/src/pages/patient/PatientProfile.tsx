@@ -7,6 +7,7 @@ import Input from '../../components/ui/Input';
 import Select from '../../components/ui/Select';
 import InlineAlert from '../../components/ui/InlineAlert';
 import { useToast } from '../../components/ui/Toast';
+import { CalendarSettingsCard } from '../../components/calendar/CalendarSettingsCard';
 import {
   User,
   Mail,
@@ -394,6 +395,9 @@ export const PatientProfile: React.FC = () => {
                 </div>
               </form>
             </Card>
+
+            {/* Section 3: Google Calendar Synchronization */}
+            <CalendarSettingsCard />
           </div>
         </div>
       </div>
