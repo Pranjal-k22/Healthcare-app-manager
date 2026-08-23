@@ -7,7 +7,6 @@ import {
 } from '../../services/leaveApi';
 import { getDoctors } from '../../services/doctorApi';
 import { DoctorLeaveItem, LeaveStatus } from '../../types/leave';
-import { Doctor } from '../../types/doctor';
 import {
   AlertCircle,
   Calendar,
@@ -19,12 +18,10 @@ import {
   Trash2,
   XCircle,
   ArrowRight,
-  Filter,
 } from 'lucide-react';
 
 export const AllDoctorLeaves: React.FC = () => {
   const [leaves, setLeaves] = useState<DoctorLeaveItem[]>([]);
-  const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -49,7 +46,6 @@ export const AllDoctorLeaves: React.FC = () => {
       ]);
 
       setLeaves(leavesData);
-      setDoctors(doctorsData);
 
       // Construct maps
       const specs: Record<string, string> = {};

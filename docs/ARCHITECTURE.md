@@ -56,7 +56,7 @@
 
 ### 4. Persistence Layer (MongoDB)
 - MongoDB is the **single source of truth** for all healthcare records.
-- Database-level compound partial unique index on `{ doctorId: 1, date: 1, startTime: 1 }` with `{ status: { $ne: 'CANCELLED' } }` guarantees atomic double-booking prevention.
+- Database-level compound partial unique index on `{ doctorId: 1, date: 1, startTime: 1 }` with `{ status: { $in: ['BOOKED', 'COMPLETED'] } }` guarantees atomic double-booking prevention.
 
 ### 5. Background Jobs Layer
 - **Appointment Reminder Worker (`reminderJob.js`)**: Runs every 60 seconds, detects appointments starting within 60 minutes, and dispatches in-app and email reminders.

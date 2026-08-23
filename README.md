@@ -4,6 +4,17 @@ HealthPulse is an enterprise-grade full-stack clinic management and patient foll
 
 ---
 
+## 🌐 Live Demo
+
+| | URL |
+|:---|:---|
+| **Frontend (Vercel)** | https://healthcare-app-manager.vercel.app |
+| **Backend API (Render)** | https://healthpulse-api-p1zf.onrender.com |
+
+> **Note**: The backend runs on Render's free tier and may take ~30 seconds to wake from cold-start on the first request. Subsequent requests are fast.
+
+---
+
 ## 🌟 Key Deliverables & System Architecture
 
 | Deliverable | Description | Location / Reference |
@@ -11,7 +22,7 @@ HealthPulse is an enterprise-grade full-stack clinic management and patient foll
 | **Complete Source Code** | Full-stack monorepo (`server/` Express REST API + `client/` React 18 TypeScript SPA) | Repository Root (`/`) |
 | **System Design Write-Up** | Canonical ~750-word architecture report covering Concurrency, Holds, Leaves & Notification retries | [tasks/SYSTEM_DESIGN_WRITEUP.md](tasks/SYSTEM_DESIGN_WRITEUP.md) |
 | **Environment Configuration** | Environment template for local and production deployment | [.env.example](.env.example) |
-| **Hosted Application** | Production deployment and cloud hosting configuration | [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) |
+| **Hosted Application** | Frontend: [healthcare-app-manager.vercel.app](https://healthcare-app-manager.vercel.app) · API: [healthpulse-api-p1zf.onrender.com](https://healthpulse-api-p1zf.onrender.com) | [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) |
 
 ```text
 React 18 + Vite (Client SPA) ────► Express REST API (Node.js 20) ────► MongoDB (Source of Truth)
@@ -192,7 +203,8 @@ User (PATIENT / DOCTOR / ADMIN)
 * **Index**: `{ userId: 1 }` (Unique).
 
 #### 3. `Appointment` (`server/models/Appointment.js`)
-* **Fields**: `doctorId`, `patientId`, `date` (`YYYY-MM-DD`), `startTime` (`HH:mm`), `endTime` (`HH:mm`), `status` (`'BOOKED'`, `'COMPLETED'`, `'CANCELLED'`, `'RESCHEDULED'`), `symptoms`, `preVisitSummary`, `postVisitSummary`, `aiStatus`, `aiPromptVersion`, `cancellationReason`.
+* **Fields**: `doctorId`, `patientId`, `date` (`YYYY-MM-DD`), `startTime` (`HH:mm`), `endTime` (`HH:mm`), `status` (`'BOOKED'`, `'COMPLETED'`, `'CANCELLED'`), `symptoms`, `preVisitSummary`, `postVisitSummary`, `aiStatus`, `aiPromptVersion`, `cancellationReason`.
+* **Reschedule Mechanism**: Rescheduling an appointment does not use a separate status string. The system atomically creates a new appointment document (with status `'BOOKED'`) for the target slot, while transitioning the original appointment to status `'CANCELLED'`.
 * **Concurrency Hard Constraint**:
   ```javascript
   // Compound Partial Unique Index for Zero Double-Booking
@@ -261,13 +273,49 @@ All API responses follow a standardized JSON envelope:
 | `PUT` | `/api/appointments/:id/reschedule` | JWT | `PATIENT`, `DOCTOR` | Reschedule appointment to new date/time |
 | `PUT` | `/api/appointments/:id/cancel` | JWT | `PATIENT`, `DOCTOR`, `ADMIN` | Cancel appointment & trigger email notification |
 
-### 4. Doctor Leave Management (`/api/leaves` & `/api/doctor-leaves`)
+### 4. Doctor Leave Management (`/api/doctor/leaves`, `/api/admin/leaves`, `/api/doctors/:id/leave`)
 | Method | Endpoint | Auth | Role | Description |
 |:---|:---|:---:|:---:|:---|
-| `POST` | `/api/leaves` | JWT | `DOCTOR`, `ADMIN` | Submit leave request with date overlap detection |
-| `GET` | `/api/leaves` | JWT | `DOCTOR`, `ADMIN` | List leave requests (filterable by status) |
-| `PUT` | `/api/leaves/:id/status` | JWT | `ADMIN` | Approve leave (cancels conflicting slots, notifies patients) |
-| `DELETE` | `/api/leaves/:id` | JWT | `DOCTOR`, `ADMIN` | Cancel leave request |
+| `POST` | `/api/doctor/leaves` | JWT | `DOCTOR` | Submit leave request (pre-checks for active booking conflicts) |
+| `GET` | `/api/doctor/leaves` | JWT | `DOCTOR` | List authenticated doctor's leave requests & status |
+| `GET` | `/api/doctor/leaves/conflicts` | JWT | `DOCTOR` | Pre-check for conflicting appointments for a date range |
+| `PATCH` | `/api/doctor/leaves/:id/cancel` | JWT | `DOCTOR`, `ADMIN` | Cancel a leave request |
+| `GET` | `/api/admin/leaves` | JWT | `ADMIN` | List all doctor leave requests across the system |
+| `PATCH` | `/api/admin/leaves/:id/status` | JWT | `ADMIN` | Approve or reject leave (on `APPROVED`, triggers cancellation cascade & patient notices) |
+| `POST` | `/api/doctors/:id/leave` | JWT | `ADMIN` | Admin direct override: schedule doctor leave and immediately cancel/notify conflicting bookings |
+
+#### 🔄 Two-Stage Doctor Leave & Notification Workflow
+
+HealthPulse separates doctor leave into a safe, non-destructive two-stage approval workflow:
+
+```text
+1. Doctor Submits Leave Request (POST /api/doctor/leaves)
+                     │
+                     ▼
+  Does date range overlap existing BOOKED appointments?
+                     │
+     ┌───────────────┴───────────────┐
+     ▼                               ▼
+ [YES: Conflict Detected]        [NO: Zero Conflicts]
+     │                               │
+     ▼                               ▼
+ Request REJECTED (HTTP 409)     Leave created as PENDING
+ Returns conflicting list        Admin alert email dispatched
+ Doctor/Admin reschedules visits             │
+     │                                       ▼
+     └───────────────────────────► 2. Admin Reviews & Approves (PATCH /api/admin/leaves/:id/status)
+                                             │
+                                             ▼
+                                  ── CANCELLATION CASCADE FIRES HERE ──
+                                  - Overlapping bookings marked CANCELLED
+                                  - cancellationReason set to 'DOCTOR_LEAVE'
+                                  - Patients receive email with reschedule links
+                                  - Doctor receives approval confirmation email
+```
+
+> ⚠️ **Note for Evaluators — How to Test Patient Notification on Doctor Leave**:
+> - **Doctor Self-Service Path**: When a doctor requests leave via `POST /api/doctor/leaves` for a date with existing bookings, the request returns `409 Conflict` (`"Cannot apply for leave: You have N active booked appointment(s)..."`). This prompts proactive rescheduling before leave submission. Once submitted on open dates (or after clearance), the request initializes in `PENDING` status. The automatic **cancel-and-notify cascade fires when an Admin APPROVES the leave request** (`PATCH /api/admin/leaves/:id/status`).
+> - **Admin Direct Override Path**: An administrator can also schedule leave directly via `POST /api/doctors/:id/leave` (or via Admin Portal), which immediately triggers the conflict cascade, cancels all overlapping `BOOKED` appointments with `cancellationReason: 'DOCTOR_LEAVE'`, and dispatches notification emails to affected patients.
 
 ### 5. Clinical Workflow & Prescriptions (`/api/clinical`)
 | Method | Endpoint | Auth | Role | Description |

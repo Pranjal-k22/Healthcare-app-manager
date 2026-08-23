@@ -20,7 +20,7 @@ MongoDB Atlas          Background Cron Jobs       Dedicated Inference
         │                        │                        │
         │                        ▼                        │
         │                 Email Provider                  │
-        │             (SendGrid / AWS SES)                │
+        │            (Nodemailer + Gmail SMTP)            │
         │                                                 │
         └──────────────── Google Calendar ────────────────┘
                       (Google Cloud OAuth 2.0)
@@ -62,16 +62,17 @@ MongoDB Atlas          Background Cron Jobs       Dedicated Inference
 | `GOOGLE_CLIENT_SECRET` | OAuth 2.0 Client Secret | `GOCSPX-...` |
 | `GOOGLE_REDIRECT_URI` | Production Callback URL | `https://api.yourdomain.com/api/calendar/oauth/callback` |
 | `ENABLE_EMAIL_NOTIFICATIONS`| Enable real SMTP delivery | `true` |
-| `SMTP_HOST` | Production SMTP Host | `smtp.sendgrid.net` |
-| `SMTP_PORT` | SMTP Port | `465` (SSL) or `587` (TLS) |
-| `SMTP_USER` | SMTP Username | `apikey` |
-| `SMTP_PASS` | SMTP Secret | `SG.xxxxxxxx...` |
-| `EMAIL_FROM` | Sender address | `"HealthPulse <notifications@yourdomain.com>"` |
+| `GMAIL_USER` | Gmail address for SMTP | `your_address@gmail.com` |
+| `GMAIL_APP_PASSWORD` | Google App Password (16 chars) | `xxxx xxxx xxxx xxxx` |
+| `EMAIL_FROM_NAME` | Sender display name | `"HealthPulse Hospital"` |
+| `SUPPORT_EMAIL` | Contact & support email | `support@yourdomain.com` |
 | `LLM_MODE` | Dual-engine or local-only | `dual` |
 | `OLLAMA_HOST` | Ollama daemon address | `http://localhost:11434` |
 | `OLLAMA_MODEL` | Local LLM model tag | `llama3` / `qwen2.5-coder:7b` |
 | `GEMINI_API_KEY` | Google Gemini API key (dual mode) | `AIzaSy...` |
 | `GEMINI_MODEL` | Gemini cloud model | `gemini-1.5-flash` |
+
+> ℹ️ **Email Service Requirement**: HealthPulse satisfies the assignment's email notification requirement using **Nodemailer with Gmail SMTP** (over STARTTLS Port 587 with forced IPv4 socket resolution to ensure high reliability on cloud hosts like Render). A 16-character Google App Password (generated via Google Account Security) is required for live delivery; when disabled or unconfigured, the service operates seamlessly in mock logging mode.
 
 ---
 

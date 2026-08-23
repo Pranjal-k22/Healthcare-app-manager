@@ -1,7 +1,7 @@
 # System Design Write-Up: Healthcare Appointment & Follow-up Manager
 
 **Author**: HealthPulse Architecture Team  
-**Word Count**: ~745 words  
+**Word Count**: ~755 words  
 **Core Design Topics**: Concurrency Control, Ephemeral Slot Reservation, Leave & Cascade Conflict Management, Notification Reliability, and LLM Guardrails.
 
 ---
@@ -71,12 +71,12 @@ To prevent checkout collisions while a patient completes symptoms and intake que
 
 When a doctor logs leave, patient appointments are protected from silent cancellation:
 
-1. **Two-Stage Approval Workflow**: Doctor leave applications initialize in `PENDING` status. Approving the leave transitions status to `APPROVED` and engages the conflict engine.
-2. **Cascade Conflict Detection**: Queries all booked appointments overlapping the leave window:
+1. **Pre-Check & Two-Stage Approval**: Doctor self-service requests (`POST /api/doctor/leaves`) pre-check for active bookings; conflicting dates return `409 Conflict` to prompt proactive rescheduling. Valid requests initialize in `PENDING` status awaiting administrative review.
+2. **Admin Approval Cascade**: When an Admin approves a leave (`PATCH /api/admin/leaves/:id/status`) or applies a direct administrative schedule (`POST /api/doctors/:id/leave`), the conflict engine executes:
    ```javascript
    const conflicts = await Appointment.find({
-     doctorId,
-     date: { $gte: startDate, $lte: endDate },
+     doctorId: leave.doctorId,
+     date: { $gte: leave.startDate, $lte: leave.endDate },
      status: 'BOOKED'
    });
    ```
