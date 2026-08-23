@@ -783,6 +783,62 @@ const dispatchDoctorLeaveDecisionDoctorAlert = async (leave, doctorUser, adminUs
   }
 };
 
+/**
+ * Dispatch Password Reset Email link to User
+ * @param {object} user - User document
+ * @param {string} resetToken - Raw unhashed 32-byte reset token
+ */
+const dispatchPasswordResetEmail = async (user, resetToken) => {
+  try {
+    const config = require('../config/env');
+    const frontendUrl = config.FRONTEND_URL || 'http://localhost:5173';
+    const resetUrl = `${frontendUrl}/reset-password?token=${resetToken}&role=${user.role}`;
+
+    queueEmailNotification({
+      to: user.email,
+      recipientName: user.name,
+      templateName: 'passwordReset',
+      templateData: {
+        userName: user.name,
+        userRole: user.role,
+        resetUrl,
+      },
+      notificationType: 'PASSWORD_RESET',
+    });
+  } catch (err) {
+    console.error('[NotificationService] Error in dispatchPasswordResetEmail:', err.message);
+  }
+};
+
+/**
+ * Dispatch Doctor Activation Email (First-time password setup link)
+ * @param {object} doctorUser - Doctor User document
+ * @param {string} activationToken - Raw unhashed 32-byte activation token
+ * @param {string} specialization
+ */
+const dispatchDoctorActivationEmail = async (doctorUser, activationToken, specialization = 'Consultant Specialist') => {
+  try {
+    const config = require('../config/env');
+    const frontendUrl = config.FRONTEND_URL || 'http://localhost:5173';
+    const setPasswordUrl = `${frontendUrl}/set-password?token=${activationToken}`;
+
+    queueEmailNotification({
+      to: doctorUser.email,
+      recipientName: `Dr. ${doctorUser.name}`,
+      templateName: 'doctorActivation',
+      templateData: {
+        doctorName: doctorUser.name,
+        doctorEmail: doctorUser.email,
+        specialization,
+        setPasswordUrl,
+      },
+      notificationType: 'ACCOUNT_ACTIVATION',
+    });
+  } catch (err) {
+    console.error('[NotificationService] Error in dispatchDoctorActivationEmail:', err.message);
+  }
+};
+
 module.exports = {
   createNotification,
   getUserNotifications,
@@ -803,4 +859,6 @@ module.exports = {
   dispatchDoctorProvisionedAdminAlert,
   dispatchDoctorLeaveRequestedAdminAlert,
   dispatchDoctorLeaveDecisionDoctorAlert,
+  dispatchPasswordResetEmail,
+  dispatchDoctorActivationEmail,
 };

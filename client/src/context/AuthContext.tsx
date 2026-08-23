@@ -2,12 +2,22 @@ import React, { createContext, useState, useEffect, useCallback } from 'react';
 import {
   AuthContextType,
   AuthState,
+  ForgotPasswordData,
   LoginCredentials,
   RegisterData,
+  ResetPasswordData,
+  SetPasswordData,
   User,
 } from '../types/auth';
 import { TOKEN_STORAGE_KEY } from '../utils/constants';
-import { fetchCurrentUser, loginUser, registerUser } from '../services/authApi';
+import {
+  fetchCurrentUser,
+  forgotPasswordUser,
+  loginUser,
+  registerUser,
+  resetPasswordUser,
+  setPasswordUser,
+} from '../services/authApi';
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -21,7 +31,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     isLoading: true,
   });
 
-  // Verify and hydrate current user on application load
+  // Verify and hydrate current user on application load via GET /api/auth/me
   const loadUser = useCallback(async () => {
     const token = localStorage.getItem(TOKEN_STORAGE_KEY);
     if (!token) {
@@ -82,6 +92,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     return response.user;
   };
 
+  const forgotPassword = async (data: ForgotPasswordData) => {
+    return await forgotPasswordUser(data);
+  };
+
+  const resetPassword = async (data: ResetPasswordData) => {
+    return await resetPasswordUser(data);
+  };
+
+  const setPassword = async (data: SetPasswordData) => {
+    return await setPasswordUser(data);
+  };
+
   const logout = () => {
     localStorage.removeItem(TOKEN_STORAGE_KEY);
     setState({
@@ -98,6 +120,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         ...state,
         login,
         register,
+        forgotPassword,
+        resetPassword,
+        setPassword,
         logout,
       }}
     >

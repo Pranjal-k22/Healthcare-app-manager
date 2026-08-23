@@ -106,12 +106,19 @@ const createDoctor = async (data) => {
 
   let createdUser = null;
   try {
-    // 2. Create User entity with DOCTOR role
+    const crypto = require('crypto');
+    const activationToken = crypto.randomBytes(32).toString('hex');
+    const hashedToken = crypto.createHash('sha256').update(activationToken).digest('hex');
+    const initialPassword = password || `DocPass_${crypto.randomBytes(6).toString('hex')}!`;
+
+    // 2. Create User entity with DOCTOR role and activation token (valid 48h)
     createdUser = await User.create({
       name: name.trim(),
       email: email.toLowerCase().trim(),
-      password,
+      password: initialPassword,
       role: 'DOCTOR',
+      passwordResetToken: hashedToken,
+      passwordResetExpires: new Date(Date.now() + 48 * 60 * 60 * 1000), // 48 hours
     });
 
     // 3. Create DoctorProfile linked by userId
@@ -140,10 +147,10 @@ const createDoctor = async (data) => {
       'name email role createdAt'
     );
 
-    // Asynchronously dispatch credentials email to Doctor and alert to Admins
+    // Asynchronously dispatch account activation email to Doctor and alert to Admins
     notificationService
-      .dispatchDoctorWelcome(createdUser, password, specialization)
-      .catch((err) => console.error('[DoctorService] Failed to dispatch welcome email:', err.message));
+      .dispatchDoctorActivationEmail(createdUser, activationToken, specialization)
+      .catch((err) => console.error('[DoctorService] Failed to dispatch activation email:', err.message));
 
     notificationService
       .dispatchDoctorProvisionedAdminAlert(createdUser, specialization, 'Admin Staff')

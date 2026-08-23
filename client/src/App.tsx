@@ -5,6 +5,9 @@ import { Navbar } from './components/common/Navbar';
 import { ProtectedRoute } from './components/common/ProtectedRoute';
 import { Login } from './pages/auth/Login';
 import { Register } from './pages/auth/Register';
+import { ForgotPassword } from './pages/auth/ForgotPassword';
+import { ResetPassword } from './pages/auth/ResetPassword';
+import { SetPassword } from './pages/auth/SetPassword';
 import { PatientDashboard } from './pages/dashboard/PatientDashboard';
 import { DoctorDashboard } from './pages/dashboard/DoctorDashboard';
 import { AdminDashboard } from './pages/dashboard/AdminDashboard';
@@ -58,6 +61,9 @@ export const App: React.FC = () => {
           {/* Public Auth Routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/set-password" element={<SetPassword />} />
 
           {/* Shared Authenticated Routes */}
           <Route

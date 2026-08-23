@@ -13,6 +13,8 @@ import {
   CalendarCheck,
   Lock,
   Mail,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
@@ -25,6 +27,7 @@ export const Login: React.FC = () => {
   const [selectedRole, setSelectedRole] = useState<AuthRole>('PATIENT');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -33,11 +36,12 @@ export const Login: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // If already logged in, redirect immediately to role dashboard
+  // If already logged in, redirect immediately to backend role dashboard
   useEffect(() => {
     if (isAuthenticated && user) {
       const from = (location.state as any)?.from?.pathname;
-      navigate(from || ROLE_DASHBOARD_ROUTES[user.role], { replace: true });
+      const targetRoute = from || ROLE_DASHBOARD_ROUTES[user.role] || '/patient/dashboard';
+      navigate(targetRoute, { replace: true });
     }
   }, [isAuthenticated, user, navigate, location]);
 
@@ -52,12 +56,25 @@ export const Login: React.FC = () => {
 
     try {
       setIsSubmitting(true);
-      const loggedUser = await login({ email, password });
+      const loggedUser = await login({ email, password, role: selectedRole });
       success(`Welcome back, ${loggedUser.name}!`, 'Signed In Successfully');
-      const targetRoute = ROLE_DASHBOARD_ROUTES[loggedUser.role] || '/';
+      const targetRoute = ROLE_DASHBOARD_ROUTES[loggedUser.role] || '/patient/dashboard';
       navigate(targetRoute, { replace: true });
     } catch (err: any) {
-      const errMsg = err.message || 'Login failed. Please verify your credentials.';
+      let errMsg = 'Login failed. Please check your credentials.';
+
+      if (err.response?.data?.code === 'ROLE_MISMATCH') {
+        errMsg = err.response.data.message;
+      } else if (err.response?.status === 401) {
+        errMsg = 'Incorrect email or password. Please verify your credentials.';
+      } else if (err.response?.status === 429) {
+        errMsg = 'Too many login attempts. Please wait a few minutes before trying again.';
+      } else if (!err.response) {
+        errMsg = 'HealthPulse services are temporarily unavailable. Please try again shortly.';
+      } else if (err.response?.data?.message) {
+        errMsg = err.response.data.message;
+      }
+
       setError(errMsg);
       toastError(errMsg, 'Authentication Failed');
     } finally {
@@ -236,27 +253,32 @@ export const Login: React.FC = () => {
 
             <Input
               id="auth-password"
-              type="password"
+              type={showPassword ? 'text' : 'password'}
               label="Password"
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               autoComplete="current-password"
               leftIcon={<Lock size={16} />}
+              rightIcon={
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              }
               required
             />
 
             <div style={{ marginTop: '0.5rem', marginBottom: '1.5rem', display: 'flex', justifyContent: 'flex-end' }}>
-              <a
-                href="#forgot"
+              <Link
+                to={`/forgot-password?role=${selectedRole}`}
                 style={{ fontSize: '13px', color: 'var(--primary)', fontWeight: 500 }}
-                onClick={(e) => {
-                  e.preventDefault();
-                  alert('Please contact hospital administration at support@healthpulse.com to reset credentials.');
-                }}
               >
                 Forgot Password?
-              </a>
+              </Link>
             </div>
 
             <Button
@@ -267,7 +289,7 @@ export const Login: React.FC = () => {
               isLoading={isSubmitting}
               rightIcon={<ArrowRight size={16} />}
             >
-              Sign In as {selectedRole}
+              {isSubmitting ? 'Signing in...' : `Sign In as ${selectedRole}`}
             </Button>
           </form>
 
@@ -306,17 +328,11 @@ export const Login: React.FC = () => {
             </div>
           </div>
 
-          <div style={{ marginTop: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', textAlign: 'center', fontSize: '14px' }}>
+          <div style={{ marginTop: '1.25rem', textAlign: 'center', fontSize: '14px' }}>
             <p style={{ margin: 0, color: 'var(--text-secondary)' }}>
               Don't have an account?{' '}
               <Link to="/register" style={{ fontWeight: 600, color: 'var(--primary)' }}>
                 Create Patient Account
-              </Link>
-            </p>
-            <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-muted)' }}>
-              Hospital Administrator?{' '}
-              <Link to="/register?role=admin" style={{ fontWeight: 600, color: '#3931af' }}>
-                Register as Administrator
               </Link>
             </p>
           </div>

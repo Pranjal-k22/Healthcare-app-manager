@@ -785,6 +785,89 @@ const doctorLeaveDecisionDoctorAlert = (data) => {
   return { subject, html, text };
 };
 
+/**
+ * 13. Password Reset Request Email Template
+ */
+const passwordReset = (data) => {
+  const { userName, userRole, resetUrl } = data;
+  const subject = 'Reset Your HealthPulse Password';
+
+  const contentHtml = `
+    <h2 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 700; color: ${BRAND.primaryDark};">
+      Password Reset Request
+    </h2>
+    <p style="margin: 0 0 16px 0;">Hello <strong>${userName || 'Valued User'}</strong>,</p>
+    <p style="margin: 0 0 20px 0;">
+      We received a request to reset your password for your <strong>HealthPulse ${userRole || ''} Account</strong>. Click the button below to set a new password:
+    </p>
+
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="${resetUrl}" style="background-color: ${BRAND.primary}; color: #ffffff; padding: 12px 28px; border-radius: 8px; font-weight: 700; text-decoration: none; display: inline-block; font-size: 15px;">
+        Reset Password
+      </a>
+    </div>
+
+    <p style="margin: 0 0 16px 0; font-size: 13.5px; color: ${BRAND.textMuted};">
+      This link will expire in <strong>15 minutes</strong>. If you did not request a password reset, no further action is required and your password will remain unchanged.
+    </p>
+  `;
+
+  const html = renderEmailLayout({
+    title: subject,
+    preheader: 'Reset your HealthPulse password using this secure 15-minute link.',
+    contentHtml,
+    ctaText: 'Reset Password',
+    ctaUrl: resetUrl,
+  });
+
+  const text = `Hello ${userName},\n\nWe received a request to reset your HealthPulse password.\nPlease click the link below to set a new password (valid for 15 minutes):\n${resetUrl}\n\nIf you did not request this change, please ignore this email.\n\nHealthPulse Clinical Security`;
+
+  return { subject, html, text };
+};
+
+/**
+ * 14. Doctor Account Activation (First-Time Set Password) Email Template
+ */
+const doctorActivation = (data) => {
+  const { doctorName, doctorEmail, specialization, setPasswordUrl } = data;
+  const subject = 'Welcome to HealthPulse — Activate Your Doctor Account';
+
+  const contentHtml = `
+    <h2 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 700; color: ${BRAND.primaryDark};">
+      Welcome to the HealthPulse Clinical Team
+    </h2>
+    <p style="margin: 0 0 16px 0;">Dear <strong>Dr. ${doctorName}</strong>,</p>
+    <p style="margin: 0 0 20px 0;">
+      An account has been provisioned for you as a <strong>${specialization || 'Consultant Specialist'}</strong> on the HealthPulse Clinical Platform (${doctorEmail}).
+    </p>
+    <p style="margin: 0 0 20px 0;">
+      To complete your registration and activate your account, please click the button below to set your account password:
+    </p>
+
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="${setPasswordUrl}" style="background-color: ${BRAND.primary}; color: #ffffff; padding: 12px 28px; border-radius: 8px; font-weight: 700; text-decoration: none; display: inline-block; font-size: 15px;">
+        Activate Account & Set Password
+      </a>
+    </div>
+
+    <p style="margin: 0 0 16px 0; font-size: 13.5px; color: ${BRAND.textMuted};">
+      This activation link is valid for <strong>48 hours</strong>. Once set, you can log in to your Doctor Portal to manage your consultation schedule and patient visits.
+    </p>
+  `;
+
+  const html = renderEmailLayout({
+    title: subject,
+    preheader: `Welcome Dr. ${doctorName}! Set your password to activate your HealthPulse account.`,
+    contentHtml,
+    ctaText: 'Activate Account & Set Password',
+    ctaUrl: setPasswordUrl,
+  });
+
+  const text = `Dear Dr. ${doctorName},\n\nAn account has been created for you on HealthPulse (${specialization}).\nPlease activate your account and set your password here:\n${setPasswordUrl}\n\nHealthPulse Hospital Systems`;
+
+  return { subject, html, text };
+};
+
 module.exports = {
   renderEmailLayout,
   bookingConfirmation,
@@ -799,4 +882,6 @@ module.exports = {
   prescriptionIssued,
   doctorLeaveRequestedAdminAlert,
   doctorLeaveDecisionDoctorAlert,
+  passwordReset,
+  doctorActivation,
 };

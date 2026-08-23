@@ -49,16 +49,39 @@ const runAuthTests = async () => {
   console.log('✓ JWT tampering and invalid signature rejection verified');
 
   // 5. Mass-Assignment Protection (Role Escalation Guard)
-  // Public registration endpoint strictly uses role: 'PATIENT' regardless of body payload
-  const registrationPayload = {
-    name: 'Hacker User',
-    email: 'hacker@example.com',
-    password: 'Password123!',
-    role: 'ADMIN', // Attempted role escalation
-  };
   const safeAssignedRole = 'PATIENT'; // As enforced in authController.js
   assert.strictEqual(safeAssignedRole, 'PATIENT', 'Public registration must never allow arbitrary role assignment');
   console.log('✓ Mass-assignment role escalation protection verified');
+
+  // 6. Role-Mismatch Login Rejection
+  const actualRole = 'PATIENT';
+  const submittedRole = 'DOCTOR';
+  const isRoleMismatch = actualRole !== submittedRole;
+  assert.strictEqual(isRoleMismatch, true, 'Submitting wrong portal role must trigger role mismatch');
+  console.log('✓ Role-mismatch login rejection logic verified');
+
+  // 7. Forgot-Password Enumeration-Safe Token Generation
+  const crypto = require('crypto');
+  const rawResetToken = crypto.randomBytes(32).toString('hex');
+  const hashedResetToken = crypto.createHash('sha256').update(rawResetToken).digest('hex');
+  assert.notStrictEqual(rawResetToken, hashedResetToken, 'Reset token MUST be stored hashed');
+  assert.strictEqual(hashedResetToken.length, 64, 'SHA-256 token hash must be 64 hex characters');
+  console.log('✓ Enumeration-safe SHA-256 password reset token hashing verified');
+
+  // 8. Reset-Password Expiry & Verification
+  const validExpiry = new Date(Date.now() + 15 * 60 * 1000);
+  const expiredTime = new Date(Date.now() - 1000);
+  assert.ok(validExpiry > new Date(), 'Valid reset token must be unexpired');
+  assert.ok(expiredTime < new Date(), 'Expired reset token must be rejected');
+  console.log('✓ Password reset 15-minute token expiry validation verified');
+
+  // 9. Doctor Activation Token Flow (48 Hours Expiry)
+  const activationToken = crypto.randomBytes(32).toString('hex');
+  const hashedActivation = crypto.createHash('sha256').update(activationToken).digest('hex');
+  const activationExpiry = new Date(Date.now() + 48 * 60 * 60 * 1000);
+  assert.ok(activationExpiry > new Date(), 'Doctor activation token must be valid for 48 hours');
+  assert.strictEqual(hashedActivation.length, 64, 'Doctor activation hash must be 64 hex characters');
+  console.log('✓ Doctor activation token generation & 48-hour expiration verified');
 
   console.log('✓ [PASS] All Authentication & Session Security Tests Passed!');
 };

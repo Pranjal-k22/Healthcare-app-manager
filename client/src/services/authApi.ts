@@ -1,9 +1,12 @@
 import apiClient from './apiClient';
 import {
   AuthResponse,
+  ForgotPasswordData,
   LoginCredentials,
   MeResponse,
   RegisterData,
+  ResetPasswordData,
+  SetPasswordData,
 } from '../types/auth';
 
 /**
@@ -31,6 +34,45 @@ export const loginUser = async (
  */
 export const fetchCurrentUser = async (): Promise<MeResponse> => {
   const response = await apiClient.get<MeResponse>('/auth/me');
+  return response.data;
+};
+
+/**
+ * Request password reset email
+ */
+export const forgotPasswordUser = async (
+  data: ForgotPasswordData
+): Promise<{ success: boolean; message: string }> => {
+  const response = await apiClient.post<{ success: boolean; message: string }>(
+    '/auth/forgot-password',
+    data
+  );
+  return response.data;
+};
+
+/**
+ * Reset password using token
+ */
+export const resetPasswordUser = async (
+  data: ResetPasswordData
+): Promise<{ success: boolean; message: string }> => {
+  const response = await apiClient.post<{ success: boolean; message: string }>(
+    '/auth/reset-password',
+    data
+  );
+  return response.data;
+};
+
+/**
+ * First-time Doctor Account Activation / Set Password
+ */
+export const setPasswordUser = async (
+  data: SetPasswordData
+): Promise<{ success: boolean; message: string }> => {
+  const response = await apiClient.post<{ success: boolean; message: string }>(
+    '/auth/set-password',
+    data
+  );
   return response.data;
 };
 
