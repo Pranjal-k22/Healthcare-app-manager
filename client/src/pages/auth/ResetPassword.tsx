@@ -143,6 +143,12 @@ export const ResetPassword: React.FC = () => {
               >
                 Update Password & Sign In
               </Button>
+
+              <div style={{ marginTop: '1.25rem', textAlign: 'center' }}>
+                <Link to="/login" style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
+                  Back to Sign In
+                </Link>
+              </div>
             </form>
           )}
         </div>
