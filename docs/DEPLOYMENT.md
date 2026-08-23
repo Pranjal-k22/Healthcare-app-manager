@@ -57,14 +57,14 @@ MongoDB Atlas          Background Cron Jobs       Dedicated Inference
 | `PORT` | API Server port | `5000` |
 | `MONGO_URI` | MongoDB connection string | `mongodb+srv://user:pass@cluster.mongodb.net/healthpulse` |
 | `JWT_SECRET` | 64+ char cryptographic key | *(Generate via `openssl rand -hex 32`)* |
-| `CLIENT_URL` | Deployed Frontend URL | `https://healthpluse.vercel.app` |
+| `CLIENT_URL` | Deployed Frontend URL | `https://health-pulse.app` |
+| `FRONTEND_URL` | Frontend Primary Domain | `https://www.health-pulse.app` |
 | `GOOGLE_CLIENT_ID` | OAuth 2.0 Web Client ID | `512072860662-...apps.googleusercontent.com` |
 | `GOOGLE_CLIENT_SECRET` | OAuth 2.0 Client Secret | `GOCSPX-...` |
 | `GOOGLE_REDIRECT_URI` | Production Callback URL | `https://healthpulse-api-4vhy.onrender.com/api/auth/google/callback` |
 | `APPOINTMENT_TIMEZONE` | Timezone (Default: IST) | `Asia/Kolkata` |
-| `ENABLE_EMAIL_NOTIFICATIONS`| Enable real SMTP delivery | `true` |
-| `GMAIL_USER` | Gmail address for SMTP | `your_address@gmail.com` |
-| `GMAIL_APP_PASSWORD` | Google App Password (16 chars) | `xxxx xxxx xxxx xxxx` |
+| `ENABLE_EMAIL_NOTIFICATIONS`| Enable real email delivery | `true` |
+| `EMAIL_FROM` | Production Sender | `"HealthPulse <notifications@health-pulse.app>"` |
 | `EMAIL_FROM_NAME` | Sender display name | `"HealthPulse Hospital"` |
 | `SUPPORT_EMAIL` | Contact & support email | `support@yourdomain.com` |
 | `LLM_MODE` | Dual-engine or local-only | `dual` |

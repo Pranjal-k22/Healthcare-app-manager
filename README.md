@@ -8,7 +8,7 @@ HealthPulse is an enterprise-grade full-stack clinic management and patient foll
 
 | | URL |
 |:---|:---|
-| **Frontend (Vercel)** | https://healthpluse.vercel.app |
+| **Frontend (Production Domain)** | https://health-pulse.app (Primary) · https://www.health-pulse.app · https://healthpluse.vercel.app |
 | **Backend API (Render)** | https://healthpulse-api-4vhy.onrender.com |
 
 > **Note**: The backend runs on Render's free tier and may take ~30 seconds to wake from cold-start on the first request. Subsequent requests are fast.
@@ -22,7 +22,7 @@ HealthPulse is an enterprise-grade full-stack clinic management and patient foll
 | **Complete Source Code** | Full-stack monorepo (`server/` Express REST API + `client/` React 18 TypeScript SPA) | Repository Root (`/`) |
 | **System Design Write-Up** | Canonical ~750-word architecture report covering Concurrency, Holds, Leaves & Notification retries | [tasks/SYSTEM_DESIGN_WRITEUP.md](tasks/SYSTEM_DESIGN_WRITEUP.md) |
 | **Environment Configuration** | Environment template for local and production deployment | [.env.example](.env.example) |
-| **Hosted Application** | Frontend: [healthpluse.vercel.app](https://healthpluse.vercel.app) · API: [healthpulse-api-4vhy.onrender.com](https://healthpulse-api-4vhy.onrender.com) | [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) |
+| **Hosted Application** | Frontend: [health-pulse.app](https://health-pulse.app) · API: [healthpulse-api-4vhy.onrender.com](https://healthpulse-api-4vhy.onrender.com) | [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) |
 | **Privacy Policy** | OAuth 2.0 Compliance Privacy Policy Disclosure | [PRIVACY.md](PRIVACY.md) |
 
 ```text
@@ -127,7 +127,7 @@ GEMINI_TIMEOUT_MS=20000
 
 # Email Notification Settings (Resend Node.js SDK over HTTPS)
 RESEND_API_KEY=re_your_resend_api_key_here
-EMAIL_FROM="HealthPulse <onboarding@resend.dev>"
+EMAIL_FROM="HealthPulse <notifications@health-pulse.app>"
 EMAIL_FROM_NAME="HealthPulse Hospital"
 EMAIL_REPLY_TO=your-support-email@example.com
 SUPPORT_EMAIL=support@healthpulse.com
