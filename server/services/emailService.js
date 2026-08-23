@@ -29,20 +29,21 @@ const getActualRecipient = (intendedRecipient) => {
  */
 function isPermanentResendError(error) {
   if (!error) return false;
-  const status = Number(error.statusCode || error.status || error.httpStatus || 0);
-  const code = String(error.name || error.code || '').toLowerCase();
-  const message = String(error.message || '').toLowerCase();
+  const status = typeof error === 'object' && error !== null ? Number(error.statusCode || error.status || error.httpStatus || 0) : 0;
+  const code = typeof error === 'object' && error !== null ? String(error.name || error.code || '').toLowerCase() : '';
+  const message = typeof error === 'string' ? error.toLowerCase() : String(error?.message || '').toLowerCase();
+  const fullText = `${status} ${code} ${message}`;
 
   // Authentication/configuration/request errors
   if ([400, 401, 403, 404, 405, 422].includes(status)) {
     return true;
   }
   // Resend sandbox limitation
-  if (message.includes('you can only send testing emails to your own email address')) {
+  if (fullText.includes('you can only send testing emails to your own email address')) {
     return true;
   }
   // Unverified sender domain
-  if (message.includes('domain') && message.includes('not verified')) {
+  if (fullText.includes('domain') && (fullText.includes('not verified') || fullText.includes('verify'))) {
     return true;
   }
   // Bad request / validation
@@ -50,10 +51,10 @@ function isPermanentResendError(error) {
     code.includes('validation_error') ||
     code.includes('invalid_parameter') ||
     code.includes('missing_required') ||
-    message.includes('invalid') ||
-    message.includes('validation') ||
-    message.includes('403') ||
-    message.includes('422')
+    fullText.includes('invalid') ||
+    fullText.includes('validation') ||
+    fullText.includes('403') ||
+    fullText.includes('422')
   ) {
     return true;
   }
@@ -65,16 +66,17 @@ function isPermanentResendError(error) {
  */
 function isTransientResendError(error) {
   if (!error) return false;
-  const status = Number(error.statusCode || error.status || error.httpStatus || 0);
-  const code = String(error.code || error.name || '').toUpperCase();
-  const message = String(error.message || '').toUpperCase();
+  const status = typeof error === 'object' && error !== null ? Number(error.statusCode || error.status || error.httpStatus || 0) : 0;
+  const code = typeof error === 'object' && error !== null ? String(error.code || error.name || '').toUpperCase() : '';
+  const message = typeof error === 'string' ? error.toUpperCase() : String(error?.message || '').toUpperCase();
+  const fullText = `${status} ${code} ${message}`;
 
   if ([429, 500, 502, 503, 504].includes(status)) {
     return true;
   }
   if (
     ['ETIMEDOUT', 'ECONNRESET', 'ECONNREFUSED', 'ENETUNREACH', 'EAI_AGAIN'].some((c) =>
-      code.includes(c) || message.includes(c)
+      fullText.includes(c)
     )
   ) {
     return true;
@@ -150,7 +152,7 @@ const sendEmail = async ({
   console.log(`[EMAIL] intended=${rawRecipient}, actual=${actualRecipient}`);
 
   const mailPayload = {
-    from: config.EMAIL_FROM || 'HealthPulse <onboarding@resend.dev>',
+    from: config.EMAIL_FROM || 'HealthPulse <notifications@health-pulse.app>',
     to: [actualRecipient],
     subject: subject || 'HealthPulse Hospital Notification',
     html: html || `<p>${text || subject}</p>`,

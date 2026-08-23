@@ -133,8 +133,17 @@ const runEmailTests = async () => {
 module.exports = runEmailTests;
 
 if (require.main === module) {
-  runEmailTests().catch((err) => {
-    console.error('Email test failed:', err);
-    process.exit(1);
-  });
+  const connectDB = require('../config/db');
+  connectDB()
+    .then(() => runEmailTests())
+    .then(async () => {
+      if (mongoose.connection.readyState !== 0) {
+        await mongoose.connection.close();
+      }
+      process.exit(0);
+    })
+    .catch((err) => {
+      console.error('Email test failed:', err);
+      process.exit(1);
+    });
 }
