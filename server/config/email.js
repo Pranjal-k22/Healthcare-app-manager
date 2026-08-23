@@ -2,6 +2,10 @@ const nodemailer = require('nodemailer');
 const dns = require('dns');
 const config = require('./env');
 
+if (typeof dns.setDefaultResultOrder === 'function') {
+  dns.setDefaultResultOrder('ipv4first');
+}
+
 // Custom lookup function to force IPv4 DNS resolution (prevents ENETUNREACH on Render)
 function forceIPv4Lookup(hostname, options, callback) {
   if (typeof options === 'function') {
@@ -30,6 +34,7 @@ const getTransporter = () => {
       port: 587,
       secure: false,      // STARTTLS (port 587)
       requireTLS: true,
+      family: 4,          // Force IPv4 socket — prevents ENETUNREACH on Render
       lookup: forceIPv4Lookup, // Force IPv4 DNS resolution for this transporter
       auth: {
         user,
