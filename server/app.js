@@ -35,6 +35,7 @@ const configuredFrontendUrl = (config.FRONTEND_URL || '').replace(/\/+$/, '');
 const allowedOrigins = [
   configuredClientUrl,
   configuredFrontendUrl,
+  'https://healthpluse.vercel.app',
   'https://healthcare-app-manager.vercel.app',
   'http://localhost:5173',
   'http://127.0.0.1:5173',
@@ -49,7 +50,7 @@ app.use(
       const normalizedOrigin = origin.replace(/\/+$/, '');
       if (
         allowedOrigins.includes(normalizedOrigin) ||
-        /^https:\/\/healthcare-app-manager(-[a-z0-9-]+)?\.vercel\.app$/.test(normalizedOrigin)
+        /^https:\/\/(healthcare-app-manager|healthpluse)(-[a-z0-9-]+)?\.vercel\.app$/.test(normalizedOrigin)
       ) {
         return callback(null, true);
       }

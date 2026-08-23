@@ -8,8 +8,8 @@ HealthPulse is an enterprise-grade full-stack clinic management and patient foll
 
 | | URL |
 |:---|:---|
-| **Frontend (Vercel)** | https://healthcare-app-manager.vercel.app |
-| **Backend API (Render)** | https://healthpulse-api-p1zf.onrender.com |
+| **Frontend (Vercel)** | https://healthpluse.vercel.app |
+| **Backend API (Render)** | https://healthpulse-api-4vhy.onrender.com |
 
 > **Note**: The backend runs on Render's free tier and may take ~30 seconds to wake from cold-start on the first request. Subsequent requests are fast.
 
@@ -22,7 +22,7 @@ HealthPulse is an enterprise-grade full-stack clinic management and patient foll
 | **Complete Source Code** | Full-stack monorepo (`server/` Express REST API + `client/` React 18 TypeScript SPA) | Repository Root (`/`) |
 | **System Design Write-Up** | Canonical ~750-word architecture report covering Concurrency, Holds, Leaves & Notification retries | [tasks/SYSTEM_DESIGN_WRITEUP.md](tasks/SYSTEM_DESIGN_WRITEUP.md) |
 | **Environment Configuration** | Environment template for local and production deployment | [.env.example](.env.example) |
-| **Hosted Application** | Frontend: [healthcare-app-manager.vercel.app](https://healthcare-app-manager.vercel.app) · API: [healthpulse-api-p1zf.onrender.com](https://healthpulse-api-p1zf.onrender.com) | [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) |
+| **Hosted Application** | Frontend: [healthpluse.vercel.app](https://healthpluse.vercel.app) · API: [healthpulse-api-4vhy.onrender.com](https://healthpulse-api-4vhy.onrender.com) | [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) |
 
 ```text
 React 18 + Vite (Client SPA) ────► Express REST API (Node.js 20) ────► MongoDB (Source of Truth)
