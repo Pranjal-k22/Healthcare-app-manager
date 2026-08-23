@@ -1,6 +1,6 @@
 # HealthPulse — Healthcare Appointment & Follow-up Manager
 
-HealthPulse is an enterprise-grade full-stack clinic management and patient follow-up platform built with **React 18, TypeScript, Express, MongoDB, Nodemailer, and Local Ollama LLM**. It features concurrency-controlled appointment booking, automated slot holds, non-destructive doctor leave management, Google Calendar synchronization, scheduled medication adherence tracking, and privacy-preserving clinical AI assistance with zero-hallucination guardrails.
+HealthPulse is an enterprise-grade full-stack clinic management and patient follow-up platform built with **React 18, TypeScript, Express, MongoDB, Resend Node.js SDK, and Local Ollama LLM**. It features concurrency-controlled appointment booking, automated slot holds, non-destructive doctor leave management, Google Calendar synchronization, scheduled medication adherence tracking, and privacy-preserving clinical AI assistance with zero-hallucination guardrails.
 
 ---
 
@@ -30,8 +30,8 @@ React 18 + Vite (Client SPA) ────► Express REST API (Node.js 20) ─�
                                            │
          ┌─────────────────────────────────┼─────────────────────────────────┐
          ▼                                 ▼                                 ▼
-Background Schedulers             Local Ollama LLM                  Google Calendar & SMTP
-(Reminders, Leaves, Retries)     (qwen2.5-coder / llama3)           (OAuth2 & Gmail Transporter)
+Background Schedulers             Local Ollama LLM                  Google Calendar & Resend API
+(Reminders, Leaves, Retries)     (qwen2.5-coder / llama3)           (OAuth2 & Resend HTTPS SDK)
 ```
 
 ---
@@ -50,7 +50,7 @@ Background Schedulers             Local Ollama LLM                  Google Calen
 | **Appointments** | Atomic Rescheduling | ✅ Implemented | Rollback-safe reschedule transaction preserving audit trail and calendar event synchronization. |
 | **Clinical** | Consultation Findings & Notes | ✅ Implemented | Role-segregated Doctor Consultation Room (`/doctor/consultation/:appointmentId`). |
 | **Clinical** | Structured Prescriptions | ✅ Implemented | Validated medicines array with discrete dosage, frequency, duration, and clinical instructions. |
-| **Notifications** | Transactional Emails | ✅ Implemented | Nodemailer with Gmail SMTP for booking confirmations, cancellations, and reschedule links. |
+| **Notifications** | Transactional Emails | ✅ Implemented | Resend Node.js SDK over HTTPS API (port 443) with idempotency keys for booking confirmations, cancellations, and reschedule links. |
 | **Notifications** | 10-Minute Retry Worker | ✅ Implemented | Background scheduler (`emailRetryJob.js`) retrying failed emails with exponential backoff. |
 | **Calendar** | Google Calendar OAuth 2.0 | ✅ Implemented | Non-blocking two-way sync with AES-256 token encryption at rest and token redaction. |
 | **Leave** | Leave Conflict Engine | ✅ Implemented | 409 Conflict rejection, non-destructive appointment cancellation, and patient reschedule emails. |
@@ -125,12 +125,13 @@ GEMINI_TIMEOUT_MS=20000
 
 > ℹ️ **Privacy & Cloud Deployment Note**: In local/on-prem deployment, `LLM_MODE=local-only` ensures zero patient data leaves the server boundary. On the public hosted Render demo, `LLM_MODE=dual` enables AI feature demonstration via Google Gemini (`gemini-3.5-flash-lite`).
 
-# Email Notification Settings (Nodemailer + Gmail SMTP)
-GMAIL_USER=your_address@gmail.com
-GMAIL_APP_PASSWORD=your_16_character_app_password
+# Email Notification Settings (Resend Node.js SDK over HTTPS)
+RESEND_API_KEY=re_your_resend_api_key_here
+EMAIL_FROM="HealthPulse <onboarding@resend.dev>"
 EMAIL_FROM_NAME="HealthPulse Hospital"
-SUPPORT_EMAIL=your_address@gmail.com
-ENABLE_EMAIL_NOTIFICATIONS=false
+EMAIL_REPLY_TO=your-support-email@example.com
+SUPPORT_EMAIL=support@healthpulse.com
+ENABLE_EMAIL_NOTIFICATIONS=true
 
 # Google Calendar OAuth Integration
 GOOGLE_CLIENT_ID=your_google_client_id.apps.googleusercontent.com
@@ -424,14 +425,15 @@ HealthPulse provides non-blocking, two-way Google Calendar synchronization for p
 
 ---
 
-## 📧 Transactional Email Architecture (Nodemailer + Gmail SMTP)
+## 📧 Transactional Email Architecture (Resend Node.js SDK over HTTPS API)
 
-HealthPulse decouples all email transmissions from HTTP requests using an asynchronous in-process queue and persistent audit logging:
+HealthPulse uses the official **Resend Node.js SDK** (`resend`) over HTTPS API (port 443) for transactional email delivery. Email requests are decoupled from HTTP responses and processed asynchronously through an in-process notification queue. Delivery status, attempt counts, and errors are persisted in MongoDB (`NotificationLog`), and failed deliveries are retried with exponential backoff. Idempotency keys are generated per request (e.g. `bookingconfirmation-${appointmentId}-${recipient}`) to guarantee at-most-once delivery and prevent duplicate emails during retries.
 
-1. **Singleton Transporter**: Nodemailer configured with Gmail SMTP and verified at startup (`verifyTransporter`). Operates with a graceful mock logger if credentials are not configured.
-2. **Persistent Audit Logging**: Every outbound notification creates a `NotificationLog` entry tracking recipient, template, payload, status (`sent`, `failed`, `dead`), and attempt count.
-3. **10-Minute Exponential Backoff Worker**: `emailRetryJob.js` periodically queries failed emails with attempts `< 5`, applying delay ($2^{\text{attempts}}$ minutes) before retrying.
-4. **Supported Templates**:
+1. **Resend SDK Integration**: Configured with `RESEND_API_KEY` to dispatch emails via HTTPS POST (`https://api.resend.com/emails`) over standard port 443, eliminating SMTP network socket blocks. Operates with a graceful mock logger when notifications are disabled or keys are unconfigured.
+2. **Idempotency Keys**: Generates unique keys per notification job (`idempotencyKey: bookingconfirmation-${appointmentId}`) to protect against duplicate emails during background retries.
+3. **Persistent Audit Logging**: Every outbound notification creates a `NotificationLog` entry tracking recipient, template, payload, status (`sent`, `failed`, `dead`), and attempt count.
+4. **10-Minute Exponential Backoff Worker**: `emailRetryJob.js` periodically queries failed emails with attempts `< 5`, applying delay ($2^{\text{attempts}}$ minutes) before retrying.
+5. **Supported Templates**:
    - `bookingConfirmation`: Instant confirmation sent to patient & doctor upon booking.
    - `appointmentReminder`: 24-hour and 1-hour pre-consultation reminders.
    - `appointmentCancellation`: Sent upon cancellation with reason.
