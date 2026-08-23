@@ -32,15 +32,16 @@ const getTransporter = () => {
   if (config.ENABLE_EMAIL_NOTIFICATIONS && user && pass) {
     transporter = nodemailer.createTransport({
       host: 'smtp.gmail.com',
-      port: 587,
-      secure: false,      // STARTTLS (port 587) — Render blocks port 465 (SSL)
-      requireTLS: true,   // Enforce TLS upgrade after connection
+      port: 465,
+      secure: true,       // Direct SSL/TLS (port 465)
       family: 4,          // Force IPv4 socket — prevents ENETUNREACH on Render
       lookup: forceIPv4Lookup, // Force IPv4 DNS resolution for this transporter
       auth: {
         user,
         pass,
       },
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
     });
     console.log(`[EmailService] Nodemailer initialized with Gmail SMTP (${user})`);
   } else {
