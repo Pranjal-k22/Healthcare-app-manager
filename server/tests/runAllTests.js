@@ -13,6 +13,7 @@ const runE2ETests = require('./e2e.test');
 const { runProfileBillingTests } = require('./profileBillingPrescription.test');
 const runEmailTests = require('./email.test');
 const runConcurrencyTests = require('./concurrency.test');
+const runApiTests = require('./api.test');
 
 const runMasterTestSuite = async () => {
   console.log('================================================================');
@@ -21,7 +22,7 @@ const runMasterTestSuite = async () => {
 
   const startTime = Date.now();
   let passedSuites = 0;
-  const totalSuites = 13;
+  const totalSuites = 14;
 
   try {
     await runAuthTests();
@@ -35,7 +36,6 @@ const runMasterTestSuite = async () => {
 
     await runClinicalTests();
     passedSuites++;
-
 
     await runLeaveTests();
     passedSuites++;
@@ -62,6 +62,9 @@ const runMasterTestSuite = async () => {
     passedSuites++;
 
     await runEmailTests();
+    passedSuites++;
+
+    await runApiTests();
     passedSuites++;
 
     const duration = ((Date.now() - startTime) / 1000).toFixed(2);
