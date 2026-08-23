@@ -1,5 +1,15 @@
 const nodemailer = require('nodemailer');
+const dns = require('dns');
 const config = require('./env');
+
+// Custom lookup function to force IPv4 DNS resolution (prevents ENETUNREACH on Render)
+function forceIPv4Lookup(hostname, options, callback) {
+  if (typeof options === 'function') {
+    callback = options;
+    options = {};
+  }
+  dns.lookup(hostname, { family: 4 }, callback);
+}
 
 let transporter = null;
 
@@ -16,7 +26,11 @@ const getTransporter = () => {
 
   if (config.ENABLE_EMAIL_NOTIFICATIONS && user && pass) {
     transporter = nodemailer.createTransport({
-      service: 'gmail',
+      host: 'smtp.gmail.com',
+      port: 587,
+      secure: false,      // STARTTLS (port 587)
+      requireTLS: true,
+      lookup: forceIPv4Lookup, // Force IPv4 DNS resolution for this transporter
       auth: {
         user,
         pass,

@@ -20,6 +20,9 @@ const { notFound, errorHandler } = require('./middleware/errorMiddleware');
 
 const app = express();
 
+// Trust reverse proxy (1 hop for Render ingress proxy) to satisfy express-rate-limit
+app.set('trust proxy', 1);
+
 // Security Headers (Helmet)
 app.use(
   helmet({
