@@ -19,18 +19,12 @@ const config = {
   ADMIN_EMAIL: process.env.ADMIN_EMAIL || 'admin@healthcare.com',
   ADMIN_PASSWORD: process.env.ADMIN_PASSWORD || 'AdminPassword123!',
 
-  // Email Notification Settings (Nodemailer + Gmail SMTP)
-  GMAIL_USER: process.env.GMAIL_USER || process.env.SMTP_USER || '',
-  GMAIL_APP_PASSWORD: process.env.GMAIL_APP_PASSWORD || process.env.SMTP_PASS || '',
-  SMTP_HOST: process.env.SMTP_HOST || 'smtp.gmail.com',
-  SMTP_PORT: parseInt(process.env.SMTP_PORT, 10) || 587,
-  SMTP_USER: process.env.GMAIL_USER || process.env.SMTP_USER || '',
-  SMTP_PASS: process.env.GMAIL_APP_PASSWORD || process.env.SMTP_PASS || '',
+  // Email Notification Settings (Resend Node.js SDK over HTTPS)
+  RESEND_API_KEY: process.env.RESEND_API_KEY || '',
   EMAIL_FROM_NAME: process.env.EMAIL_FROM_NAME || 'HealthPulse Hospital',
-  EMAIL_FROM:
-    process.env.EMAIL_FROM ||
-    `"${process.env.EMAIL_FROM_NAME || 'HealthPulse Hospital'}" <${process.env.GMAIL_USER || process.env.SMTP_USER || 'notifications@healthpulse.com'}>`,
-  SUPPORT_EMAIL: process.env.SUPPORT_EMAIL || process.env.GMAIL_USER || 'support@healthpulse.com',
+  EMAIL_FROM: process.env.EMAIL_FROM || 'HealthPulse <onboarding@resend.dev>',
+  EMAIL_REPLY_TO: process.env.EMAIL_REPLY_TO || '',
+  SUPPORT_EMAIL: process.env.SUPPORT_EMAIL || 'support@healthpulse.com',
   ENABLE_EMAIL_NOTIFICATIONS: process.env.ENABLE_EMAIL_NOTIFICATIONS === 'true',
 
   // Background Job & Reminder Settings (Phase 5)

@@ -1,98 +1,36 @@
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 const NotificationLog = require('../models/NotificationLog');
 const config = require('../config/env');
-const dns = require('dns');
 
-if (typeof dns.setDefaultResultOrder === 'function') {
-  dns.setDefaultResultOrder('ipv4first');
-}
-
-// Custom lookup function to force IPv4 DNS resolution (prevents ENETUNREACH on Render)
-function forceIPv4Lookup(hostname, options, callback) {
-  if (typeof options === 'function') {
-    callback = options;
-    options = {};
-  }
-  dns.lookup(hostname, { family: 4 }, callback);
-}
-
-let transporter = null;
+let resendClient = null;
 
 /**
- * Initialize or return singleton Nodemailer transporter (created once at module load)
+ * Initialize or return singleton Resend SDK client instance
  */
-const getTransporter = () => {
-  if (transporter) {
-    return transporter;
+const getResendClient = () => {
+  if (!resendClient && config.RESEND_API_KEY) {
+    resendClient = new Resend(config.RESEND_API_KEY);
   }
-
-  const user = config.GMAIL_USER || config.SMTP_USER;
-  const pass = config.GMAIL_APP_PASSWORD || config.SMTP_PASS;
-
-  if (config.ENABLE_EMAIL_NOTIFICATIONS && user && pass) {
-    transporter = nodemailer.createTransport({
-      host: 'smtp.gmail.com',
-      port: 465,
-      secure: true,       // Direct SSL/TLS (port 465)
-      family: 4,          // Force IPv4 socket — prevents ENETUNREACH on Render
-      lookup: forceIPv4Lookup, // Force IPv4 DNS resolution for this transporter
-      auth: {
-        user,
-        pass,
-      },
-      connectionTimeout: 10000,
-      greetingTimeout: 10000,
-    });
-    console.log(`[EmailService] Nodemailer initialized with Gmail SMTP (${user})`);
-  } else {
-    // Development / Mock Transporter
-    transporter = {
-      sendMail: async (mailOptions) => {
-        console.log(
-          `[EmailService MOCK] [To: ${mailOptions.to}] [Subject: "${mailOptions.subject}"]`
-        );
-        return {
-          messageId: `mock-email-${Date.now()}-${Math.random().toString(36).substring(7)}`,
-          accepted: [mailOptions.to],
-        };
-      },
-      verify: async () => {
-        return true;
-      },
-    };
-    console.log('[EmailService] Running in Development / Mock Mode (Emails logged to console)');
-  }
-
-  return transporter;
+  return resendClient;
 };
 
-// Initialize transporter at module load
-getTransporter();
-
 /**
- * Verify transporter at server startup (logs clear warning, never crashes)
+ * Verify Resend SDK configuration at server startup without blocking
  */
 const verifyTransporter = async () => {
-  const activeTransporter = getTransporter();
-  if (activeTransporter && typeof activeTransporter.verify === 'function') {
-    try {
-      await activeTransporter.verify();
-      console.log('[EmailService] SMTP connection verified successfully with Gmail.');
-      return true;
-    } catch (error) {
-      console.warn(
-        `[EmailService] SMTP verification warning: ${error.message}. Check GMAIL_USER and GMAIL_APP_PASSWORD.`
-      );
-      return false;
-    }
+  if (config.ENABLE_EMAIL_NOTIFICATIONS && config.RESEND_API_KEY) {
+    console.log('[EmailService] Resend SDK initialized over HTTPS API (port 443).');
+    return true;
   }
+  console.log('[EmailService] Running in Development / Mock Mode (Emails logged to console)');
   return true;
 };
 
 /**
- * Core sendEmail function with NotificationLog persistence, exponential backoff, and non-blocking safety
- * @param {object} params - { to, subject, html, text, appointmentId, notificationType, payload, recipientName }
- * @returns {Promise<{ success: boolean, messageId?: string, logId?: string }>}
+ * Core sendEmail function using official Resend Node.js SDK with NotificationLog persistence,
+ * exponential backoff, idempotency keys, and non-blocking safety
+ * @param {object} params - { to, subject, html, text, appointmentId, notificationType, payload, recipientName, idempotencyKey }
+ * @returns {Promise<{ success: boolean, messageId?: string, emailId?: string, logId?: string, error?: string }>}
  */
 const sendEmail = async ({
   to,
@@ -103,36 +41,82 @@ const sendEmail = async ({
   notificationType = 'GENERAL_NOTIFICATION',
   payload = {},
   recipientName = '',
+  idempotencyKey = null,
 }) => {
-  if (!to || typeof to !== 'string' || !to.trim()) {
+  if (!to || (typeof to !== 'string' && !Array.isArray(to))) {
     console.warn('[EmailService] sendEmail skipped: No recipient email provided');
     return { success: false, error: 'Recipient email missing' };
   }
 
-  const recipient = to.trim().toLowerCase();
-  const mailOptions = {
-    from: config.EMAIL_FROM,
-    to: recipient,
+  const recipientList = Array.isArray(to) ? to : [to.trim().toLowerCase()];
+  const recipientStr = recipientList.join(', ');
+
+  const mailPayload = {
+    from: config.EMAIL_FROM || 'HealthPulse <onboarding@resend.dev>',
+    to: recipientList,
     subject: subject || 'HealthPulse Hospital Notification',
     html: html || `<p>${text || subject}</p>`,
-    text: text || subject,
+    ...(text && { text }),
+    ...(config.EMAIL_REPLY_TO && { replyTo: config.EMAIL_REPLY_TO }),
   };
 
-  const activeTransporter = getTransporter();
+  const effectiveIdempotencyKey =
+    idempotencyKey || (appointmentId ? `${notificationType.toLowerCase()}-${appointmentId}` : undefined);
 
+  // If email notifications are disabled or API key is missing, execute in Mock Mode
+  if (!config.ENABLE_EMAIL_NOTIFICATIONS || !config.RESEND_API_KEY) {
+    console.log(`[EmailService MOCK] [To: ${recipientStr}] [Subject: "${mailPayload.subject}"]`);
+    const mockId = `mock-email-${Date.now()}-${Math.random().toString(36).substring(7)}`;
+
+    let logEntry = null;
+    try {
+      logEntry = await NotificationLog.create({
+        recipientEmail: recipientStr,
+        recipientName: recipientName || payload.recipientName || '',
+        notificationType,
+        appointmentId,
+        subject: mailPayload.subject,
+        payload,
+        status: 'sent',
+        attempts: 1,
+        sentAt: new Date(),
+      });
+    } catch (logErr) {
+      console.warn('[EmailService] Warning writing mock NotificationLog:', logErr.message);
+    }
+
+    return {
+      success: true,
+      mocked: true,
+      messageId: mockId,
+      emailId: mockId,
+      logId: logEntry ? logEntry._id : null,
+    };
+  }
+
+  // Real Resend API Send via HTTPS SDK
   try {
-    const info = await activeTransporter.sendMail(mailOptions);
-    console.log(`[EmailService] Email delivered to ${recipient} (ID: ${info.messageId || 'OK'})`);
+    const resend = getResendClient();
+    const options = effectiveIdempotencyKey ? { idempotencyKey: effectiveIdempotencyKey } : undefined;
+
+    const { data, error } = await resend.emails.send(mailPayload, options);
+
+    if (error) {
+      throw new Error(error.message || 'Failed to dispatch via Resend API');
+    }
+
+    const emailId = data.id || `resend-${Date.now()}`;
+    console.log(`[EmailService] Email sent successfully via Resend API to ${recipientStr} (ID: ${emailId})`);
 
     // Write success to NotificationLog
     let logEntry = null;
     try {
       logEntry = await NotificationLog.create({
-        recipientEmail: recipient,
+        recipientEmail: recipientStr,
         recipientName: recipientName || payload.recipientName || '',
         notificationType,
         appointmentId,
-        subject: mailOptions.subject,
+        subject: mailPayload.subject,
         payload,
         status: 'sent',
         attempts: 1,
@@ -144,13 +128,13 @@ const sendEmail = async ({
 
     return {
       success: true,
-      messageId: info.messageId,
+      messageId: emailId,
+      emailId,
       logId: logEntry ? logEntry._id : null,
     };
   } catch (sendError) {
-    console.error(`[EmailService] Failed to send email to ${recipient}: ${sendError.message}`);
+    console.error(`[EmailService] Failed to send email to ${recipientStr}: ${sendError.message}`);
 
-    // Compute exponential backoff for next retry (e.g. 2^1 = 2 minutes, 2^2 = 4 min, etc.)
     const attempts = 1;
     const backoffMinutes = Math.min(60, Math.pow(2, attempts));
     const nextRetryAt = new Date(Date.now() + backoffMinutes * 60 * 1000);
@@ -158,11 +142,11 @@ const sendEmail = async ({
     let logEntry = null;
     try {
       logEntry = await NotificationLog.create({
-        recipientEmail: recipient,
+        recipientEmail: recipientStr,
         recipientName: recipientName || payload.recipientName || '',
         notificationType,
         appointmentId,
-        subject: mailOptions.subject,
+        subject: mailPayload.subject,
         payload,
         status: 'failed',
         attempts,
@@ -173,7 +157,6 @@ const sendEmail = async ({
       console.warn('[EmailService] Warning writing failure NotificationLog:', logErr.message);
     }
 
-    // Never throw - graceful failure ensures core booking transactions are never blocked
     return {
       success: false,
       error: sendError.message,
@@ -212,7 +195,6 @@ const retryFailedNotifications = async (maxBatch = 20) => {
     for (const log of failedLogs) {
       const currentAttempts = log.attempts + 1;
 
-      // Check if template rendering can be reconstructed from payload
       let rendered = null;
       if (log.payload && log.notificationType) {
         const templateFn = emailTemplates[log.notificationType] || emailTemplates.bookingConfirmation;
@@ -221,17 +203,19 @@ const retryFailedNotifications = async (maxBatch = 20) => {
         }
       }
 
-      const mailOptions = {
-        from: config.EMAIL_FROM,
+      const retryResult = await sendEmail({
         to: log.recipientEmail,
         subject: rendered ? rendered.subject : log.subject,
         html: rendered ? rendered.html : `<p>${log.subject}</p>`,
         text: rendered ? rendered.text : log.subject,
-      };
+        appointmentId: log.appointmentId,
+        notificationType: log.notificationType,
+        payload: log.payload,
+        recipientName: log.recipientName,
+        idempotencyKey: `retry-${currentAttempts}-${log._id}`,
+      });
 
-      try {
-        const activeTransporter = getTransporter();
-        const info = await activeTransporter.sendMail(mailOptions);
+      if (retryResult.success) {
         log.status = 'sent';
         log.attempts = currentAttempts;
         log.sentAt = new Date();
@@ -239,9 +223,9 @@ const retryFailedNotifications = async (maxBatch = 20) => {
         await log.save();
         succeeded++;
         console.log(`[EmailRetryWorker] Retry succeeded for log ${log._id} -> ${log.recipientEmail}`);
-      } catch (retryError) {
+      } else {
         log.attempts = currentAttempts;
-        log.lastError = retryError.message;
+        log.lastError = retryResult.error || 'Retry failed';
 
         if (currentAttempts >= MAX_ATTEMPTS) {
           log.status = 'dead';
@@ -269,7 +253,7 @@ const retryFailedNotifications = async (maxBatch = 20) => {
 };
 
 module.exports = {
-  getTransporter,
+  getResendClient,
   verifyTransporter,
   sendEmail,
   retryFailedNotifications,

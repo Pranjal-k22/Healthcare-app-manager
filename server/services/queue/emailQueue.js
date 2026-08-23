@@ -49,7 +49,11 @@ const processNotificationJob = async (payload) => {
     text: templateData.text || 'Notification',
   };
 
-  // 3. Send Email via central EmailService
+  const idempotencyKey = appointmentId
+    ? `${effectiveType.toLowerCase()}-${appointmentId}-${normalizedTo.replace(/[^a-z0-9]/g, '')}`
+    : `notification-${Date.now()}`;
+
+  // 3. Send Email via central EmailService (Resend SDK over HTTPS API)
   console.log(`[EmailWorker] Dispatching ${effectiveType} to ${normalizedTo}`);
   const result = await emailService.sendEmail({
     to: normalizedTo,
@@ -60,6 +64,7 @@ const processNotificationJob = async (payload) => {
     notificationType: effectiveType,
     payload: templateData,
     recipientName,
+    idempotencyKey,
   });
 
   return result;

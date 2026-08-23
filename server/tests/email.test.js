@@ -5,7 +5,7 @@ const emailTemplates = require('../services/emailTemplates');
 const { sendEmail } = require('../services/emailService');
 
 const runEmailTests = async () => {
-  console.log('\n--- [TEST SUITE 12] Nodemailer Gmail SMTP & Email Notifications ---');
+  console.log('\n--- [TEST SUITE 12] Resend Node.js SDK & Email Notifications ---');
 
   // 1. Validate All 6 On-Brand Email Templates
   const sampleData = {
@@ -101,7 +101,7 @@ const runEmailTests = async () => {
 
   // 3. Test sendEmail In-Memory Execution
   const successResult = await sendEmail({
-    to: 'test-patient@healthpulse.com',
+    to: process.env.TEST_EMAIL || 'pranjalkaran2004@gmail.com',
     subject: booking.subject,
     html: booking.html,
     text: booking.text,
@@ -127,7 +127,7 @@ const runEmailTests = async () => {
   assert.strictEqual(emptyResult.success, false, 'Should return false without throwing');
   console.log('✓ Non-blocking graceful error handling verified (email failures never throw)');
 
-  console.log('✓ [PASS] All Nodemailer & Email Notification Tests Passed!\n');
+  console.log('✓ [PASS] All Resend SDK & Email Notification Tests Passed!\n');
 };
 
 module.exports = runEmailTests;
