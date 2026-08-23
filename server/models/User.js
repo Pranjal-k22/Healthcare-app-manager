@@ -82,6 +82,14 @@ const userSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    activationToken: {
+      type: String,
+      default: null,
+    },
+    activationExpires: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,
@@ -90,6 +98,8 @@ const userSchema = new mongoose.Schema(
         delete ret.password;
         delete ret.passwordResetToken;
         delete ret.passwordResetExpires;
+        delete ret.activationToken;
+        delete ret.activationExpires;
         delete ret.__v;
         return ret;
       },

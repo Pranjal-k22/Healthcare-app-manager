@@ -117,8 +117,8 @@ const createDoctor = async (data) => {
       email: email.toLowerCase().trim(),
       password: initialPassword,
       role: 'DOCTOR',
-      passwordResetToken: hashedToken,
-      passwordResetExpires: new Date(Date.now() + 48 * 60 * 60 * 1000), // 48 hours
+      activationToken: hashedToken,
+      activationExpires: new Date(Date.now() + 48 * 60 * 60 * 1000), // 48 hours
     });
 
     // 3. Create DoctorProfile linked by userId

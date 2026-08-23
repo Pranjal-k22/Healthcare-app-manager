@@ -7,11 +7,12 @@ const config = require('../config/env');
  * @param {string} role - User Role ('PATIENT' | 'DOCTOR' | 'ADMIN')
  * @returns {string} Signed JWT token
  */
-const generateToken = (id, role) => {
+const generateToken = (id, role, tokenVersion = 0) => {
   return jwt.sign(
     {
       id,
       role,
+      tokenVersion,
     },
     config.JWT_SECRET,
     {

@@ -26,6 +26,18 @@ const protect = async (req, res, next) => {
         });
       }
 
+      // Enforce tokenVersion session invalidation check
+      if (
+        decoded.tokenVersion !== undefined &&
+        user.tokenVersion !== undefined &&
+        decoded.tokenVersion < user.tokenVersion
+      ) {
+        return res.status(401).json({
+          success: false,
+          message: 'Session has been invalidated due to password reset or security change. Please sign in again.',
+        });
+      }
+
       req.user = user;
       return next();
     } catch (error) {

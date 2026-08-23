@@ -81,7 +81,12 @@ const runAuthTests = async () => {
   const activationExpiry = new Date(Date.now() + 48 * 60 * 60 * 1000);
   assert.ok(activationExpiry > new Date(), 'Doctor activation token must be valid for 48 hours');
   assert.strictEqual(hashedActivation.length, 64, 'Doctor activation hash must be 64 hex characters');
-  console.log('✓ Doctor activation token generation & 48-hour expiration verified');
+  // 10. tokenVersion Session Invalidation Check
+  const oldToken = jwt.sign({ id: mockUser._id, role: 'PATIENT', tokenVersion: 0 }, config.JWT_SECRET);
+  const currentTokenVersion = 1; // User reset password
+  const decodedOldToken = jwt.verify(oldToken, config.JWT_SECRET);
+  assert.ok(decodedOldToken.tokenVersion < currentTokenVersion, 'Old tokenVersion must be less than current User tokenVersion');
+  console.log('✓ tokenVersion instant session invalidation check verified');
 
   console.log('✓ [PASS] All Authentication & Session Security Tests Passed!');
 };

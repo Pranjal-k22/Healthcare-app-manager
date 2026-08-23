@@ -55,7 +55,7 @@ const register = async (req, res, next) => {
       role: 'PATIENT',
     });
 
-    const token = generateToken(user._id, user.role);
+    const token = generateToken(user._id, user.role, user.tokenVersion || 0);
 
     return res.status(201).json({
       success: true,
@@ -76,7 +76,7 @@ const register = async (req, res, next) => {
 };
 
 /**
- * @desc    Authenticate user & validate submitted portal role
+ * @desc    Authenticate user & validate submitted portal role (Enumeration-Safe)
  * @route   POST /api/auth/login
  * @access  Public
  */
@@ -101,15 +101,7 @@ const login = async (req, res, next) => {
       });
     }
 
-    // Role mismatch check: Validate user's actual role against submitted portal role
-    if (role && user.role !== role.toUpperCase()) {
-      return res.status(400).json({
-        success: false,
-        code: 'ROLE_MISMATCH',
-        message: `Account role mismatch. This email is registered as a ${user.role}. Please select the ${user.role.charAt(0) + user.role.slice(1).toLowerCase()} portal.`,
-      });
-    }
-
+    // 1. Validate password FIRST to prevent account/role enumeration attacks
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
       return res.status(401).json({
@@ -118,7 +110,16 @@ const login = async (req, res, next) => {
       });
     }
 
-    const token = generateToken(user._id, user.role);
+    // 2. Validate role mismatch SECOND (only after password verification succeeds)
+    if (role && user.role !== role.toUpperCase()) {
+      return res.status(400).json({
+        success: false,
+        code: 'ROLE_MISMATCH',
+        message: `Account role mismatch. This email is registered as a ${user.role}. Please select the ${user.role.charAt(0) + user.role.slice(1).toLowerCase()} portal.`,
+      });
+    }
+
+    const token = generateToken(user._id, user.role, user.tokenVersion || 0);
 
     return res.status(200).json({
       success: true,
@@ -276,12 +277,68 @@ const resetPassword = async (req, res, next) => {
 };
 
 /**
- * @desc    Doctor First-Time Account Activation / Set Password
+ * @desc    Doctor First-Time Account Activation / Set Password (Dedicated activationToken field)
  * @route   POST /api/auth/set-password
  * @access  Public
  */
 const setPassword = async (req, res, next) => {
-  return resetPassword(req, res, next);
+  try {
+    const { token, password } = req.body;
+
+    if (!token || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide both activation token and new password',
+      });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: 'Password must be at least 6 characters long',
+      });
+    }
+
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+    // 1. Check dedicated activationToken field
+    let user = await User.findOne({
+      activationToken: hashedToken,
+      activationExpires: { $gt: new Date() },
+    });
+
+    // 2. Fallback check for passwordResetToken
+    if (!user) {
+      user = await User.findOne({
+        passwordResetToken: hashedToken,
+        passwordResetExpires: { $gt: new Date() },
+      });
+    }
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: 'Activation token is invalid or has expired',
+      });
+    }
+
+    user.password = password;
+    user.activationToken = undefined;
+    user.activationExpires = undefined;
+    user.passwordResetToken = undefined;
+    user.passwordResetExpires = undefined;
+    user.tokenVersion = (user.tokenVersion || 0) + 1;
+    await user.save();
+
+    notificationService.dispatchPasswordChangedAlert(user).catch(() => {});
+
+    return res.status(200).json({
+      success: true,
+      message: 'Account activated successfully. Please sign in with your new password.',
+    });
+  } catch (error) {
+    next(error);
+  }
 };
 
 /**
