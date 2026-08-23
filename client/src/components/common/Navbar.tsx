@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { NotificationBell } from './NotificationBell';
+import { NavCalendarButton } from './NavCalendarButton';
 import {
   Calendar,
   CalendarCheck,
@@ -233,6 +234,7 @@ export const Navbar: React.FC = () => {
           <div className="nav-user-panel">
             {isAuthenticated && user ? (
               <>
+                <NavCalendarButton />
                 <NotificationBell />
 
                 <div className="user-identity">
