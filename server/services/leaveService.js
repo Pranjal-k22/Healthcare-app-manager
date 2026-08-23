@@ -289,46 +289,60 @@ const updateDoctorLeaveStatusAdmin = async (leaveId, updateData, adminUser) => {
     throw error;
   }
 
-  leave.status = status;
-  if (status === 'APPROVED') {
-    leave.approvedBy = adminUser._id;
-    leave.approvedAt = new Date();
-    leave.rejectedBy = null;
-    leave.rejectedAt = null;
-    leave.rejectionReason = '';
+  let cancelledAppointments = [];
+  const session = await mongoose.startSession();
+  try {
+    await session.withTransaction(async () => {
+      leave.status = status;
+      if (status === 'APPROVED') {
+        leave.approvedBy = adminUser._id;
+        leave.approvedAt = new Date();
+        leave.rejectedBy = null;
+        leave.rejectedAt = null;
+        leave.rejectionReason = '';
 
-    // Cascade Conflict Detection & Cancellation
-    const conflictingAppointments = await Appointment.find({
-      doctorId: leave.doctorId,
-      date: { $gte: leave.startDate, $lte: leave.endDate },
-      status: 'BOOKED',
-    });
+        // Cascade Conflict Detection & Cancellation
+        const conflictingAppointments = await Appointment.find({
+          doctorId: leave.doctorId,
+          date: { $gte: leave.startDate, $lte: leave.endDate },
+          status: 'BOOKED',
+        }).session(session);
 
-    if (conflictingAppointments.length > 0) {
-      for (const appointment of conflictingAppointments) {
-        appointment.status = 'CANCELLED';
-        appointment.cancellationReason = 'DOCTOR_LEAVE';
-        await appointment.save();
-
-        try {
-          await notificationService.dispatchAppointmentCancelled(appointment, { role: 'ADMIN' });
-        } catch (dispatchErr) {
-          console.error(
-            `[LeaveService] Failed to dispatch cancellation notification for appointment ${appointment._id}:`,
-            dispatchErr.message
-          );
+        if (conflictingAppointments.length > 0) {
+          for (const appointment of conflictingAppointments) {
+            appointment.status = 'CANCELLED';
+            appointment.cancellationReason = 'DOCTOR_LEAVE';
+            await appointment.save({ session });
+            cancelledAppointments.push(appointment);
+          }
         }
+      } else {
+        leave.rejectedBy = adminUser._id;
+        leave.rejectedAt = new Date();
+        leave.rejectionReason = adminNotes.trim() || 'Declined by Administrator';
+        leave.approvedBy = null;
+        leave.approvedAt = null;
       }
-    }
-  } else {
-    leave.rejectedBy = adminUser._id;
-    leave.rejectedAt = new Date();
-    leave.rejectionReason = adminNotes.trim() || 'Declined by Administrator';
-    leave.approvedBy = null;
-    leave.approvedAt = null;
+
+      await leave.save({ session });
+    });
+  } finally {
+    session.endSession();
   }
 
-  await leave.save();
+  // Post-commit notification dispatches
+  if (cancelledAppointments.length > 0) {
+    for (const appointment of cancelledAppointments) {
+      try {
+        await notificationService.dispatchAppointmentCancelled(appointment, { role: 'ADMIN' });
+      } catch (dispatchErr) {
+        console.error(
+          `[LeaveService] Failed to dispatch cancellation notification for appointment ${appointment._id}:`,
+          dispatchErr.message
+        );
+      }
+    }
+  }
 
   // Asynchronously dispatch decision confirmation email to the doctor
   (async () => {

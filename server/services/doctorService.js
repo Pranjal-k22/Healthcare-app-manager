@@ -627,31 +627,39 @@ const deleteDoctorCompletely = async (id) => {
   const doctorName = profile.userId?.name || 'Doctor';
   const doctorEmail = profile.userId?.email || '';
 
-  // 2. Cascade delete related entities:
-  // a) Cancel any pending / booked appointments
-  await Appointment.updateMany(
-    { doctorId: doctorUserId, status: { $in: ['BOOKED', 'PENDING', 'RESCHEDULED'] } },
-    { $set: { status: 'CANCELLED', reason: 'Doctor profile removed by hospital administration' } }
-  );
-
-  // b) Delete doctor leaves
-  await DoctorLeave.deleteMany({ doctorId: doctorUserId });
-
-  // c) Delete DoctorProfile
-  await DoctorProfile.findByIdAndDelete(doctorProfileId);
-
-  // d) Delete User entity
-  if (doctorUserId) {
-    await User.findByIdAndDelete(doctorUserId);
-  }
-
-  // e) Delete CalendarConnection if any
+  // 2. Cascade delete related entities within a MongoDB session transaction:
+  const session = await mongoose.startSession();
   try {
-    const { CalendarConnection } = require('../models/CalendarConnection');
-    if (CalendarConnection) {
-      await CalendarConnection.deleteMany({ userId: doctorUserId });
-    }
-  } catch (err) {}
+    await session.withTransaction(async () => {
+      // a) Cancel any pending / booked appointments
+      await Appointment.updateMany(
+        { doctorId: doctorUserId, status: { $in: ['BOOKED', 'PENDING', 'RESCHEDULED'] } },
+        { $set: { status: 'CANCELLED', reason: 'Doctor profile removed by hospital administration' } },
+        { session }
+      );
+
+      // b) Delete doctor leaves
+      await DoctorLeave.deleteMany({ doctorId: doctorUserId }, { session });
+
+      // c) Delete DoctorProfile
+      await DoctorProfile.findByIdAndDelete(doctorProfileId, { session });
+
+      // d) Delete User entity
+      if (doctorUserId) {
+        await User.findByIdAndDelete(doctorUserId, { session });
+      }
+
+      // e) Delete CalendarConnection if any
+      try {
+        const CalendarConnection = require('../models/CalendarConnection');
+        if (CalendarConnection) {
+          await CalendarConnection.deleteMany({ userId: doctorUserId }, { session });
+        }
+      } catch (err) {}
+    });
+  } finally {
+    session.endSession();
+  }
 
   return {
     deletedId: doctorProfileId.toString(),
