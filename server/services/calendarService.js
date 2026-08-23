@@ -123,6 +123,10 @@ const handleOAuthCallback = async (code, state) => {
     updatePayload.refreshToken = encryptedRefreshToken;
   } else if (!existingConnection || !existingConnection.refreshToken) {
     updatePayload.refreshToken = '';
+    console.warn(
+      `[CalendarService] Warning: Google did not return a refresh_token for user ${userId}. ` +
+      'If token refresh fails in future, user should revoke app access at https://myaccount.google.com/permissions and reconnect.'
+    );
   }
 
   await CalendarConnection.findOneAndUpdate(

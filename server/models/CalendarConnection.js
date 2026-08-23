@@ -21,7 +21,16 @@ const calendarConnectionSchema = new mongoose.Schema(
     },
     accessToken: {
       type: String,
-      required: [true, 'Access token is required'],
+      default: '',
+      validate: {
+        validator: function (v) {
+          if (this.isConnected) {
+            return typeof v === 'string' && v.trim().length > 0;
+          }
+          return true;
+        },
+        message: 'Access token is required when connected',
+      },
     },
     refreshToken: {
       type: String,
