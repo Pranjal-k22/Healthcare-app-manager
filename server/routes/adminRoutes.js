@@ -1,18 +1,18 @@
 const express = require('express');
 const router = express.Router();
 const {
-  getPasswordRequests,
-  approvePasswordRequest,
-  denyPasswordRequest,
-} = require('../controllers/passwordRequestController');
+  getDoctorResetRequests,
+  approveDoctorReset,
+  denyDoctorReset,
+} = require('../controllers/doctorResetController');
 const { protect } = require('../middleware/authMiddleware');
 const { requireRole } = require('../middleware/roleMiddleware');
 
 router.use(protect);
 router.use(requireRole('ADMIN'));
 
-router.get('/password-requests', getPasswordRequests);
-router.post('/password-requests/:id/approve', approvePasswordRequest);
-router.post('/password-requests/:id/deny', denyPasswordRequest);
+router.get('/doctor-reset-requests', getDoctorResetRequests);
+router.post('/doctor-reset-requests/:id/approve', approveDoctorReset);
+router.post('/doctor-reset-requests/:id/deny', denyDoctorReset);
 
 module.exports = router;

@@ -33,7 +33,7 @@ export const ForgotPassword: React.FC = () => {
       setIsSubmitting(true);
       const response = await forgotPassword({ email: email.trim(), role });
       setSuccessMessage(
-        response.message || 'If an account exists, your request has been sent for admin approval. You will receive a verification code by email once approved.'
+        response.message || "If an account exists, you'll receive instructions by email shortly."
       );
     } catch (err: any) {
       setError(err.message || 'Failed to send password reset request. Please try again.');

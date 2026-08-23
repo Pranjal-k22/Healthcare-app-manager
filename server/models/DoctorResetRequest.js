@@ -1,17 +1,12 @@
 const mongoose = require('mongoose');
 
-const passwordResetRequestSchema = new mongoose.Schema(
+const doctorResetRequestSchema = new mongoose.Schema(
   {
-    user: {
+    doctor: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
-      required: [true, 'User ID is required'],
+      required: [true, 'Doctor User ID is required'],
       index: true,
-    },
-    requestedRole: {
-      type: String,
-      enum: ['PATIENT', 'DOCTOR', 'ADMIN'],
-      required: [true, 'Requested role is required'],
     },
     status: {
       type: String,
@@ -35,6 +30,10 @@ const passwordResetRequestSchema = new mongoose.Schema(
       type: Date,
       default: Date.now,
     },
+    expiresAt: {
+      type: Date,
+      default: () => new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 Hours TTL
+    },
     reviewedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
@@ -47,10 +46,6 @@ const passwordResetRequestSchema = new mongoose.Schema(
     ipAddress: {
       type: String,
       default: '',
-    },
-    expiresAt: {
-      type: Date,
-      default: () => new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 Hours TTL
     },
   },
   {
@@ -65,9 +60,9 @@ const passwordResetRequestSchema = new mongoose.Schema(
   }
 );
 
-// TTL Index: Auto-evict expired PENDING requests after 24 hours
-passwordResetRequestSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+// TTL Index: Auto-evict unreviewed PENDING requests after 24 hours
+doctorResetRequestSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
-const PasswordResetRequest = mongoose.model('PasswordResetRequest', passwordResetRequestSchema);
+const DoctorResetRequest = mongoose.model('DoctorResetRequest', doctorResetRequestSchema);
 
-module.exports = PasswordResetRequest;
+module.exports = DoctorResetRequest;

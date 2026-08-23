@@ -14,7 +14,7 @@ const { runProfileBillingTests } = require('./profileBillingPrescription.test');
 const runEmailTests = require('./email.test');
 const runConcurrencyTests = require('./concurrency.test');
 const runApiTests = require('./api.test');
-const runPasswordRequestTests = require('./passwordRequest.test');
+const runDoctorResetRequestTests = require('./doctorResetRequest.test');
 
 const config = require('../config/env');
 
@@ -35,7 +35,7 @@ const runMasterTestSuite = async () => {
     await runAuthTests();
     passedSuites++;
 
-    await runPasswordRequestTests();
+    await runDoctorResetRequestTests();
     passedSuites++;
 
     await runAppointmentTests();

@@ -914,6 +914,109 @@ const dispatchOtpEmail = async (requesterUser, resetRequest, rawOtp) => {
   }
 };
 
+/**
+ * Alert Administrators when a Doctor submits a Password Reset Request (Pending Approval)
+ * @param {object} resetRequest - DoctorResetRequest document
+ * @param {object} doctorUser - Doctor User document
+ */
+const dispatchDoctorResetPendingAlert = async (resetRequest, doctorUser) => {
+  try {
+    const admins = await User.find({ role: 'ADMIN' }).select('email name');
+    const payload = {
+      doctorName: doctorUser.name,
+      doctorEmail: doctorUser.email,
+      requestedAt: resetRequest.requestedAt ? new Date(resetRequest.requestedAt).toLocaleString() : new Date().toLocaleString(),
+      requestId: resetRequest._id.toString(),
+    };
+
+    for (const admin of admins) {
+      queueEmailNotification({
+        to: admin.email,
+        recipientName: admin.name || 'Hospital Admin',
+        templateName: 'doctorResetPending',
+        templateData: payload,
+        notificationType: 'DOCTOR_RESET_PENDING',
+      });
+
+      createNotification({
+        userId: admin._id,
+        type: 'DOCTOR_RESET_REQUESTED',
+        title: 'Doctor Password Reset Pending Review',
+        message: `Dr. ${doctorUser.name} requested a password reset. Approval required in Admin Portal.`,
+        metadata: { requestId: resetRequest._id, doctorId: doctorUser._id },
+      }).catch(() => {});
+    }
+  } catch (err) {
+    console.error('[NotificationService] Error in dispatchDoctorResetPendingAlert:', err.message);
+  }
+};
+
+/**
+ * Dispatch 6-Digit OTP Email to Doctor upon Admin Approval
+ * @param {object} doctorUser - Doctor User document
+ * @param {object} resetRequest - DoctorResetRequest document
+ * @param {string} rawOtp - Unhashed 6-digit numeric OTP
+ */
+const dispatchDoctorOtpEmail = async (doctorUser, resetRequest, rawOtp) => {
+  try {
+    const config = require('../config/env');
+    const frontendUrl = config.FRONTEND_URL || 'http://localhost:5173';
+    const verifyUrl = `${frontendUrl}/doctor/verify-otp?requestId=${resetRequest._id.toString()}`;
+
+    queueEmailNotification({
+      to: doctorUser.email,
+      recipientName: `Dr. ${doctorUser.name}`,
+      templateName: 'doctorOtpDelivery',
+      templateData: {
+        doctorName: doctorUser.name,
+        otp: rawOtp,
+        verifyUrl,
+        expiresMinutes: 10,
+      },
+      notificationType: 'DOCTOR_OTP_DELIVERY',
+    });
+
+    createNotification({
+      userId: doctorUser._id,
+      type: 'DOCTOR_RESET_APPROVED',
+      title: 'Doctor Password Reset Approved',
+      message: 'Your password reset request has been approved by administration. Check your email for your 6-digit verification code.',
+      metadata: { requestId: resetRequest._id },
+    }).catch(() => {});
+  } catch (err) {
+    console.error('[NotificationService] Error in dispatchDoctorOtpEmail:', err.message);
+  }
+};
+
+/**
+ * Dispatch Neutral Denial Email to Doctor if Admin Denies Reset Request
+ * @param {object} doctorUser - Doctor User document
+ * @param {object} resetRequest - DoctorResetRequest document
+ */
+const dispatchDoctorResetDeniedEmail = async (doctorUser, resetRequest) => {
+  try {
+    queueEmailNotification({
+      to: doctorUser.email,
+      recipientName: `Dr. ${doctorUser.name}`,
+      templateName: 'doctorResetDenied',
+      templateData: {
+        doctorName: doctorUser.name,
+      },
+      notificationType: 'DOCTOR_RESET_DENIED',
+    });
+
+    createNotification({
+      userId: doctorUser._id,
+      type: 'DOCTOR_RESET_DENIED',
+      title: 'Doctor Password Reset Update',
+      message: 'Your password reset application could not be processed at this time. Contact administration for support.',
+      metadata: { requestId: resetRequest._id },
+    }).catch(() => {});
+  } catch (err) {
+    console.error('[NotificationService] Error in dispatchDoctorResetDeniedEmail:', err.message);
+  }
+};
+
 module.exports = {
   createNotification,
   getUserNotifications,
@@ -938,4 +1041,7 @@ module.exports = {
   dispatchDoctorActivationEmail,
   dispatchAdminApprovalAlert,
   dispatchOtpEmail,
+  dispatchDoctorResetPendingAlert,
+  dispatchDoctorOtpEmail,
+  dispatchDoctorResetDeniedEmail,
 };

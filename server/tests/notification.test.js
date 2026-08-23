@@ -30,6 +30,10 @@ const runNotificationTests = async () => {
     'ACCOUNT_PROVISIONED',
     'DOCTOR_PROVISIONED',
     'SYSTEM_ALERT',
+    'PASSWORD_RESET',
+    'DOCTOR_RESET_REQUESTED',
+    'DOCTOR_RESET_APPROVED',
+    'DOCTOR_RESET_DENIED',
   ]);
   console.log('✓ Notification model schema paths and notification types enum verified');
 

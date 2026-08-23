@@ -1,14 +1,14 @@
 import apiClient from './apiClient';
 import {
   AuthResponse,
+  DoctorResetRequestItem,
   ForgotPasswordData,
   LoginCredentials,
   MeResponse,
-  PasswordResetRequestItem,
   RegisterData,
   ResetPasswordData,
   SetPasswordData,
-  VerifyOtpPayload,
+  VerifyDoctorOtpPayload,
 } from '../types/auth';
 
 /**
@@ -40,7 +40,7 @@ export const fetchCurrentUser = async (): Promise<MeResponse> => {
 };
 
 /**
- * Request password reset (Admin Approval Queue)
+ * Request password reset (Role-Branching Hybrid Workflow)
  */
 export const forgotPasswordUser = async (
   data: ForgotPasswordData
@@ -53,52 +53,50 @@ export const forgotPasswordUser = async (
 };
 
 /**
- * Verify 6-digit OTP and reset password
+ * Verify Doctor 6-digit OTP and reset password
  */
-export const verifyOtpUser = async (
-  payload: VerifyOtpPayload
+export const verifyDoctorOtpUser = async (
+  payload: VerifyDoctorOtpPayload
 ): Promise<{ success: boolean; message: string }> => {
   const response = await apiClient.post<{ success: boolean; message: string }>(
-    '/auth/verify-otp',
+    '/auth/doctor/verify-otp',
     payload
   );
   return response.data;
 };
 
 /**
- * Fetch Admin Password Reset Requests Queue
+ * Fetch Admin Doctor Reset Requests Queue
  */
-export const fetchAdminPasswordRequests = async (
+export const fetchAdminDoctorResetRequests = async (
   status = 'PENDING'
-): Promise<{ success: boolean; data: PasswordResetRequestItem[] }> => {
-  const response = await apiClient.get<{ success: boolean; data: PasswordResetRequestItem[] }>(
-    `/admin/password-requests?status=${status}`
+): Promise<{ success: boolean; data: DoctorResetRequestItem[] }> => {
+  const response = await apiClient.get<{ success: boolean; data: DoctorResetRequestItem[] }>(
+    `/admin/doctor-reset-requests?status=${status}`
   );
   return response.data;
 };
 
 /**
- * Approve Password Reset Request (Admin)
+ * Approve Doctor Password Reset Request (Admin)
  */
-export const approveAdminPasswordRequest = async (
+export const approveAdminDoctorResetRequest = async (
   requestId: string
 ): Promise<{ success: boolean; message: string }> => {
   const response = await apiClient.post<{ success: boolean; message: string }>(
-    `/admin/password-requests/${requestId}/approve`
+    `/admin/doctor-reset-requests/${requestId}/approve`
   );
   return response.data;
 };
 
 /**
- * Deny Password Reset Request (Admin)
+ * Deny Doctor Password Reset Request (Admin)
  */
-export const denyAdminPasswordRequest = async (
-  requestId: string,
-  reason?: string
+export const denyAdminDoctorResetRequest = async (
+  requestId: string
 ): Promise<{ success: boolean; message: string }> => {
   const response = await apiClient.post<{ success: boolean; message: string }>(
-    `/admin/password-requests/${requestId}/deny`,
-    { reason }
+    `/admin/doctor-reset-requests/${requestId}/deny`
   );
   return response.data;
 };

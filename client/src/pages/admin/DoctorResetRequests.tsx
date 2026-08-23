@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-  fetchAdminPasswordRequests,
-  approveAdminPasswordRequest,
-  denyAdminPasswordRequest,
+  fetchAdminDoctorResetRequests,
+  approveAdminDoctorResetRequest,
+  denyAdminDoctorResetRequest,
 } from '../../services/authApi';
-import { PasswordResetRequestItem } from '../../types/auth';
+import { DoctorResetRequestItem } from '../../types/auth';
 import {
   KeyRound,
   ShieldAlert,
@@ -12,13 +12,14 @@ import {
   Check,
   X,
   AlertTriangle,
+  Stethoscope,
 } from 'lucide-react';
 import Button from '../../components/ui/Button';
 import InlineAlert from '../../components/ui/InlineAlert';
 import { useToast } from '../../components/ui/Toast';
 
-export const PasswordRequests: React.FC = () => {
-  const [requests, setRequests] = useState<PasswordResetRequestItem[]>([]);
+export const DoctorResetRequests: React.FC = () => {
+  const [requests, setRequests] = useState<DoctorResetRequestItem[]>([]);
   const [statusFilter, setStatusFilter] = useState<'PENDING' | 'APPROVED' | 'DENIED' | 'ALL'>('PENDING');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -26,12 +27,12 @@ export const PasswordRequests: React.FC = () => {
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean;
     requestId: string;
-    requesterName: string;
+    doctorName: string;
     action: 'APPROVE' | 'DENY';
   }>({
     isOpen: false,
     requestId: '',
-    requesterName: '',
+    doctorName: '',
     action: 'APPROVE',
   });
 
@@ -41,10 +42,10 @@ export const PasswordRequests: React.FC = () => {
     try {
       setIsLoading(true);
       setError(null);
-      const res = await fetchAdminPasswordRequests(statusFilter);
+      const res = await fetchAdminDoctorResetRequests(statusFilter);
       setRequests(res.data || []);
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to load password reset requests queue.');
+      setError(err.response?.data?.message || 'Failed to load doctor reset requests queue.');
     } finally {
       setIsLoading(false);
     }
@@ -54,11 +55,11 @@ export const PasswordRequests: React.FC = () => {
     loadRequests();
   }, [loadRequests]);
 
-  const handleActionClick = (requestId: string, requesterName: string, action: 'APPROVE' | 'DENY') => {
+  const handleActionClick = (requestId: string, doctorName: string, action: 'APPROVE' | 'DENY') => {
     setConfirmModal({
       isOpen: true,
       requestId,
-      requesterName,
+      doctorName,
       action,
     });
   };
@@ -70,11 +71,11 @@ export const PasswordRequests: React.FC = () => {
 
     try {
       if (action === 'APPROVE') {
-        const res = await approveAdminPasswordRequest(requestId);
-        success(res.message || 'Request approved successfully!', 'Approval Complete');
+        const res = await approveAdminDoctorResetRequest(requestId);
+        success(res.message || 'Doctor reset request approved!', 'Approval Complete');
       } else {
-        const res = await denyAdminPasswordRequest(requestId);
-        success(res.message || 'Request denied.', 'Request Updated');
+        const res = await denyAdminDoctorResetRequest(requestId);
+        success(res.message || 'Doctor reset request denied.', 'Request Denied');
       }
       await loadRequests();
     } catch (err: any) {
@@ -91,10 +92,10 @@ export const PasswordRequests: React.FC = () => {
         <div>
           <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <KeyRound size={28} color="var(--primary)" />
-            Password Reset Requests Queue
+            Doctor Password Reset Requests
           </h1>
           <p style={{ margin: '0.25rem 0 0 0', color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
-            Review, approve, or deny patient and staff account password recovery applications.
+            Review and approve clinical physician password reset applications before 6-digit OTP delivery.
           </p>
         </div>
         <Button variant="outline" size="sm" onClick={loadRequests} leftIcon={<RefreshCw size={16} />}>
@@ -141,22 +142,22 @@ export const PasswordRequests: React.FC = () => {
         {isLoading ? (
           <div style={{ padding: '3rem', textAlign: 'center' }}>
             <div className="spinner" style={{ width: '32px', height: '32px', margin: '0 auto 1rem auto' }}></div>
-            <p style={{ color: 'var(--text-secondary)' }}>Loading password reset requests...</p>
+            <p style={{ color: 'var(--text-secondary)' }}>Loading doctor reset requests...</p>
           </div>
         ) : requests.length === 0 ? (
           <div style={{ padding: '3rem', textAlign: 'center' }}>
             <ShieldAlert size={48} color="var(--text-muted)" style={{ marginBottom: '1rem' }} />
-            <h3 style={{ fontSize: '1.1rem', color: 'var(--text-primary)', margin: 0 }}>No Password Reset Requests Found</h3>
+            <h3 style={{ fontSize: '1.1rem', color: 'var(--text-primary)', margin: 0 }}>No Doctor Reset Requests Found</h3>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '0.5rem' }}>
-              There are currently no requests matching the selected status filter.
+              There are currently no doctor requests matching the selected status filter.
             </p>
           </div>
         ) : (
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px', textAlign: 'left' }}>
             <thead>
               <tr style={{ backgroundColor: 'var(--bg-light)', borderBottom: '1px solid var(--border-light)', color: 'var(--text-secondary)', fontWeight: 600 }}>
-                <th style={{ padding: '12px 16px' }}>Requester</th>
-                <th style={{ padding: '12px 16px' }}>Portal Role</th>
+                <th style={{ padding: '12px 16px' }}>Physician</th>
+                <th style={{ padding: '12px 16px' }}>Role</th>
                 <th style={{ padding: '12px 16px' }}>Requested At</th>
                 <th style={{ padding: '12px 16px' }}>Status</th>
                 <th style={{ padding: '12px 16px' }}>Review Details</th>
@@ -167,16 +168,15 @@ export const PasswordRequests: React.FC = () => {
               {requests.map((item) => (
                 <tr key={item._id} style={{ borderBottom: '1px solid var(--border-light)' }}>
                   <td style={{ padding: '14px 16px' }}>
-                    <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{item.user?.name || 'Unknown User'}</div>
-                    <div style={{ fontSize: '12.5px', color: 'var(--text-muted)' }}>{item.user?.email || 'N/A'}</div>
+                    <div style={{ fontWeight: 600, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <Stethoscope size={15} color="var(--primary)" />
+                      Dr. {item.doctor?.name || 'Unknown Doctor'}
+                    </div>
+                    <div style={{ fontSize: '12.5px', color: 'var(--text-muted)' }}>{item.doctor?.email || 'N/A'}</div>
                   </td>
                   <td style={{ padding: '14px 16px' }}>
-                    <span style={{
-                      backgroundColor: item.requestedRole === 'ADMIN' ? '#E0E7FF' : item.requestedRole === 'DOCTOR' ? '#FEF3C7' : '#E0F2FE',
-                      color: item.requestedRole === 'ADMIN' ? '#3730A3' : item.requestedRole === 'DOCTOR' ? '#B45309' : '#0369A1',
-                      padding: '4px 8px', borderRadius: '4px', fontWeight: 600, fontSize: '12px'
-                    }}>
-                      {item.requestedRole}
+                    <span style={{ backgroundColor: '#FEF3C7', color: '#B45309', padding: '4px 8px', borderRadius: '4px', fontWeight: 600, fontSize: '12px' }}>
+                      DOCTOR
                     </span>
                   </td>
                   <td style={{ padding: '14px 16px', color: 'var(--text-secondary)' }}>
@@ -205,7 +205,7 @@ export const PasswordRequests: React.FC = () => {
                           variant="primary"
                           size="sm"
                           isLoading={actionLoadingId === item._id}
-                          onClick={() => handleActionClick(item._id, item.user?.name || 'User', 'APPROVE')}
+                          onClick={() => handleActionClick(item._id, item.doctor?.name || 'Doctor', 'APPROVE')}
                           leftIcon={<Check size={14} />}
                         >
                           Approve
@@ -214,7 +214,7 @@ export const PasswordRequests: React.FC = () => {
                           variant="outline"
                           size="sm"
                           isLoading={actionLoadingId === item._id}
-                          onClick={() => handleActionClick(item._id, item.user?.name || 'User', 'DENY')}
+                          onClick={() => handleActionClick(item._id, item.doctor?.name || 'Doctor', 'DENY')}
                           leftIcon={<X size={14} />}
                           style={{ color: '#dc2626', borderColor: '#fca5a5' }}
                         >
@@ -239,13 +239,13 @@ export const PasswordRequests: React.FC = () => {
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem', color: confirmModal.action === 'APPROVE' ? '#059669' : '#dc2626' }}>
               <AlertTriangle size={24} />
               <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 700 }}>
-                {confirmModal.action === 'APPROVE' ? 'Approve Reset Request?' : 'Deny Reset Request?'}
+                {confirmModal.action === 'APPROVE' ? 'Approve Doctor Reset?' : 'Deny Doctor Reset?'}
               </h3>
             </div>
             <p style={{ margin: '0 0 1.25rem 0', fontSize: '14px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
               {confirmModal.action === 'APPROVE'
-                ? `Approving this request will generate a 6-digit numeric OTP and email it directly to ${confirmModal.requesterName}. The OTP will expire in 10 minutes.`
-                : `Denying this request will mark the application as DENIED for ${confirmModal.requesterName}.`}
+                ? `Approving this request will generate a 6-digit numeric OTP and email it directly to Dr. ${confirmModal.doctorName}. The OTP expires in 10 minutes.`
+                : `Denying this request will send a neutral notice to Dr. ${confirmModal.doctorName}.`}
             </p>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
               <Button variant="outline" size="sm" onClick={() => setConfirmModal((prev) => ({ ...prev, isOpen: false }))}>
@@ -267,4 +267,4 @@ export const PasswordRequests: React.FC = () => {
   );
 };
 
-export default PasswordRequests;
+export default DoctorResetRequests;

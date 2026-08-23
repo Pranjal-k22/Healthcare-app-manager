@@ -213,15 +213,15 @@ export const Navbar: React.FC = () => {
                         <span>Appointments</span>
                       </Link>
                       <Link
-                        to="/admin/password-requests"
+                        to="/admin/doctor-reset-requests"
                         className={`nav-link-item ${
-                          location.pathname.startsWith('/admin/password-requests')
+                          location.pathname.startsWith('/admin/doctor-reset-requests')
                             ? 'nav-link-active'
                             : ''
                         }`}
                       >
                         <KeyRound size={15} />
-                        <span>Reset Requests</span>
+                        <span>Doctor Resets</span>
                       </Link>
                     </>
                   )}

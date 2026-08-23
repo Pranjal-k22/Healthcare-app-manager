@@ -870,6 +870,9 @@ const doctorActivation = (data) => {
 
 const passwordRequestPending = require('./passwordRequestPending');
 const otpDelivery = require('./otpDelivery');
+const doctorResetPending = require('./doctorResetPending');
+const doctorOtpDelivery = require('./doctorOtpDelivery');
+const doctorResetDenied = require('./doctorResetDenied');
 
 module.exports = {
   renderEmailLayout,
@@ -889,4 +892,7 @@ module.exports = {
   doctorActivation,
   passwordRequestPending,
   otpDelivery,
+  doctorResetPending,
+  doctorOtpDelivery,
+  doctorResetDenied,
 };

@@ -171,15 +171,17 @@ const getMe = async (req, res, next) => {
 };
 
 /**
- * @desc    Request password reset (Admin-Approved OTP Workflow)
+ * @desc    Request password reset (Role-Branching Hybrid Workflow)
+ *          - PATIENT & ADMIN: Self-service reset link via email
+ *          - DOCTOR: Admin approval required (DoctorResetRequest + OTP)
  * @route   POST /api/auth/forgot-password
  * @access  Public
  */
 const forgotPassword = async (req, res, next) => {
   try {
-    const PasswordResetRequest = require('../models/PasswordResetRequest');
+    const DoctorResetRequest = require('../models/DoctorResetRequest');
     const { email, role } = req.body;
-    const GENERIC_SUCCESS_MSG = 'If an account exists with this email, your password reset request has been logged for administrative approval.';
+    const GENERIC_SUCCESS_MSG = "If an account exists, you'll receive instructions by email shortly.";
 
     if (!email) {
       return res.status(400).json({
@@ -191,7 +193,7 @@ const forgotPassword = async (req, res, next) => {
     const normalizedEmail = email.toLowerCase().trim();
     const user = await User.findOne({ email: normalizedEmail });
 
-    // Enumeration safety: Always return 200 generic message regardless of user existence
+    // Enumeration safety: Always return 200 generic message regardless of user existence or role mismatch
     if (!user || (role && user.role !== role.toUpperCase())) {
       return res.status(200).json({
         success: true,
@@ -199,29 +201,108 @@ const forgotPassword = async (req, res, next) => {
       });
     }
 
-    // Prevent duplicate active PENDING requests for the same user
-    const existingPending = await PasswordResetRequest.findOne({
-      user: user._id,
-      status: 'PENDING',
-    });
+    // Role-Branching Logic: PATIENT & ADMIN vs DOCTOR
+    if (user.role === 'PATIENT' || user.role === 'ADMIN') {
+      // 1. Self-Service Path for PATIENT & ADMIN: Emailed Reset Link
+      const resetToken = crypto.randomBytes(32).toString('hex');
+      const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
 
-    if (!existingPending) {
-      const resetRequest = await PasswordResetRequest.create({
-        user: user._id,
-        requestedRole: role ? role.toUpperCase() : user.role,
+      user.passwordResetToken = hashedToken;
+      user.passwordResetExpires = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+      await user.save();
+
+      // Dispatch password reset email with token link
+      notificationService.dispatchPasswordResetEmail(user, resetToken).catch((err) => {
+        console.error('[AuthController] Failed to dispatch reset email:', err.message);
+      });
+    } else if (user.role === 'DOCTOR') {
+      // 2. Admin-Approved Path for DOCTOR: Create DoctorResetRequest (PENDING)
+      const existingPending = await DoctorResetRequest.findOne({
+        doctor: user._id,
         status: 'PENDING',
-        ipAddress: req.ip || req.headers['x-forwarded-for'] || '',
       });
 
-      // Dispatch alert notification to all active Administrators
-      notificationService.dispatchAdminApprovalAlert(resetRequest, user).catch((err) => {
-        console.error('[AuthController] Failed to dispatch admin approval alert:', err.message);
-      });
+      if (!existingPending) {
+        const resetRequest = await DoctorResetRequest.create({
+          doctor: user._id,
+          status: 'PENDING',
+          ipAddress: req.ip || req.headers['x-forwarded-for'] || '',
+        });
+
+        // Trigger alert email to all active Administrators
+        notificationService.dispatchDoctorResetPendingAlert(resetRequest, user).catch((err) => {
+          console.error('[AuthController] Failed to dispatch doctor reset pending alert:', err.message);
+        });
+      }
     }
 
     return res.status(200).json({
       success: true,
       message: GENERIC_SUCCESS_MSG,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Reset password using valid 15-minute token (PATIENT & ADMIN Self-Service path only)
+ * @route   POST /api/auth/reset-password
+ * @access  Public
+ */
+const resetPassword = async (req, res, next) => {
+  try {
+    const { token, password } = req.body;
+
+    if (!token || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide both reset token and new password',
+      });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: 'New password must be at least 6 characters long',
+      });
+    }
+
+    // Hash incoming token & lookup matching unexpired record
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+    const user = await User.findOne({
+      passwordResetToken: hashedToken,
+      passwordResetExpires: { $gt: new Date() },
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: 'Password reset token is invalid or has expired',
+      });
+    }
+
+    // Server-Side Guard: DOCTOR accounts are NOT permitted on self-service reset-password endpoint
+    if (user.role === 'DOCTOR') {
+      return res.status(400).json({
+        success: false,
+        message: 'Password reset token is invalid or has expired',
+      });
+    }
+
+    // Set new password, clear reset token fields, & increment tokenVersion to revoke active sessions
+    user.password = password;
+    user.passwordResetToken = undefined;
+    user.passwordResetExpires = undefined;
+    user.tokenVersion = (user.tokenVersion || 0) + 1;
+    await user.save();
+
+    // Send security notification email
+    notificationService.dispatchPasswordChangedAlert(user).catch(() => {});
+
+    return res.status(200).json({
+      success: true,
+      message: 'Password reset successfully. Please sign in with your new password.',
     });
   } catch (error) {
     next(error);
@@ -457,6 +538,7 @@ module.exports = {
   getMe,
   forgotPassword,
   verifyOtp,
+  resetPassword,
   setPassword,
   changePassword,
 };

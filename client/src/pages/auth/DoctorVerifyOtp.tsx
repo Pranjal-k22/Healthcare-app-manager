@@ -7,7 +7,7 @@ import Input from '../../components/ui/Input';
 import InlineAlert from '../../components/ui/InlineAlert';
 import { useToast } from '../../components/ui/Toast';
 
-export const VerifyOtp: React.FC = () => {
+export const DoctorVerifyOtp: React.FC = () => {
   const [searchParams] = useSearchParams();
   const initialRequestId = searchParams.get('requestId') || '';
 
@@ -20,7 +20,7 @@ export const VerifyOtp: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
 
-  const { verifyOtp } = useAuth();
+  const { verifyDoctorOtp } = useAuth();
   const { success } = useToast();
   const navigate = useNavigate();
 
@@ -34,7 +34,7 @@ export const VerifyOtp: React.FC = () => {
     }
 
     if (!otp.trim() || otp.trim().length !== 6) {
-      setError('Please enter the 6-digit verification code sent to your email.');
+      setError('Please enter your 6-digit verification code sent to your email.');
       return;
     }
 
@@ -50,13 +50,13 @@ export const VerifyOtp: React.FC = () => {
 
     try {
       setIsSubmitting(true);
-      const response = await verifyOtp({
+      const response = await verifyDoctorOtp({
         requestId: requestId.trim(),
         otp: otp.trim(),
         newPassword,
       });
       setIsSuccess(true);
-      success(response.message || 'Password reset successfully!', 'Security Updated');
+      success(response.message || 'Password reset successfully!', 'Doctor Account Updated');
     } catch (err: any) {
       setError(err.response?.data?.message || err.message || 'Invalid or expired verification code.');
     } finally {
@@ -72,12 +72,12 @@ export const VerifyOtp: React.FC = () => {
           <div>
             <div className="auth-brand-badge">
               <HeartPulse size={16} />
-              <span>HealthPulse Verification Portal</span>
+              <span>HealthPulse Physician Portal</span>
             </div>
             <div className="auth-hero-content">
-              <h1 className="auth-hero-title">Enter Verification Code</h1>
+              <h1 className="auth-hero-title">Doctor Verification Code</h1>
               <p className="auth-hero-desc">
-                Your request has been approved by administration. Enter the 6-digit OTP code sent to your registered email to set your new password.
+                Your password reset application has been approved by Hospital Administration. Enter the 6-digit verification code to reset your physician credentials.
               </p>
               <div className="auth-trust-points" style={{ marginTop: '1.5rem' }}>
                 <div className="auth-trust-item">
@@ -97,8 +97,8 @@ export const VerifyOtp: React.FC = () => {
         {/* Right Column: OTP Form */}
         <div className="auth-form-panel">
           <div className="auth-header-block">
-            <h2>Enter Verification Code</h2>
-            <p>Input your 6-digit code and choose a new password.</p>
+            <h2>Enter Doctor Verification Code</h2>
+            <p>Enter your 6-digit code and choose a new password for your doctor account.</p>
           </div>
 
           {error && <InlineAlert type="danger" message={error} onClose={() => setError(null)} />}
@@ -108,19 +108,19 @@ export const VerifyOtp: React.FC = () => {
               <div style={{ display: 'inline-flex', padding: '12px', borderRadius: '50%', backgroundColor: '#ECFDF5', color: '#10B981', marginBottom: '1rem' }}>
                 <CheckCircle2 size={36} />
               </div>
-              <h3 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '0.5rem', color: 'var(--text-primary)' }}>Password Reset Complete!</h3>
+              <h3 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '0.5rem', color: 'var(--text-primary)' }}>Doctor Password Reset Complete!</h3>
               <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
-                Your password has been updated and active sessions have been securely invalidated. You may now sign in.
+                Your doctor account password has been updated. Prior active sessions have been invalidated.
               </p>
               <Button variant="primary" size="md" onClick={() => navigate('/login')}>
-                Sign In Now
+                Sign In to Doctor Portal
               </Button>
             </div>
           ) : (
             <form onSubmit={handleSubmit}>
               {!initialRequestId && (
                 <Input
-                  id="otp-request-id"
+                  id="doctor-otp-request-id"
                   type="text"
                   label="Reset Request ID"
                   placeholder="Paste your request ID from email"
@@ -131,7 +131,7 @@ export const VerifyOtp: React.FC = () => {
               )}
 
               <Input
-                id="otp-code"
+                id="doctor-otp-code"
                 type="text"
                 label="6-Digit OTP Code"
                 placeholder="123456"
@@ -144,7 +144,7 @@ export const VerifyOtp: React.FC = () => {
               />
 
               <Input
-                id="otp-new-password"
+                id="doctor-otp-new-password"
                 type={showPassword ? 'text' : 'password'}
                 label="New Password"
                 placeholder="Min 6 characters"
@@ -164,7 +164,7 @@ export const VerifyOtp: React.FC = () => {
               />
 
               <Input
-                id="otp-confirm-password"
+                id="doctor-otp-confirm-password"
                 type={showPassword ? 'text' : 'password'}
                 label="Confirm New Password"
                 placeholder="Repeat new password"
@@ -183,7 +183,7 @@ export const VerifyOtp: React.FC = () => {
                 rightIcon={<ArrowRight size={16} />}
                 style={{ marginTop: '1.25rem' }}
               >
-                Verify Code & Update Password
+                Verify & Reset Password
               </Button>
 
               <div style={{ marginTop: '1.25rem', textAlign: 'center' }}>
@@ -199,4 +199,4 @@ export const VerifyOtp: React.FC = () => {
   );
 };
 
-export default VerifyOtp;
+export default DoctorVerifyOtp;

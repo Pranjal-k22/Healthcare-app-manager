@@ -37,22 +37,21 @@ export interface SetPasswordData {
   password: string;
 }
 
-export interface VerifyOtpPayload {
+export interface VerifyDoctorOtpPayload {
   requestId: string;
   otp: string;
   newPassword: string;
 }
 
-export interface PasswordResetRequestItem {
+export interface DoctorResetRequestItem {
   _id: string;
-  user: {
+  doctor: {
     _id: string;
     name: string;
     email: string;
     role: UserRole;
     phone?: string;
   };
-  requestedRole: UserRole;
   status: 'PENDING' | 'APPROVED' | 'DENIED' | 'EXPIRED' | 'COMPLETED';
   otpAttempts: number;
   requestedAt: string;
@@ -88,7 +87,7 @@ export interface AuthContextType extends AuthState {
   login: (credentials: LoginCredentials) => Promise<User>;
   register: (data: RegisterData) => Promise<User>;
   forgotPassword: (data: ForgotPasswordData) => Promise<{ success: boolean; message: string }>;
-  verifyOtp: (payload: VerifyOtpPayload) => Promise<{ success: boolean; message: string }>;
+  verifyDoctorOtp: (payload: VerifyDoctorOtpPayload) => Promise<{ success: boolean; message: string }>;
   resetPassword: (data: ResetPasswordData) => Promise<{ success: boolean; message: string }>;
   setPassword: (data: SetPasswordData) => Promise<{ success: boolean; message: string }>;
   logout: () => void;
