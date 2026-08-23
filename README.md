@@ -472,13 +472,46 @@ HealthPulse uses the official **Resend Node.js SDK** (`resend`) over HTTPS API (
 
 ---
 
+## 🛠️ Production Engineering Case Studies & Root-Cause Resolution
+
+The HealthPulse system features real-world production incident root-cause investigations, architectural refactoring, and empirical runtime verification:
+
+### 1. Resend Node.js SDK Migration (`ENETUNREACH` Outbound Port Resolution)
+* **Incident**: Deployment on cloud environments (Render free tier) produced `connect ENETUNREACH` network timeouts when attempting outbound SMTP connections on ports 25, 465, or 587.
+* **Root Cause**: Cloud hosting platforms block outbound SMTP socket connections to prevent spam abuse.
+* **Architecture Fix**: Re-architected the email subsystem to use the official **Resend Node.js SDK over HTTPS API (port 443)**. Verified production domain `health-pulse.app` with Resend (DKIM passing) and set production sender address to `HealthPulse <notifications@health-pulse.app>`.
+* **Retry & DLQ Fix**: Fixed a bug in `emailRetryJob.js` where string error objects caused `error.message` to evaluate to `'undefined'`, preventing permanent failures from being capped as `DEAD`. Unretryable string/object errors now halt retries immediately.
+
+### 2. Google Calendar Disconnect Validation Trap (`Access token is required`)
+* **Incident**: Disconnecting Google Calendar left the UI showing "Connected" with a red error banner `Access token is required.`, persisting across re-authentication.
+* **Root Cause**: Mongoose `CalendarConnection` schema declared `accessToken: { type: String, required: [true, 'Access token is required'] }`. When `disconnectCalendar` set `accessToken = ''` and `isConnected: false`, schema validation rejected the empty string and failed to save, leaving database records stuck in a broken state.
+* **Fix**: Updated schema validation to enforce non-empty tokens *only when `isConnected: true`*. Added log warnings when Google omits `refresh_token` during repeat OAuth consent.
+
+### 3. ACID MongoDB Transactions for Multi-Collection Cascades
+* **Incident**: Multi-collection cascades (doctor leave approval cancelling appointments, cascading doctor deletion removing profiles, user accounts, leaves, and appointments) ran as un-isolated sequential writes, risking partial state corruption if interrupted.
+* **Fix**: Wrapped all multi-document operations inside native **MongoDB session transactions (`session.withTransaction`)** in `leaveService.js` and `doctorService.js`. Empirically verified on MongoDB Atlas replica set cluster.
+
+### 4. Live Empirical High-Concurrency Double-Booking Verification (HTTP 409)
+* **Architecture**: 3-tier double-booking defense (pre-flight schedule check, compound partial unique index `{ doctorId: 1, date: 1, startTime: 1 } where status IN ('BOOKED', 'COMPLETED')`, and `E11000` duplicate key handling to `409 Conflict`).
+* **Live Verification**: Dispatched simultaneous HTTP `POST /api/appointments` requests at the exact same millisecond against live production, confirming 1 request receives `201 Created` and 1 request receives `409 Conflict`.
+
+### 5. Timezone-Aware Date Checks & Documented Technical Debt
+* **Fix**: Updated `appointmentValidator.js` (`getTodayDateString`, `getCurrentTimeString`) using `Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' })` (`YYYY-MM-DD`) so date and past-slot checks reflect Indian Standard Time regardless of server process clock (UTC on Render).
+* **Documented Technical Debt**: Explicitly documented remaining raw `toISOString().split('T')[0]` usages in `calendarController.js`, `reminderJob.js`, and `leaveService.js` for future refactoring.
+
+### 6. Fail-Fast Boot Security & 14/14 Integration Test Suite
+* **Fail-Fast Boot Check**: Enforced startup environment validation in `server/config/env.js` throwing an immediate boot exception in `NODE_ENV === 'production'` if `JWT_SECRET` or `TOKEN_ENCRYPTION_KEY` are unconfigured.
+* **Supertest HTTP Integration Tests**: Created `server/tests/api.test.js` covering `/api/auth/login`, `/api/doctors`, and `/api/appointments`. All 14/14 automated test suites in `node server/tests/runAllTests.js` pass 100%.
+
+---
+
 ## 📚 Supplementary Technical References
 
 For detailed architectural deep-dives, consult the curated reference documents in `docs/` and `tasks/`:
 
 | Document | Purpose & Scope |
 |:---|:---|
-| [tasks/SYSTEM_DESIGN_WRITEUP.md](tasks/SYSTEM_DESIGN_WRITEUP.md) | **Canonical Deliverable**: ~750-word report on Double-Booking, Holds, Leaves & Email Retries |
+| [tasks/SYSTEM_DESIGN_WRITEUP.md](tasks/SYSTEM_DESIGN_WRITEUP.md) | **Canonical Deliverable**: ~750-word report on Double-Booking, Holds, Leaves, Email Retries & Production Incident Resolution |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | High-level system topology, module interactions, and asynchronous flow diagrams |
 | [docs/LLM_ARCHITECTURE.md](docs/LLM_ARCHITECTURE.md) | Local Ollama daemon architecture, error taxonomy, bounded retries & safety gates |
 | [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | Production Docker containerization, cloud deployment guides & live URL setup |

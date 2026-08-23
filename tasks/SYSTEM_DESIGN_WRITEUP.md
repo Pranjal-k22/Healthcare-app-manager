@@ -108,6 +108,27 @@ HealthPulse operates a hybrid dual-engine architecture combining **Local Ollama*
 
 ---
 
-### 6. Process Lifecycle & Production Hosting
+### 6. Production Hardening, ACID Transactions & Live Verification
+
+1. **Outbound Port Blocking & Resend Node.js SDK Migration (`ENETUNREACH`)**:
+   - Deployment on cloud container hosts (Render free tier) produced `connect ENETUNREACH` network timeouts when attempting outbound SMTP connections on ports 25, 465, or 587.
+   - Re-architected the email pipeline to use the official **Resend Node.js SDK over HTTPS API (port 443)**. Verified domain `health-pulse.app` with Resend (DKIM passing) and set production sender address to `HealthPulse <notifications@health-pulse.app>`.
+   - Fixed a bug in `emailRetryJob.js` where string error objects caused `error.message` to evaluate to `'undefined'`, preventing permanent failures from being capped as `DEAD`.
+
+2. **ACID MongoDB Session Transactions**:
+   - Wrapped multi-collection updates (doctor leave approval cancelling appointments, cascading doctor deletion purging profiles/users/appointments/leaves) inside native **MongoDB session transactions (`session.withTransaction`)** in `leaveService.js` and `doctorService.js`.
+   - Prevents partial state corruption during system restarts or unexpected errors.
+
+3. **Fail-Fast Boot Security & Timezone-Aware Validation**:
+   - Added startup environment validation in `server/config/env.js` throwing an immediate boot exception in `NODE_ENV === 'production'` if `JWT_SECRET` or `TOKEN_ENCRYPTION_KEY` are unconfigured.
+   - Updated `appointmentValidator.js` (`getTodayDateString`, `getCurrentTimeString`) using `Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' })` (`YYYY-MM-DD`) so past-slot checks reflect Indian Standard Time regardless of server process clock (UTC on Render).
+
+4. **14/14 Automated Integration Test Suite & Live Verification**:
+   - Expanded automated test coverage (`server/tests/runAllTests.js`) to 14 test suites by adding `supertest` REST integration tests (`server/tests/api.test.js`).
+   - Performed live empirical verification against production Render environment, confirming simultaneous concurrent bookings trigger `409 Conflict` and live doctor leave approval triggers atomic appointment cancellation (`DOCTOR_LEAVE`). All live test data was systematically purged after verification.
+
+---
+
+### 7. Process Lifecycle & Production Hosting
 
 The backend runs Express and background schedulers (`reminderJob`, `medicationReminderJob`, `emailRetryJob`) in-process within a single Node.js event loop, engineered for **always-on container hosting** (e.g. Render Web Service).
