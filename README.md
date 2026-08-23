@@ -23,6 +23,7 @@ HealthPulse is an enterprise-grade full-stack clinic management and patient foll
 | **System Design Write-Up** | Canonical ~750-word architecture report covering Concurrency, Holds, Leaves & Notification retries | [tasks/SYSTEM_DESIGN_WRITEUP.md](tasks/SYSTEM_DESIGN_WRITEUP.md) |
 | **Environment Configuration** | Environment template for local and production deployment | [.env.example](.env.example) |
 | **Hosted Application** | Frontend: [healthpluse.vercel.app](https://healthpluse.vercel.app) · API: [healthpulse-api-4vhy.onrender.com](https://healthpulse-api-4vhy.onrender.com) | [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) |
+| **Privacy Policy** | OAuth 2.0 Compliance Privacy Policy Disclosure | [PRIVACY.md](PRIVACY.md) |
 
 ```text
 React 18 + Vite (Client SPA) ────► Express REST API (Node.js 20) ────► MongoDB (Source of Truth)

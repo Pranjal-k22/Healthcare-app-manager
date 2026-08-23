@@ -57,10 +57,11 @@ MongoDB Atlas          Background Cron Jobs       Dedicated Inference
 | `PORT` | API Server port | `5000` |
 | `MONGO_URI` | MongoDB connection string | `mongodb+srv://user:pass@cluster.mongodb.net/healthpulse` |
 | `JWT_SECRET` | 64+ char cryptographic key | *(Generate via `openssl rand -hex 32`)* |
-| `CLIENT_URL` | Deployed Frontend URL | `https://healthpulse.yourdomain.com` |
+| `CLIENT_URL` | Deployed Frontend URL | `https://healthpluse.vercel.app` |
 | `GOOGLE_CLIENT_ID` | OAuth 2.0 Web Client ID | `512072860662-...apps.googleusercontent.com` |
 | `GOOGLE_CLIENT_SECRET` | OAuth 2.0 Client Secret | `GOCSPX-...` |
-| `GOOGLE_REDIRECT_URI` | Production Callback URL | `https://api.yourdomain.com/api/calendar/oauth/callback` |
+| `GOOGLE_REDIRECT_URI` | Production Callback URL | `https://healthpulse-api-4vhy.onrender.com/api/auth/google/callback` |
+| `APPOINTMENT_TIMEZONE` | Timezone (Default: IST) | `Asia/Kolkata` |
 | `ENABLE_EMAIL_NOTIFICATIONS`| Enable real SMTP delivery | `true` |
 | `GMAIL_USER` | Gmail address for SMTP | `your_address@gmail.com` |
 | `GMAIL_APP_PASSWORD` | Google App Password (16 chars) | `xxxx xxxx xxxx xxxx` |
@@ -70,9 +71,9 @@ MongoDB Atlas          Background Cron Jobs       Dedicated Inference
 | `OLLAMA_HOST` | Ollama daemon address | `http://localhost:11434` |
 | `OLLAMA_MODEL` | Local LLM model tag | `llama3` / `qwen2.5-coder:7b` |
 | `GEMINI_API_KEY` | Google Gemini API key (dual mode) | `AIzaSy...` |
-| `GEMINI_MODEL` | Gemini cloud model | `gemini-1.5-flash` |
+| `GEMINI_MODEL` | Gemini cloud model | `gemini-3.5-flash-lite` |
 
-> ℹ️ **Email Service Requirement**: HealthPulse satisfies the assignment's email notification requirement using **Nodemailer with Gmail SMTP** (over STARTTLS Port 587 with forced IPv4 socket resolution to ensure high reliability on cloud hosts like Render). A 16-character Google App Password (generated via Google Account Security) is required for live delivery; when disabled or unconfigured, the service operates seamlessly in mock logging mode.
+> ℹ️ **Email & Calendar Setup Note**: HealthPulse uses **Nodemailer + Gmail SMTP** over STARTTLS Port 587 (forced IPv4 socket resolution) for transactional emails. For Google Calendar integration, publish your app in Google Cloud Console using the public Privacy Policy URL: `https://github.com/Pranjal-k22/Healthcare-app-manager/blob/main/PRIVACY.md`.
 
 ---
 
