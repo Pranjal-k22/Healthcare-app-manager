@@ -22,7 +22,7 @@ const config = {
   // Email Notification Settings (Resend Node.js SDK over HTTPS)
   RESEND_API_KEY: process.env.RESEND_API_KEY || '',
   EMAIL_FROM_NAME: process.env.EMAIL_FROM_NAME || 'HealthPulse Hospital',
-  EMAIL_FROM: process.env.EMAIL_FROM || 'HealthPulse <onboarding@resend.dev>',
+  EMAIL_FROM: process.env.EMAIL_FROM || 'HealthPulse <notifications@health-pulse.app>',
   EMAIL_REPLY_TO: process.env.EMAIL_REPLY_TO || '',
   SUPPORT_EMAIL: process.env.SUPPORT_EMAIL || 'support@healthpulse.com',
   ENABLE_EMAIL_NOTIFICATIONS: process.env.ENABLE_EMAIL_NOTIFICATIONS === 'true',
