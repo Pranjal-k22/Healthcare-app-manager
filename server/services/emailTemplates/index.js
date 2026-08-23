@@ -868,6 +868,9 @@ const doctorActivation = (data) => {
   return { subject, html, text };
 };
 
+const passwordRequestPending = require('./passwordRequestPending');
+const otpDelivery = require('./otpDelivery');
+
 module.exports = {
   renderEmailLayout,
   bookingConfirmation,
@@ -884,4 +887,6 @@ module.exports = {
   doctorLeaveDecisionDoctorAlert,
   passwordReset,
   doctorActivation,
+  passwordRequestPending,
+  otpDelivery,
 };

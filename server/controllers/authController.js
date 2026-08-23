@@ -171,14 +171,15 @@ const getMe = async (req, res, next) => {
 };
 
 /**
- * @desc    Request password reset email (Enumeration-safe)
+ * @desc    Request password reset (Admin-Approved OTP Workflow)
  * @route   POST /api/auth/forgot-password
  * @access  Public
  */
 const forgotPassword = async (req, res, next) => {
   try {
+    const PasswordResetRequest = require('../models/PasswordResetRequest');
     const { email, role } = req.body;
-    const GENERIC_SUCCESS_MSG = 'If an account exists with this email, a password reset link has been sent.';
+    const GENERIC_SUCCESS_MSG = 'If an account exists with this email, your password reset request has been logged for administrative approval.';
 
     if (!email) {
       return res.status(400).json({
@@ -198,18 +199,25 @@ const forgotPassword = async (req, res, next) => {
       });
     }
 
-    // Generate crypto random token & store SHA-256 hash in DB with 15-minute expiry
-    const resetToken = crypto.randomBytes(32).toString('hex');
-    const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
-
-    user.passwordResetToken = hashedToken;
-    user.passwordResetExpires = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
-    await user.save();
-
-    // Dispatch email via notificationService (Resend SDK)
-    notificationService.dispatchPasswordResetEmail(user, resetToken).catch((err) => {
-      console.error('[AuthController] Failed to dispatch reset email:', err.message);
+    // Prevent duplicate active PENDING requests for the same user
+    const existingPending = await PasswordResetRequest.findOne({
+      user: user._id,
+      status: 'PENDING',
     });
+
+    if (!existingPending) {
+      const resetRequest = await PasswordResetRequest.create({
+        user: user._id,
+        requestedRole: role ? role.toUpperCase() : user.role,
+        status: 'PENDING',
+        ipAddress: req.ip || req.headers['x-forwarded-for'] || '',
+      });
+
+      // Dispatch alert notification to all active Administrators
+      notificationService.dispatchAdminApprovalAlert(resetRequest, user).catch((err) => {
+        console.error('[AuthController] Failed to dispatch admin approval alert:', err.message);
+      });
+    }
 
     return res.status(200).json({
       success: true,
@@ -221,48 +229,94 @@ const forgotPassword = async (req, res, next) => {
 };
 
 /**
- * @desc    Reset password using valid 15-minute reset token
- * @route   POST /api/auth/reset-password
+ * @desc    Verify 6-digit OTP and reset password (Admin-Approved Flow)
+ * @route   POST /api/auth/verify-otp
  * @access  Public
  */
-const resetPassword = async (req, res, next) => {
+const verifyOtp = async (req, res, next) => {
   try {
-    const { token, password } = req.body;
+    const PasswordResetRequest = require('../models/PasswordResetRequest');
+    const otpService = require('../services/otpService');
+    const { requestId, otp, newPassword } = req.body;
+    const GENERIC_OTP_ERROR = 'Invalid or expired verification code';
 
-    if (!token || !password) {
+    if (!requestId || !otp || !newPassword) {
       return res.status(400).json({
         success: false,
-        message: 'Please provide both reset token and new password',
+        message: 'Please provide request ID, verification code, and new password',
       });
     }
 
-    if (password.length < 6) {
+    if (newPassword.length < 6) {
       return res.status(400).json({
         success: false,
         message: 'New password must be at least 6 characters long',
       });
     }
 
-    // Hash incoming token & lookup matching unexpired record
-    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
-    const user = await User.findOne({
-      passwordResetToken: hashedToken,
-      passwordResetExpires: { $gt: new Date() },
-    });
-
-    if (!user) {
+    const requestDoc = await PasswordResetRequest.findById(requestId);
+    if (!requestDoc) {
       return res.status(400).json({
         success: false,
-        message: 'Password reset token is invalid or has expired',
+        message: GENERIC_OTP_ERROR,
       });
     }
 
-    // Set new password, clear reset token fields, & increment tokenVersion to invalidate active sessions
-    user.password = password;
-    user.passwordResetToken = undefined;
-    user.passwordResetExpires = undefined;
+    // Check status APPROVED & unexpired 10-minute OTP
+    if (
+      requestDoc.status !== 'APPROVED' ||
+      !requestDoc.otpExpires ||
+      new Date() > new Date(requestDoc.otpExpires)
+    ) {
+      if (requestDoc.status === 'APPROVED' && new Date() > new Date(requestDoc.otpExpires)) {
+        requestDoc.status = 'EXPIRED';
+        await requestDoc.save();
+      }
+      return res.status(400).json({
+        success: false,
+        message: GENERIC_OTP_ERROR,
+      });
+    }
+
+    // Increment attempt counter for brute-force tracking
+    requestDoc.otpAttempts = (requestDoc.otpAttempts || 0) + 1;
+
+    // Lockout check: max 5 failed attempts
+    if (requestDoc.otpAttempts > 5) {
+      requestDoc.status = 'EXPIRED';
+      await requestDoc.save();
+      return res.status(400).json({
+        success: false,
+        message: 'Maximum verification attempts exceeded. Request expired.',
+      });
+    }
+
+    // Constant-time OTP comparison
+    const isOtpValid = otpService.compareOtp(otp, requestDoc.otpHash);
+    if (!isOtpValid) {
+      await requestDoc.save();
+      return res.status(400).json({
+        success: false,
+        message: GENERIC_OTP_ERROR,
+      });
+    }
+
+    // OTP match! Update user password & increment tokenVersion to revoke active sessions
+    const user = await User.findById(requestDoc.user);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'Associated user account not found',
+      });
+    }
+
+    user.password = newPassword;
     user.tokenVersion = (user.tokenVersion || 0) + 1;
     await user.save();
+
+    // Mark reset request as COMPLETED
+    requestDoc.status = 'COMPLETED';
+    await requestDoc.save();
 
     // Send security notification alert
     notificationService.dispatchPasswordChangedAlert(user).catch(() => {});
@@ -402,7 +456,7 @@ module.exports = {
   login,
   getMe,
   forgotPassword,
-  resetPassword,
+  verifyOtp,
   setPassword,
   changePassword,
 };

@@ -4,9 +4,11 @@ import {
   ForgotPasswordData,
   LoginCredentials,
   MeResponse,
+  PasswordResetRequestItem,
   RegisterData,
   ResetPasswordData,
   SetPasswordData,
+  VerifyOtpPayload,
 } from '../types/auth';
 
 /**
@@ -38,7 +40,7 @@ export const fetchCurrentUser = async (): Promise<MeResponse> => {
 };
 
 /**
- * Request password reset email
+ * Request password reset (Admin Approval Queue)
  */
 export const forgotPasswordUser = async (
   data: ForgotPasswordData
@@ -46,6 +48,57 @@ export const forgotPasswordUser = async (
   const response = await apiClient.post<{ success: boolean; message: string }>(
     '/auth/forgot-password',
     data
+  );
+  return response.data;
+};
+
+/**
+ * Verify 6-digit OTP and reset password
+ */
+export const verifyOtpUser = async (
+  payload: VerifyOtpPayload
+): Promise<{ success: boolean; message: string }> => {
+  const response = await apiClient.post<{ success: boolean; message: string }>(
+    '/auth/verify-otp',
+    payload
+  );
+  return response.data;
+};
+
+/**
+ * Fetch Admin Password Reset Requests Queue
+ */
+export const fetchAdminPasswordRequests = async (
+  status = 'PENDING'
+): Promise<{ success: boolean; data: PasswordResetRequestItem[] }> => {
+  const response = await apiClient.get<{ success: boolean; data: PasswordResetRequestItem[] }>(
+    `/admin/password-requests?status=${status}`
+  );
+  return response.data;
+};
+
+/**
+ * Approve Password Reset Request (Admin)
+ */
+export const approveAdminPasswordRequest = async (
+  requestId: string
+): Promise<{ success: boolean; message: string }> => {
+  const response = await apiClient.post<{ success: boolean; message: string }>(
+    `/admin/password-requests/${requestId}/approve`
+  );
+  return response.data;
+};
+
+/**
+ * Deny Password Reset Request (Admin)
+ */
+export const denyAdminPasswordRequest = async (
+  requestId: string,
+  reason?: string
+): Promise<{ success: boolean; message: string }> => {
+  const response = await apiClient.post<{ success: boolean; message: string }>(
+    `/admin/password-requests/${requestId}/deny`,
+    { reason }
   );
   return response.data;
 };

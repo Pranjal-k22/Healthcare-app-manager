@@ -839,6 +839,81 @@ const dispatchDoctorActivationEmail = async (doctorUser, activationToken, specia
   }
 };
 
+/**
+ * Alert all active Administrators when a user submits a Password Reset Request (Pending Approval)
+ * @param {object} resetRequest - PasswordResetRequest document
+ * @param {object} requesterUser - Requester User document
+ */
+const dispatchAdminApprovalAlert = async (resetRequest, requesterUser) => {
+  try {
+    const admins = await User.find({ role: 'ADMIN' }).select('email name');
+    const payload = {
+      requesterName: requesterUser.name,
+      requesterEmail: requesterUser.email,
+      requesterRole: resetRequest.requestedRole,
+      requestedAt: resetRequest.requestedAt ? new Date(resetRequest.requestedAt).toLocaleString() : new Date().toLocaleString(),
+      requestId: resetRequest._id.toString(),
+    };
+
+    for (const admin of admins) {
+      queueEmailNotification({
+        to: admin.email,
+        recipientName: admin.name || 'Hospital Admin',
+        templateName: 'passwordRequestPending',
+        templateData: payload,
+        notificationType: 'PASSWORD_REQUEST_PENDING',
+      });
+
+      createNotification({
+        userId: admin._id,
+        type: 'PASSWORD_RESET_REQUESTED',
+        title: 'New Password Reset Request Pending Approval',
+        message: `${requesterUser.name} (${resetRequest.requestedRole}) requested a password reset. Review in Admin Portal.`,
+        metadata: { requestId: resetRequest._id, requesterId: requesterUser._id },
+      }).catch(() => {});
+    }
+  } catch (err) {
+    console.error('[NotificationService] Error in dispatchAdminApprovalAlert:', err.message);
+  }
+};
+
+/**
+ * Dispatch 6-Digit OTP Email to User upon Admin Approval
+ * @param {object} requesterUser - User document
+ * @param {object} resetRequest - PasswordResetRequest document
+ * @param {string} rawOtp - Unhashed 6-digit numeric OTP
+ */
+const dispatchOtpEmail = async (requesterUser, resetRequest, rawOtp) => {
+  try {
+    const config = require('../config/env');
+    const frontendUrl = config.FRONTEND_URL || 'http://localhost:5173';
+    const verifyUrl = `${frontendUrl}/verify-otp?requestId=${resetRequest._id.toString()}`;
+
+    queueEmailNotification({
+      to: requesterUser.email,
+      recipientName: requesterUser.name,
+      templateName: 'otpDelivery',
+      templateData: {
+        userName: requesterUser.name,
+        otp: rawOtp,
+        verifyUrl,
+        expiresMinutes: 10,
+      },
+      notificationType: 'OTP_DELIVERY',
+    });
+
+    createNotification({
+      userId: requesterUser._id,
+      type: 'PASSWORD_RESET_APPROVED',
+      title: 'Password Reset Request Approved',
+      message: 'Your password reset request has been approved by administration. Check your email for your 6-digit verification code.',
+      metadata: { requestId: resetRequest._id },
+    }).catch(() => {});
+  } catch (err) {
+    console.error('[NotificationService] Error in dispatchOtpEmail:', err.message);
+  }
+};
+
 module.exports = {
   createNotification,
   getUserNotifications,
@@ -861,4 +936,6 @@ module.exports = {
   dispatchDoctorLeaveDecisionDoctorAlert,
   dispatchPasswordResetEmail,
   dispatchDoctorActivationEmail,
+  dispatchAdminApprovalAlert,
+  dispatchOtpEmail,
 };

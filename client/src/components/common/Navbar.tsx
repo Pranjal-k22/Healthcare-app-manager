@@ -14,6 +14,7 @@ import {
   Menu,
   X,
   HeartPulse,
+  KeyRound,
 } from 'lucide-react';
 import { ROLE_DASHBOARD_ROUTES } from '../../utils/constants';
 import Button from '../ui/Button';
@@ -210,6 +211,17 @@ export const Navbar: React.FC = () => {
                       >
                         <Calendar size={15} />
                         <span>Appointments</span>
+                      </Link>
+                      <Link
+                        to="/admin/password-requests"
+                        className={`nav-link-item ${
+                          location.pathname.startsWith('/admin/password-requests')
+                            ? 'nav-link-active'
+                            : ''
+                        }`}
+                      >
+                        <KeyRound size={15} />
+                        <span>Reset Requests</span>
                       </Link>
                     </>
                   )}

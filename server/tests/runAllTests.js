@@ -14,6 +14,9 @@ const { runProfileBillingTests } = require('./profileBillingPrescription.test');
 const runEmailTests = require('./email.test');
 const runConcurrencyTests = require('./concurrency.test');
 const runApiTests = require('./api.test');
+const runPasswordRequestTests = require('./passwordRequest.test');
+
+const config = require('../config/env');
 
 const runMasterTestSuite = async () => {
   console.log('================================================================');
@@ -22,10 +25,17 @@ const runMasterTestSuite = async () => {
 
   const startTime = Date.now();
   let passedSuites = 0;
-  const totalSuites = 14;
+  const totalSuites = 15;
 
   try {
+    if (mongoose.connection.readyState === 0) {
+      await mongoose.connect(config.MONGO_URI || config.MONGODB_URI);
+    }
+
     await runAuthTests();
+    passedSuites++;
+
+    await runPasswordRequestTests();
     passedSuites++;
 
     await runAppointmentTests();

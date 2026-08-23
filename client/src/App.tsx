@@ -6,6 +6,7 @@ import { ProtectedRoute } from './components/common/ProtectedRoute';
 import { Login } from './pages/auth/Login';
 import { Register } from './pages/auth/Register';
 import { ForgotPassword } from './pages/auth/ForgotPassword';
+import { VerifyOtp } from './pages/auth/VerifyOtp';
 import { ResetPassword } from './pages/auth/ResetPassword';
 import { SetPassword } from './pages/auth/SetPassword';
 import { PatientDashboard } from './pages/dashboard/PatientDashboard';
@@ -28,6 +29,7 @@ import { EditDoctor } from './pages/admin/EditDoctor';
 import { ManageDoctorLeave } from './pages/admin/ManageDoctorLeave';
 import { ManageAppointments } from './pages/admin/ManageAppointments';
 import { AllDoctorLeaves } from './pages/admin/AllDoctorLeaves';
+import { PasswordRequests } from './pages/admin/PasswordRequests';
 import { NotificationsPage } from './pages/notifications/NotificationsPage';
 import { ROLE_DASHBOARD_ROUTES } from './utils/constants';
 
@@ -62,6 +64,7 @@ export const App: React.FC = () => {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/verify-otp" element={<VerifyOtp />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/set-password" element={<SetPassword />} />
 
@@ -229,6 +232,14 @@ export const App: React.FC = () => {
             element={
               <ProtectedRoute allowedRoles={['ADMIN']}>
                 <AllDoctorLeaves />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/password-requests"
+            element={
+              <ProtectedRoute allowedRoles={['ADMIN']}>
+                <PasswordRequests />
               </ProtectedRoute>
             }
           />

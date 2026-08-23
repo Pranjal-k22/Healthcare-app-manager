@@ -17,6 +17,7 @@ import {
   registerUser,
   resetPasswordUser,
   setPasswordUser,
+  verifyOtpUser,
 } from '../services/authApi';
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -96,6 +97,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     return await forgotPasswordUser(data);
   };
 
+  const verifyOtp = async (payload: any) => {
+    return await verifyOtpUser(payload);
+  };
+
   const resetPassword = async (data: ResetPasswordData) => {
     return await resetPasswordUser(data);
   };
@@ -121,6 +126,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         login,
         register,
         forgotPassword,
+        verifyOtp,
         resetPassword,
         setPassword,
         logout,

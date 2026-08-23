@@ -33,7 +33,7 @@ export const ForgotPassword: React.FC = () => {
       setIsSubmitting(true);
       const response = await forgotPassword({ email: email.trim(), role });
       setSuccessMessage(
-        response.message || 'If an account exists with this email, a password reset link has been sent.'
+        response.message || 'If an account exists, your request has been sent for admin approval. You will receive a verification code by email once approved.'
       );
     } catch (err: any) {
       setError(err.message || 'Failed to send password reset request. Please try again.');
@@ -55,7 +55,7 @@ export const ForgotPassword: React.FC = () => {
             <div className="auth-hero-content">
               <h1 className="auth-hero-title">Reset Your Password</h1>
               <p className="auth-hero-desc">
-                Enter your account email address below. We will send you a secure 15-minute password reset link to recover account access.
+                Enter your account email address below. Your password reset request will be submitted to hospital administration for approval.
               </p>
             </div>
           </div>

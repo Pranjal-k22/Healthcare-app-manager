@@ -15,6 +15,7 @@ const medicationReminderRoutes = require('./routes/medicationReminderRoutes');
 const profileRoutes = require('./routes/profileRoutes');
 const billingRoutes = require('./routes/billingRoutes');
 const prescriptionRoutes = require('./routes/prescriptionRoutes');
+const adminRoutes = require('./routes/adminRoutes');
 const path = require('path');
 const { notFound, errorHandler } = require('./middleware/errorMiddleware');
 
@@ -107,6 +108,7 @@ app.use('/api/dev', devRoutes);
 
 // Mount Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/admin', adminRoutes);
 app.use('/api/doctors', doctorRoutes);
 app.use('/api/appointments', appointmentRoutes);
 app.use('/api/notifications', notificationRoutes);

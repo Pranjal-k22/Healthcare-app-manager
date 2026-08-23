@@ -5,18 +5,19 @@ const {
   login,
   getMe,
   forgotPassword,
-  resetPassword,
+  verifyOtp,
   setPassword,
   changePassword,
 } = require('../controllers/authController');
 const { getConnectUrl, handleCallback } = require('../controllers/calendarController');
 const { protect } = require('../middleware/authMiddleware');
+const { forgotPasswordLimiter, verifyOtpLimiter } = require('../middleware/rateLimit');
 
 // Public auth routes
 router.post('/register', register);
 router.post('/login', login);
-router.post('/forgot-password', forgotPassword);
-router.post('/reset-password', resetPassword);
+router.post('/forgot-password', forgotPasswordLimiter, forgotPassword);
+router.post('/verify-otp', verifyOtpLimiter, verifyOtp);
 router.post('/set-password', setPassword);
 
 // Google OAuth callback (Public redirect from Google)
