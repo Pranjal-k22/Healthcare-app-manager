@@ -294,9 +294,9 @@ export const PatientBilling: React.FC = () => {
           exportFileName="hospital-billing-invoices"
           emptyState={
             <EmptyState
-              icon={<CreditCard size={36} color="var(--primary)" />}
+              imageSrc="/undraw_monitoring-data_twub.svg"
               title="No billing records yet"
-              description="You don't have any invoices at the moment. Invoices will appear here after eligible consultations."
+              description="You don't have any pending invoices at the moment. Billing statements and receipts will appear here after your healthcare consultations."
             />
           }
           mobileCardRender={(item) => (

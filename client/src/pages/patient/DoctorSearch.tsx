@@ -7,7 +7,8 @@ import DashboardLayout from '../../components/ui/DashboardLayout';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import InlineAlert from '../../components/ui/InlineAlert';
-import { Stethoscope, RotateCcw } from 'lucide-react';
+import EmptyState from '../../components/ui/EmptyState';
+import { RotateCcw } from 'lucide-react';
 
 export const DoctorSearch: React.FC = () => {
   const [doctors, setDoctors] = useState<Doctor[]>([]);
@@ -107,26 +108,28 @@ export const DoctorSearch: React.FC = () => {
             ))}
           </div>
         ) : doctors.length === 0 ? (
-          <Card className="empty-state-card-ui">
-            <div className="empty-state-icon-circle">
-              <Stethoscope size={28} />
-            </div>
-            <h3 className="empty-state-title">No Doctors Found</h3>
-            <p className="empty-state-desc">
-              {searchTerm || selectedSpecialization
-                ? 'No specialists matched your current search criteria. Try adjusting your keyword or choosing a different specialization.'
-                : 'No doctor profiles are currently available in the directory.'}
-            </p>
-            {(searchTerm || selectedSpecialization) && (
-              <Button
-                variant="outline"
-                size="md"
-                onClick={handleClearFilters}
-                leftIcon={<RotateCcw size={15} />}
-              >
-                Clear All Filters
-              </Button>
-            )}
+          <Card>
+            <EmptyState
+              imageSrc="/undraw_doctors_djoj.svg"
+              title="No Doctors Found"
+              description={
+                searchTerm || selectedSpecialization
+                  ? 'No specialists matched your current search criteria. Try adjusting your keyword or choosing a different specialization.'
+                  : 'No doctor profiles are currently available in the directory.'
+              }
+              action={
+                (searchTerm || selectedSpecialization) ? (
+                  <Button
+                    variant="outline"
+                    size="md"
+                    onClick={handleClearFilters}
+                    leftIcon={<RotateCcw size={15} />}
+                  >
+                    Clear All Filters
+                  </Button>
+                ) : undefined
+              }
+            />
           </Card>
         ) : (
           <div className="doctors-list-container" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>

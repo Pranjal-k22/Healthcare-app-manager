@@ -14,9 +14,9 @@ import DashboardLayout from '../../components/ui/DashboardLayout';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
 import InlineAlert from '../../components/ui/InlineAlert';
+import EmptyState from '../../components/ui/EmptyState';
 import { useToast } from '../../components/ui/Toast';
 import {
-  CalendarCheck2,
   Search,
   Plus,
 } from 'lucide-react';
@@ -206,21 +206,23 @@ export const MyAppointments: React.FC = () => {
             </p>
           </div>
         ) : appointments.length === 0 ? (
-          <Card className="empty-state-card-ui">
-            <div className="empty-state-icon-circle">
-              <CalendarCheck2 size={28} />
-            </div>
-            <h3 className="empty-state-title">No Appointments Found</h3>
-            <p className="empty-state-desc">
-              {activeTab === 'ALL'
-                ? 'You have no scheduled appointments on record. Connect with a specialist to book your next consultation.'
-                : `You currently have no ${activeTab.toLowerCase()} appointments in your record.`}
-            </p>
-            <Link to="/patient/doctors">
-              <Button variant="primary" size="md" leftIcon={<Plus size={16} />}>
-                Find a Doctor & Book
-              </Button>
-            </Link>
+          <Card>
+            <EmptyState
+              imageSrc="/undraw_online-calendar_iz1q.svg"
+              title="No Appointments Found"
+              description={
+                activeTab === 'ALL'
+                  ? 'You have no scheduled appointments on record. Connect with a specialist to book your next consultation.'
+                  : `You currently have no ${activeTab.toLowerCase()} appointments in your record.`
+              }
+              action={
+                <Link to="/patient/doctors">
+                  <Button variant="primary" size="md" leftIcon={<Plus size={16} />}>
+                    Find a Doctor & Book
+                  </Button>
+                </Link>
+              }
+            />
           </Card>
         ) : (
           <div className="appointments-grid-ui">

@@ -7,6 +7,7 @@ import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import StatusBadge from '../../components/ui/StatusBadge';
 import Input from '../../components/ui/Input';
+import EmptyState from '../../components/ui/EmptyState';
 import {
   Pill,
   Search,
@@ -155,28 +156,30 @@ export const PatientPrescriptions: React.FC = () => {
             <div className="btn-spinner" style={{ width: '32px', height: '32px', borderColor: 'var(--primary)', borderTopColor: 'transparent' }} />
           </div>
         ) : filteredPrescriptions.length === 0 ? (
-          <Card className="empty-state-card-ui">
-            <div className="empty-state-icon-circle">
-              <Pill size={28} />
-            </div>
-            <h3 className="empty-state-title">No Prescriptions Found</h3>
-            <p className="empty-state-desc">
-              {searchTerm || statusFilter !== 'ALL'
-                ? 'No prescriptions matched your active search filters.'
-                : 'You have no prescriptions on record. Prescriptions issued during doctor consultations will appear here.'}
-            </p>
-            {(searchTerm || statusFilter !== 'ALL') && (
-              <Button
-                variant="outline"
-                size="md"
-                onClick={() => {
-                  setSearchTerm('');
-                  setStatusFilter('ALL');
-                }}
-              >
-                Clear Filters
-              </Button>
-            )}
+          <Card>
+            <EmptyState
+              imageSrc="/undraw_medicine_hqqg.svg"
+              title="No Prescriptions Found"
+              description={
+                searchTerm || statusFilter !== 'ALL'
+                  ? 'No prescriptions matched your active search filters.'
+                  : 'You have no prescriptions on record. Prescriptions issued during doctor consultations will appear here automatically.'
+              }
+              action={
+                (searchTerm || statusFilter !== 'ALL') ? (
+                  <Button
+                    variant="outline"
+                    size="md"
+                    onClick={() => {
+                      setSearchTerm('');
+                      setStatusFilter('ALL');
+                    }}
+                  >
+                    Clear Search Filters
+                  </Button>
+                ) : undefined
+              }
+            />
           </Card>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>

@@ -9,6 +9,7 @@ import StatusBadge from '../../components/ui/StatusBadge';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
+import EmptyState from '../../components/ui/EmptyState';
 import { useToast } from '../../components/ui/Toast';
 import { MedicationReminderList } from '../../components/patient/MedicationReminderList';
 import { formatDateIndian, formatTimeIndian } from '../../utils/dateUtils';
@@ -71,26 +72,48 @@ export const PatientDashboard: React.FC = () => {
   return (
     <DashboardLayout>
       <div className="patient-dashboard-view">
-        {/* Welcome Header */}
-        <div className="dashboard-header-row">
-          <div>
-            <h1 className="welcome-title">
-              Welcome, {user?.name}
+        {/* Hero Welcome Banner with Illustration */}
+        <div
+          style={{
+            background: 'linear-gradient(135deg, #ffffff 0%, #f0f7ff 100%)',
+            borderRadius: '16px',
+            border: '1px solid #dbeafe',
+            padding: '1.75rem 2rem',
+            marginBottom: '1.75rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '1.5rem',
+            boxShadow: '0 4px 20px rgba(0, 98, 204, 0.05)',
+            position: 'relative',
+            overflow: 'hidden',
+          }}
+        >
+          <div style={{ flex: 1, minWidth: '260px', zIndex: 1 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '0.35rem' }}>
+              <h1 className="welcome-title" style={{ margin: 0 }}>
+                Welcome back, {user?.name}!
+              </h1>
               <span className="role-badge badge-patient">
                 <User size={12} /> Patient
               </span>
-            </h1>
-            <p className="welcome-subtitle">
-              Manage your healthcare visits, specialist appointments, and medication tracking.
+            </div>
+            <p className="welcome-subtitle" style={{ maxWidth: '520px', marginBottom: '1.25rem' }}>
+              Your personal HealthPulse portal. Schedule specialist consultations, review medical history, and access digital prescriptions securely.
             </p>
-          </div>
-
-          <div style={{ display: 'flex', gap: '0.75rem' }}>
             <Link to="/patient/doctors">
               <Button variant="primary" size="md" leftIcon={<Search size={16} />}>
-                Book New Appointment
+                Book Specialist Consultation
               </Button>
             </Link>
+          </div>
+
+          <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <img
+              src="/undraw_doctor_aum1.svg"
+              alt="Medical Care"
+              style={{ width: '180px', height: '130px', objectFit: 'contain' }}
+            />
           </div>
         </div>
 
@@ -181,24 +204,19 @@ export const PatientDashboard: React.FC = () => {
             </div>
           </div>
         ) : (
-          <Card
-            className="next-appointment-hero-card"
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <div className="next-appt-avatar" style={{ backgroundColor: 'var(--surface-alt)', color: 'var(--text-muted)' }}>
-                <Calendar size={24} />
-              </div>
-              <div>
-                <h4 style={{ fontSize: '16px', fontWeight: 600 }}>No upcoming appointments scheduled</h4>
-                <p className="helper-text">Ready to consult with a specialist? Book a visit in seconds.</p>
-              </div>
-            </div>
-            <Link to="/patient/doctors">
-              <Button variant="primary" size="sm" leftIcon={<PlusCircle size={14} />}>
-                Browse Doctors
-              </Button>
-            </Link>
+          <Card style={{ marginBottom: '1.75rem' }}>
+            <EmptyState
+              imageSrc="/undraw_online-calendar_iz1q.svg"
+              title="No upcoming appointments scheduled"
+              description="Ready to consult with a medical specialist? Search available time slots and book a consultation in seconds."
+              action={
+                <Link to="/patient/doctors">
+                  <Button variant="primary" size="md" leftIcon={<PlusCircle size={16} />}>
+                    Browse Verified Doctors
+                  </Button>
+                </Link>
+              }
+            />
           </Card>
         )}
 

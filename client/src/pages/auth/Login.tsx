@@ -123,6 +123,20 @@ export const Login: React.FC = () => {
                   'Centralized management of doctor credentials, leave calendars, operational schedules, and appointment telemetry.'}
               </p>
 
+              <div style={{ margin: '1.5rem 0', textAlign: 'center' }}>
+                <img
+                  src={
+                    selectedRole === 'PATIENT'
+                      ? '/undraw_doctors_djoj.svg'
+                      : selectedRole === 'DOCTOR'
+                      ? '/undraw_doctors-orders_a8sv.svg'
+                      : '/undraw_private-data_934y.svg'
+                  }
+                  alt="HealthPulse Portal"
+                  style={{ width: '220px', height: '140px', objectFit: 'contain' }}
+                />
+              </div>
+
               <div className="auth-trust-points">
                 <div className="auth-trust-item">
                   <div className="auth-trust-icon">

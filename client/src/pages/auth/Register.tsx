@@ -103,6 +103,14 @@ export const Register: React.FC = () => {
                 Gain instant access to top medical specialists, digital prescription history, and seamless appointment booking across all hospital departments.
               </p>
 
+              <div style={{ margin: '1.5rem 0', textAlign: 'center' }}>
+                <img
+                  src="/undraw_profile_9xdn.svg"
+                  alt="Register Patient Account"
+                  style={{ width: '220px', height: '140px', objectFit: 'contain' }}
+                />
+              </div>
+
               <div className="auth-trust-points">
                 <div className="auth-trust-item">
                   <div className="auth-trust-icon">
