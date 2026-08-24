@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { getMyAppointments, cancelAppointment } from '../../services/appointmentApi';
+import { getMyPrescriptions } from '../../services/clinicalApi';
+import { getInvoices } from '../../services/billingApi';
 import { Appointment } from '../../types/appointment';
 import DashboardLayout from '../../components/ui/DashboardLayout';
 import SummaryStatCard from '../../components/ui/SummaryStatCard';
@@ -10,6 +12,7 @@ import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import EmptyState from '../../components/ui/EmptyState';
+import Avatar from '../../components/ui/Avatar';
 import { useToast } from '../../components/ui/Toast';
 import { MedicationReminderList } from '../../components/patient/MedicationReminderList';
 import { formatDateIndian, formatTimeIndian } from '../../utils/dateUtils';
@@ -21,12 +24,11 @@ import {
   Search,
   Calendar,
   Clock,
-  MapPin,
-  Stethoscope,
-  XCircle,
   FileText,
-  User,
-  PlusCircle,
+  Plus,
+  ArrowRight,
+  ChevronRight,
+  CalendarDays,
 } from 'lucide-react';
 
 export const PatientDashboard: React.FC = () => {
@@ -34,20 +36,38 @@ export const PatientDashboard: React.FC = () => {
   const { success, error: toastError } = useToast();
 
   const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [prescriptionsCount, setPrescriptionsCount] = useState<number>(0);
+  const [outstandingBalance, setOutstandingBalance] = useState<number>(0);
+
   const [cancelModalAppointmentId, setCancelModalAppointmentId] = useState<string | null>(null);
   const [isCancelling, setIsCancelling] = useState(false);
 
-  const fetchAppointments = async () => {
+  const fetchDashboardData = async () => {
     try {
-      const data = await getMyAppointments();
-      setAppointments(data);
+      const appData = await getMyAppointments();
+      setAppointments(appData);
+
+      try {
+        const rxData = await getMyPrescriptions();
+        setPrescriptionsCount(rxData.length);
+      } catch {
+        setPrescriptionsCount(0);
+      }
+
+      try {
+        const billData = await getInvoices({ status: 'pending' });
+        const unpaidTotal = billData.invoices.reduce((sum, inv) => sum + (inv.total || 0), 0);
+        setOutstandingBalance(unpaidTotal);
+      } catch {
+        setOutstandingBalance(0);
+      }
     } catch (err: any) {
       console.warn('Failed to load patient appointments', err);
     }
   };
 
   useEffect(() => {
-    fetchAppointments();
+    fetchDashboardData();
   }, []);
 
   const upcomingAppointments = appointments.filter((a) => a.status === 'BOOKED');
@@ -61,7 +81,7 @@ export const PatientDashboard: React.FC = () => {
       await cancelAppointment(cancelModalAppointmentId);
       success('Appointment was cancelled successfully.', 'Cancelled');
       setCancelModalAppointmentId(null);
-      await fetchAppointments();
+      await fetchDashboardData();
     } catch (err: any) {
       toastError(err.message || 'Failed to cancel appointment', 'Action Failed');
     } finally {
@@ -69,191 +89,382 @@ export const PatientDashboard: React.FC = () => {
     }
   };
 
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good morning';
+    if (hour < 17) return 'Good afternoon';
+    return 'Good evening';
+  };
+
   return (
     <DashboardLayout>
-      <div className="patient-dashboard-view">
-        {/* Hero Welcome Banner with Illustration */}
-        <div
-          style={{
-            background: 'linear-gradient(135deg, #ffffff 0%, #f0f7ff 100%)',
-            borderRadius: '16px',
-            border: '1px solid #dbeafe',
-            padding: '1.75rem 2rem',
-            marginBottom: '1.75rem',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '1.5rem',
-            boxShadow: '0 4px 20px rgba(0, 98, 204, 0.05)',
-            position: 'relative',
-            overflow: 'hidden',
-          }}
-        >
-          <div style={{ flex: 1, minWidth: '260px', zIndex: 1 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '0.35rem' }}>
-              <h1 className="welcome-title" style={{ margin: 0 }}>
-                Welcome back, {user?.name}!
-              </h1>
-              <span className="role-badge badge-patient">
-                <User size={12} /> Patient
-              </span>
-            </div>
-            <p className="welcome-subtitle" style={{ maxWidth: '520px', marginBottom: '1.25rem' }}>
-              Your personal HealthPulse portal. Schedule specialist consultations, review medical history, and access digital prescriptions securely.
+      <div className="patient-dashboard-view" style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
+        {/* 1. DASHBOARD WELCOME HEADER */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
+          <div>
+            <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0F172A', margin: 0, letterSpacing: '-0.02em' }}>
+              {getGreeting()}, {user?.name?.split(' ')[0] || 'Patient'}
+            </h1>
+            <p style={{ fontSize: '0.95rem', color: '#64748B', margin: '0.25rem 0 0 0' }}>
+              Your healthcare at a glance.
             </p>
-            <Link to="/patient/doctors">
-              <Button variant="primary" size="md" leftIcon={<Search size={16} />}>
-                Book Specialist Consultation
-              </Button>
-            </Link>
           </div>
 
-          <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <img
-              src="/undraw_doctor_aum1.svg"
-              alt="Medical Care"
-              style={{ width: '180px', height: '130px', objectFit: 'contain' }}
-            />
+          <Link to="/patient/doctors">
+            <Button variant="primary" size="md" leftIcon={<Plus size={16} />}>
+              Book Appointment
+            </Button>
+          </Link>
+        </div>
+
+        {/* 2. PRIMARY TOP GRID: NEXT APPOINTMENT (Left 62%) & QUICK ACTIONS (Right 38%) */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.25rem', alignItems: 'stretch' }}>
+          {/* Left: Primary Next Appointment Card */}
+          <div style={{ flex: '1 1 60%' }}>
+            {nextAppointment ? (
+              <div
+                style={{
+                  background: 'linear-gradient(135deg, #FFFFFF 0%, #F3F8FF 100%)',
+                  border: '1px solid #DBEAFE',
+                  borderRadius: '14px',
+                  padding: '1.5rem',
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  boxShadow: '0 2px 8px rgba(37, 99, 235, 0.05)',
+                  position: 'relative',
+                }}
+              >
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#2563EB' }}>
+                      Next Appointment
+                    </span>
+                    <StatusBadge status={nextAppointment.status} size="sm" />
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem', marginBottom: '1.25rem' }}>
+                    <Avatar
+                      name={nextAppointment.doctorName}
+                      seed={typeof nextAppointment.doctorId === 'object' ? (nextAppointment.doctorId as any)?._id : nextAppointment.doctorId}
+                      size="xl"
+                    />
+                    <div>
+                      <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#0F172A', margin: 0 }}>
+                        {nextAppointment.doctorName ? `Dr. ${nextAppointment.doctorName}` : 'Specialist Doctor'}
+                      </h3>
+                      <span style={{ fontSize: '0.88rem', color: '#0D9488', fontWeight: 600 }}>
+                        Cardiology / General Care
+                      </span>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', background: '#FFFFFF', padding: '0.85rem 1rem', borderRadius: '10px', border: '1px solid #E2E8F0', marginBottom: '1.25rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.88rem', color: '#334155', fontWeight: 600 }}>
+                      <Calendar size={16} color="#2563EB" />
+                      <span>{formatDateIndian(nextAppointment.date)}</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.88rem', color: '#334155', fontWeight: 600 }}>
+                      <Clock size={16} color="#2563EB" />
+                      <span>{formatTimeIndian(nextAppointment.startTime, false)} - {formatTimeIndian(nextAppointment.endTime, false)} IST</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <Link to={`/patient/appointments/${nextAppointment.id}`} style={{ flex: 1 }}>
+                    <Button variant="primary" size="sm" fullWidth leftIcon={<FileText size={15} />}>
+                      View Details
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            ) : (
+              <Card style={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                <EmptyState
+                  imageSrc="/undraw_online-calendar_iz1q.svg"
+                  title="No upcoming appointments"
+                  description="Need to see a doctor? Find a specialist and book a convenient appointment."
+                  action={
+                    <Link to="/patient/doctors">
+                      <Button variant="primary" size="sm" leftIcon={<Search size={15} />}>
+                        Find a Doctor
+                      </Button>
+                    </Link>
+                  }
+                />
+              </Card>
+            )}
+          </div>
+
+          {/* Right: Quick Actions Panel */}
+          <div style={{ flex: '1 1 40%' }}>
+            <Card title="Quick Actions">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+                <Link
+                  to="/patient/doctors"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '12px 14px',
+                    borderRadius: '10px',
+                    border: '1px solid #E2E8F0',
+                    background: '#F8FAFC',
+                    textDecoration: 'none',
+                    transition: 'all 150ms ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#EFF6FF';
+                    e.currentTarget.style.borderColor = '#BFDBFE';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = '#F8FAFC';
+                    e.currentTarget.style.borderColor = '#E2E8F0';
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <div style={{ width: '34px', height: '34px', borderRadius: '8px', background: '#EFF6FF', color: '#2563EB', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Search size={18} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '0.92rem', fontWeight: 700, color: '#0F172A' }}>Find a Doctor</div>
+                      <div style={{ fontSize: '0.78rem', color: '#64748B' }}>Search verified medical specialists</div>
+                    </div>
+                  </div>
+                  <ChevronRight size={18} color="#94A3B8" />
+                </Link>
+
+                <Link
+                  to="/patient/appointments"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '12px 14px',
+                    borderRadius: '10px',
+                    border: '1px solid #E2E8F0',
+                    background: '#F8FAFC',
+                    textDecoration: 'none',
+                    transition: 'all 150ms ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#EFF6FF';
+                    e.currentTarget.style.borderColor = '#BFDBFE';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = '#F8FAFC';
+                    e.currentTarget.style.borderColor = '#E2E8F0';
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <div style={{ width: '34px', height: '34px', borderRadius: '8px', background: '#EFF6FF', color: '#2563EB', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <CalendarDays size={18} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '0.92rem', fontWeight: 700, color: '#0F172A' }}>My Appointments</div>
+                      <div style={{ fontSize: '0.78rem', color: '#64748B' }}>Review upcoming and past visits</div>
+                    </div>
+                  </div>
+                  <ChevronRight size={18} color="#94A3B8" />
+                </Link>
+
+                <Link
+                  to="/patient/prescriptions"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '12px 14px',
+                    borderRadius: '10px',
+                    border: '1px solid #E2E8F0',
+                    background: '#F8FAFC',
+                    textDecoration: 'none',
+                    transition: 'all 150ms ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#EFF6FF';
+                    e.currentTarget.style.borderColor = '#BFDBFE';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = '#F8FAFC';
+                    e.currentTarget.style.borderColor = '#E2E8F0';
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <div style={{ width: '34px', height: '34px', borderRadius: '8px', background: '#F0FDFA', color: '#0D9488', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Pill size={18} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '0.92rem', fontWeight: 700, color: '#0F172A' }}>Prescriptions</div>
+                      <div style={{ fontSize: '0.78rem', color: '#64748B' }}>Access active digital medications</div>
+                    </div>
+                  </div>
+                  <ChevronRight size={18} color="#94A3B8" />
+                </Link>
+
+                <Link
+                  to="/patient/billing"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '12px 14px',
+                    borderRadius: '10px',
+                    border: '1px solid #E2E8F0',
+                    background: '#F8FAFC',
+                    textDecoration: 'none',
+                    transition: 'all 150ms ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#EFF6FF';
+                    e.currentTarget.style.borderColor = '#BFDBFE';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = '#F8FAFC';
+                    e.currentTarget.style.borderColor = '#E2E8F0';
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <div style={{ width: '34px', height: '34px', borderRadius: '8px', background: '#F5F3FF', color: '#6D28D9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <CreditCard size={18} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '0.92rem', fontWeight: 700, color: '#0F172A' }}>Billing & Invoices</div>
+                      <div style={{ fontSize: '0.78rem', color: '#64748B' }}>View statements & payments</div>
+                    </div>
+                  </div>
+                  <ChevronRight size={18} color="#94A3B8" />
+                </Link>
+              </div>
+            </Card>
           </div>
         </div>
 
-        {/* 4 Top Summary Stat Cards */}
-        <div className="stats-grid">
+        {/* 3. SUMMARY METRICS (4 Cards Row) */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
           <SummaryStatCard
             label="Upcoming Appointments"
             value={upcomingAppointments.length}
-            icon={<CalendarCheck size={22} />}
-            iconBgColor="rgba(0, 98, 204, 0.08)"
-            iconColor="var(--primary)"
+            icon={<CalendarCheck size={20} />}
+            iconBgColor="#EFF6FF"
+            iconColor="#2563EB"
             subtext="Confirmed & Active"
           />
           <SummaryStatCard
-            label="Completed Consultations"
+            label="Completed Visits"
             value={completedAppointments.length}
-            icon={<CheckCircle2 size={22} />}
-            iconBgColor="var(--success-bg)"
-            iconColor="var(--success)"
+            icon={<CheckCircle2 size={20} />}
+            iconBgColor="#DCFCE7"
+            iconColor="#16A34A"
             subtext="Care history on file"
           />
           <SummaryStatCard
             label="Active Prescriptions"
-            value="3"
-            icon={<Pill size={22} />}
-            iconBgColor="var(--info-bg)"
-            iconColor="var(--info)"
-            subtext="Daily dosage scheduled"
+            value={prescriptionsCount}
+            icon={<Pill size={20} />}
+            iconBgColor="#CCFBF1"
+            iconColor="#0D9488"
+            subtext="Medication records"
           />
           <SummaryStatCard
             label="Outstanding Balance"
-            value="$0.00"
-            icon={<CreditCard size={22} />}
-            iconBgColor="rgba(57, 49, 175, 0.08)"
-            iconColor="var(--primary-dark)"
-            subtext="All accounts settled"
+            value={`₹${outstandingBalance.toLocaleString('en-IN')}`}
+            icon={<CreditCard size={20} />}
+            iconBgColor="#F3E8FF"
+            iconColor="#6D28D9"
+            subtext={outstandingBalance > 0 ? 'Payment pending' : 'All accounts settled'}
           />
         </div>
 
-        {/* Highlight Block: Next Appointment */}
-        {nextAppointment ? (
-          <div className="next-appointment-hero-card">
-            <div className="next-appt-meta">
-              <div className="next-appt-avatar">
-                <Stethoscope size={28} />
-              </div>
-              <div className="next-appt-details">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '4px' }}>
-                  <span className="helper-text" style={{ textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600, color: 'var(--primary)' }}>
-                    Next Scheduled Appointment
-                  </span>
-                  <StatusBadge status={nextAppointment.status} size="sm" />
-                </div>
-                <h4>
-                  {nextAppointment.doctorName ? `Dr. ${nextAppointment.doctorName}` : 'Specialist Consultation'}
-                </h4>
-                <div className="next-appt-specs">
-                  <span className="next-appt-spec-item">
-                    <Calendar size={14} color="var(--primary)" />
-                    {formatDateIndian(nextAppointment.date)}
-                  </span>
-                  <span className="next-appt-spec-item">
-                    <Clock size={14} color="var(--primary)" />
-                    {formatTimeIndian(nextAppointment.startTime, false)} - {formatTimeIndian(nextAppointment.endTime, false)} IST
-                  </span>
-                  <span className="next-appt-spec-item">
-                    <MapPin size={14} color="var(--text-muted)" />
-                    Main Clinic • Room 302
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div className="next-appt-actions">
-              <Link to={`/patient/appointments/${nextAppointment.id}`}>
-                <Button variant="outline" size="sm" leftIcon={<FileText size={14} />}>
-                  View Details
-                </Button>
-              </Link>
-              <Button
-                variant="danger"
-                size="sm"
-                leftIcon={<XCircle size={14} />}
-                onClick={() => setCancelModalAppointmentId(nextAppointment.id)}
-              >
-                Cancel
-              </Button>
-            </div>
+        {/* 4. MEDICATION SCHEDULE */}
+        <div id="prescriptions">
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+            <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#0F172A', margin: 0 }}>
+              Today's Medication
+            </h3>
+            <Link to="/patient/prescriptions" style={{ fontSize: '0.88rem', fontWeight: 600, color: '#2563EB', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+              <span>View all</span>
+              <ArrowRight size={14} />
+            </Link>
           </div>
-        ) : (
-          <Card style={{ marginBottom: '1.75rem' }}>
+          <MedicationReminderList />
+        </div>
+
+        {/* 5. UPCOMING APPOINTMENTS LIST */}
+        <Card>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <CalendarCheck size={18} color="#2563EB" />
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#0F172A', margin: 0 }}>
+                Upcoming Appointments
+              </h3>
+            </div>
+            <Link to="/patient/appointments" style={{ fontSize: '0.84rem', fontWeight: 600, color: '#2563EB', textDecoration: 'none' }}>
+              View all appointments →
+            </Link>
+          </div>
+          {upcomingAppointments.length === 0 ? (
             <EmptyState
               imageSrc="/undraw_online-calendar_iz1q.svg"
-              title="No upcoming appointments scheduled"
-              description="Ready to consult with a medical specialist? Search available time slots and book a consultation in seconds."
+              title="No upcoming visits scheduled"
+              description="Browse top specialists and pick a suitable time slot for your next consultation."
               action={
                 <Link to="/patient/doctors">
-                  <Button variant="primary" size="md" leftIcon={<PlusCircle size={16} />}>
-                    Browse Verified Doctors
+                  <Button variant="outline" size="sm" leftIcon={<Search size={14} />}>
+                    Browse Doctors
                   </Button>
                 </Link>
               }
             />
-          </Card>
-        )}
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+              {upcomingAppointments.slice(0, 3).map((app) => (
+                <div
+                  key={app.id}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '12px 16px',
+                    borderRadius: '10px',
+                    border: '1px solid #E2E8F0',
+                    background: '#FFFFFF',
+                    flexWrap: 'wrap',
+                    gap: '1rem',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <Avatar
+                      name={app.doctorName}
+                      seed={typeof app.doctorId === 'object' ? (app.doctorId as any)?._id : app.doctorId}
+                      size="md"
+                    />
+                    <div>
+                      <h4 style={{ fontSize: '0.98rem', fontWeight: 700, color: '#0F172A', margin: 0 }}>
+                        Dr. {app.doctorName}
+                      </h4>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', fontSize: '0.82rem', color: '#64748B', marginTop: '2px' }}>
+                        <span>{formatDateIndian(app.date)}</span>
+                        <span>•</span>
+                        <span>{formatTimeIndian(app.startTime, false)} IST</span>
+                      </div>
+                    </div>
+                  </div>
 
-        {/* Medication Reminders Section */}
-        <div id="prescriptions" style={{ marginBottom: '1.75rem' }}>
-          <MedicationReminderList />
-        </div>
-
-        {/* Account Information Card */}
-        <Card
-          id="profile"
-          title="Patient Account & Security Details"
-          icon={<User size={18} />}
-        >
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem' }}>
-            <div>
-              <div className="helper-text" style={{ marginBottom: '4px' }}>Patient ID</div>
-              <div style={{ fontFamily: 'monospace', fontSize: '14px', color: 'var(--text-primary)', fontWeight: 600 }}>
-                {user?._id}
-              </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <StatusBadge status={app.status} size="sm" />
+                    <Link to={`/patient/appointments/${app.id}`}>
+                      <Button variant="outline" size="sm">
+                        View Details
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              ))}
             </div>
-            <div>
-              <div className="helper-text" style={{ marginBottom: '4px' }}>Registered Full Name</div>
-              <div style={{ fontWeight: 600 }}>{user?.name}</div>
-            </div>
-            <div>
-              <div className="helper-text" style={{ marginBottom: '4px' }}>Email Address</div>
-              <div style={{ fontWeight: 500 }}>{user?.email}</div>
-            </div>
-            <div>
-              <div className="helper-text" style={{ marginBottom: '4px' }}>Security Session</div>
-              <div style={{ color: 'var(--success)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--success)' }} />
-                Bearer Token Active (JWT)
-              </div>
-            </div>
-          </div>
+          )}
         </Card>
       </div>
 
