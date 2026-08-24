@@ -15,6 +15,16 @@ const getResendClient = () => {
 };
 
 /**
+ * Master Kill Switch helper function
+ */
+const isEmailEnabled = () => {
+  if (process.env.EMAIL_ENABLED !== undefined) {
+    return String(process.env.EMAIL_ENABLED).toLowerCase() === 'true';
+  }
+  return config.ENABLE_EMAIL_NOTIFICATIONS === true;
+};
+
+/**
  * Determine actual recipient for development/test mode overrides
  */
 const getActualRecipient = (intendedRecipient) => {
@@ -117,11 +127,11 @@ function calculateNextRetry(attempt) {
  * Verify Resend SDK configuration at server startup without blocking
  */
 const verifyTransporter = async () => {
-  if (config.ENABLE_EMAIL_NOTIFICATIONS && config.RESEND_API_KEY) {
+  if (isEmailEnabled() && config.RESEND_API_KEY) {
     console.log('[EmailService] Resend SDK initialized over HTTPS API (port 443).');
     return true;
   }
-  console.log('[EmailService] Running in Development / Mock Mode (Emails logged to console)');
+  console.log('[EmailService] EMAIL_ENABLED=false (Outbound email sending is globally disabled)');
   return true;
 };
 
@@ -149,7 +159,6 @@ const sendEmail = async ({
 
   const rawRecipient = Array.isArray(to) ? to.join(', ') : to.trim().toLowerCase();
   const actualRecipient = getActualRecipient(rawRecipient);
-  console.log(`[EMAIL] intended=${rawRecipient}, actual=${actualRecipient}`);
 
   const mailPayload = {
     from: config.EMAIL_FROM || 'HealthPulse <notifications@health-pulse.app>',
@@ -160,11 +169,44 @@ const sendEmail = async ({
     ...(config.EMAIL_REPLY_TO && { replyTo: config.EMAIL_REPLY_TO }),
   };
 
+  // MASTER KILL SWITCH: If email is globally disabled via EMAIL_ENABLED=false
+  if (!isEmailEnabled()) {
+    console.warn(`[EMAIL DISABLED] Skipping email intended for ${rawRecipient}`);
+
+    let logEntry = null;
+    if (!isRetry) {
+      try {
+        logEntry = await NotificationLog.create({
+          recipientEmail: rawRecipient,
+          recipientName: recipientName || payload.recipientName || '',
+          notificationType,
+          appointmentId,
+          subject: mailPayload.subject,
+          payload,
+          status: 'dead',
+          attempts: 0,
+          lastError: 'EMAIL_DISABLED',
+          deadAt: new Date(),
+          nextRetryAt: null,
+        });
+      } catch (logErr) {
+        console.warn('[EmailService] Warning writing skipped NotificationLog:', logErr.message);
+      }
+    }
+
+    return {
+      success: false,
+      skipped: true,
+      reason: 'EMAIL_DISABLED',
+      logId: logEntry ? logEntry._id : null,
+    };
+  }
+
   const effectiveIdempotencyKey =
     idempotencyKey || (appointmentId ? `${notificationType.toLowerCase()}-${appointmentId}` : undefined);
 
   // If email notifications are disabled or API key is missing, execute in Mock Mode
-  if (!config.ENABLE_EMAIL_NOTIFICATIONS || !config.RESEND_API_KEY) {
+  if (!config.RESEND_API_KEY) {
     console.log(`[EmailService MOCK] intended=${rawRecipient} actual=${actualRecipient} [Subject: "${mailPayload.subject}"]`);
     const mockId = `mock-email-${Date.now()}-${Math.random().toString(36).substring(7)}`;
 
@@ -297,6 +339,10 @@ const sendEmail = async ({
  * @param {number} maxBatch - Maximum logs to process per run (default: 20)
  */
 const retryFailedNotifications = async (maxBatch = 20) => {
+  if (!isEmailEnabled()) {
+    console.log('[EmailRetryWorker] Email disabled — retry processing skipped.');
+    return { retried: 0, succeeded: 0, markedDead: 0 };
+  }
   const now = new Date();
   const MAX_ATTEMPTS = 5;
 

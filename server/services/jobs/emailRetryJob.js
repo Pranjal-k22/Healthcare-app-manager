@@ -7,6 +7,11 @@ let isJobRunning = false;
  * Execute retry cycle for failed email notifications
  */
 const runEmailRetryJob = async () => {
+  if (String(process.env.EMAIL_ENABLED || '').toLowerCase() !== 'true') {
+    console.log('[EmailRetryJob] Email disabled — retry processing skipped.');
+    return;
+  }
+
   if (isJobRunning) {
     return;
   }

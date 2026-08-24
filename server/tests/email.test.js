@@ -111,8 +111,8 @@ const runEmailTests = async () => {
   });
 
   assert.ok(
-    successResult.success === true || (successResult.success === false && typeof successResult.error === 'string'),
-    'sendEmail should return a structured result object (success or handled quota/network status) without throwing'
+    successResult.success === true || successResult.skipped === true || (successResult.success === false && typeof successResult.error === 'string'),
+    'sendEmail should return a structured result object (success, skipped, or handled status) without throwing'
   );
   console.log('✓ sendEmail execution and message ID dispatch verified');
 

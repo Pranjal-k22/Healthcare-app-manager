@@ -29,6 +29,7 @@ const config = {
   ADMIN_PASSWORD: process.env.ADMIN_PASSWORD || 'AdminPassword123!',
 
   // Email Notification Settings (Resend Node.js SDK over HTTPS)
+  EMAIL_ENABLED: process.env.EMAIL_ENABLED !== undefined ? String(process.env.EMAIL_ENABLED).toLowerCase() === 'true' : (process.env.ENABLE_EMAIL_NOTIFICATIONS === 'true'),
   RESEND_API_KEY: process.env.RESEND_API_KEY || '',
   EMAIL_FROM_NAME: process.env.EMAIL_FROM_NAME || 'HealthPulse Hospital',
   EMAIL_FROM: process.env.EMAIL_FROM || 'HealthPulse <notifications@health-pulse.app>',
