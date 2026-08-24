@@ -42,7 +42,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
           { label: 'Dashboard', to: '/patient/dashboard', icon: <LayoutDashboard size={20} /> },
           { label: 'Book', to: '/patient/doctors', icon: <Calendar size={20} /> },
           { label: 'Appointments', to: '/patient/appointments', icon: <Users size={20} /> },
-          { label: 'Alerts', to: '/notifications', icon: <User size={20} /> },
+          { label: 'Profile', to: '/patient/profile', icon: <User size={20} /> },
         ];
     }
   };

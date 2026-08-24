@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   Calendar,
@@ -78,6 +78,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
     navigate('/login');
   };
 
+  const getProfileRoute = () => {
+    switch (role) {
+      case 'DOCTOR':
+        return '/doctor/profile';
+      case 'ADMIN':
+        return '/admin/dashboard';
+      case 'PATIENT':
+      default:
+        return '/patient/profile';
+    }
+  };
+
   return (
     <>
       <aside
@@ -93,22 +105,37 @@ export const Sidebar: React.FC<SidebarProps> = ({
             gap: '0.75rem',
           }}
         >
-          <Avatar
-            name={user?.name || 'User'}
-            seed={user?._id || user?.email}
-            size="md"
-          />
+          <Link
+            to={getProfileRoute()}
+            title="View & Edit Account Profile"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.75rem',
+              textDecoration: 'none',
+              color: 'inherit',
+              flex: 1,
+              minWidth: 0,
+              cursor: 'pointer',
+            }}
+          >
+            <Avatar
+              name={user?.name || 'User'}
+              seed={user?._id || user?.email}
+              size="md"
+            />
 
-          {!isCollapsed && (
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: '0.92rem', fontWeight: 800, color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {user?.name || 'User'}
+            {!isCollapsed && (
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: '0.92rem', fontWeight: 800, color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {user?.name || 'User'}
+                </div>
+                <div style={{ fontSize: '0.75rem', color: '#0062cc', fontWeight: 600 }}>
+                  View Profile →
+                </div>
               </div>
-              <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>
-                {role} Portal
-              </div>
-            </div>
-          )}
+            )}
+          </Link>
 
           {onToggleCollapse && (
             <button

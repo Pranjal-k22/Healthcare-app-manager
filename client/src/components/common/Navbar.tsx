@@ -238,18 +238,37 @@ export const Navbar: React.FC = () => {
                 <NavCalendarButton />
                 <NotificationBell />
 
-                <Avatar
-                  name={user.name}
-                  seed={user._id || user.email}
-                  size="sm"
-                />
-                <div className="user-identity">
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'flex-end' }}>
-                    <span className="user-name">{user.name}</span>
-                    {getRoleBadge(user.role)}
+                <Link
+                  to={
+                    user.role === 'DOCTOR'
+                      ? '/doctor/profile'
+                      : user.role === 'ADMIN'
+                      ? '/admin/dashboard'
+                      : '/patient/profile'
+                  }
+                  title="View & Edit Account Profile"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.65rem',
+                    textDecoration: 'none',
+                    color: 'inherit',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <Avatar
+                    name={user.name}
+                    seed={user._id || user.email}
+                    size="sm"
+                  />
+                  <div className="user-identity">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                      <span className="user-name">{user.name}</span>
+                      {getRoleBadge(user.role)}
+                    </div>
+                    <span className="user-email">{user.email}</span>
                   </div>
-                  <span className="user-email">{user.email}</span>
-                </div>
+                </Link>
                 <div className="nav-logout-btn">
                   <Button
                     variant="outline"
