@@ -17,6 +17,8 @@ import {
   Trash2,
 } from 'lucide-react';
 
+import Avatar from '../ui/Avatar';
+
 interface DoctorCardProps {
   doctor: Doctor;
   isAdminView?: boolean;
@@ -41,23 +43,18 @@ export const DoctorCard: React.FC<DoctorCardProps> = ({
 
   const formattedDays = activeDaysList.length > 0 ? activeDaysList.join(', ') : 'Schedule on request';
 
-  // Calculate initials (e.g. "Dr. Sarah Jenkins" -> "SJ")
-  const cleanName = doctor.name.replace(/^Dr\.\s*/i, '').trim();
-  const nameParts = cleanName.split(/\s+/);
-  const initials =
-    nameParts.length >= 2
-      ? `${nameParts[0].charAt(0)}${nameParts[nameParts.length - 1].charAt(0)}`.toUpperCase()
-      : cleanName.slice(0, 2).toUpperCase() || 'DR';
-
   return (
     <Card className="doctor-card-ui" style={{ marginBottom: '1.25rem' }}>
       <div className="doctor-card-inner">
         {/* Main Info Section (Left/Center) */}
         <div className="doctor-card-main-info">
-          {/* Circular Initials Avatar */}
-          <div className="doctor-initials-avatar">
-            <span>{initials}</span>
-          </div>
+          {/* Circular Avataaars / Photo Avatar */}
+          <Avatar
+            name={doctor.name}
+            seed={doctor.id || doctor.email}
+            src={doctor.profileImage}
+            size="lg"
+          />
 
           <div className="doctor-details-block">
             {/* Name and Specialization Tag */}

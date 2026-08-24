@@ -11,13 +11,13 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
-  Shield,
   Pill,
   CalendarDays,
   UserPlus,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import ConfirmDialog from './ConfirmDialog';
+import Avatar from './Avatar';
 
 
 export interface NavItem {
@@ -103,30 +103,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
             gap: '0.75rem',
           }}
         >
-          <div
-            style={{
-              width: '40px',
-              height: '40px',
-              borderRadius: '10px',
-              background:
-                role === 'ADMIN'
-                  ? 'linear-gradient(135deg, rgba(57, 49, 175, 0.12), rgba(0, 98, 204, 0.12))'
-                  : 'linear-gradient(135deg, rgba(0, 98, 204, 0.12), rgba(0, 198, 255, 0.12))',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: role === 'ADMIN' ? '#3931af' : '#0062cc',
-              flexShrink: 0,
-            }}
-          >
-            {role === 'ADMIN' ? (
-              <Shield size={20} />
-            ) : role === 'DOCTOR' ? (
-              <Stethoscope size={20} />
-            ) : (
-              <User size={20} />
-            )}
-          </div>
+          <Avatar
+            name={user?.name || 'User'}
+            seed={user?._id || user?.email}
+            size="md"
+          />
 
           {!isCollapsed && (
             <div style={{ flex: 1, minWidth: 0 }}>

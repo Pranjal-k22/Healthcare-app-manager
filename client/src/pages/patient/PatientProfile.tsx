@@ -8,6 +8,7 @@ import Select from '../../components/ui/Select';
 import InlineAlert from '../../components/ui/InlineAlert';
 import { useToast } from '../../components/ui/Toast';
 import { CalendarSettingsCard } from '../../components/calendar/CalendarSettingsCard';
+import Avatar from '../../components/ui/Avatar';
 import {
   User,
   Mail,
@@ -97,14 +98,6 @@ export const PatientProfile: React.FC = () => {
     window.print();
   };
 
-  // Initials
-  const cleanName = formData.name.trim();
-  const nameParts = cleanName.split(/\s+/);
-  const initials =
-    nameParts.length >= 2
-      ? `${nameParts[0].charAt(0)}${nameParts[nameParts.length - 1].charAt(0)}`.toUpperCase()
-      : cleanName.slice(0, 2).toUpperCase() || 'JD';
-
   return (
     <DashboardLayout>
       <div className="profile-page-view">
@@ -133,23 +126,11 @@ export const PatientProfile: React.FC = () => {
             <Card style={{ textAlign: 'center', padding: '32px 20px' }}>
               {/* Circular Avatar */}
               <div style={{ position: 'relative', width: '84px', height: '84px', margin: '0 auto 1rem auto' }}>
-                <div
-                  style={{
-                    width: '84px',
-                    height: '84px',
-                    borderRadius: '50%',
-                    backgroundColor: 'rgba(0, 98, 204, 0.1)',
-                    color: 'var(--primary)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '28px',
-                    fontWeight: 700,
-                    border: '2px solid var(--border-light)',
-                  }}
-                >
-                  {initials}
-                </div>
+                <Avatar
+                  name={formData.name}
+                  seed={user?._id || user?.email}
+                  size="xl"
+                />
                 <button
                   type="button"
                   title="Update profile photo"

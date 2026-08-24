@@ -16,7 +16,6 @@ import {
   Edit3,
   Mail,
   Phone,
-  Stethoscope,
   X,
   Clock,
   Lock,
@@ -26,6 +25,7 @@ import {
 
 import { CalendarSettingsCard } from '../../components/calendar/CalendarSettingsCard';
 import { DoctorLeaveManager } from '../../components/doctor/DoctorLeaveManager';
+import Avatar from '../../components/ui/Avatar';
 
 const DAYS_ORDER: Array<{ key: keyof Doctor['workingHours']; label: string }> = [
   { key: 'monday', label: 'Monday' },
@@ -449,21 +449,12 @@ export const DoctorProfile: React.FC = () => {
           }}
         >
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1.5rem', flexWrap: 'wrap' }}>
-            <div
-              style={{
-                width: '68px',
-                height: '68px',
-                borderRadius: '16px',
-                background: 'linear-gradient(135deg, rgba(0, 98, 204, 0.12), rgba(0, 198, 255, 0.12))',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#0062cc',
-                flexShrink: 0,
-              }}
-            >
-              <Stethoscope size={36} />
-            </div>
+            <Avatar
+              name={doctor.name}
+              seed={doctor.id || doctor.email}
+              src={doctor.profileImage}
+              size="xl"
+            />
 
             <div style={{ flex: 1, minWidth: '260px' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>

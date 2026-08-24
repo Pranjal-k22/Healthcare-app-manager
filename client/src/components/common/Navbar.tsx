@@ -20,6 +20,7 @@ import {
 import { ROLE_DASHBOARD_ROUTES } from '../../utils/constants';
 import Button from '../ui/Button';
 import ConfirmDialog from '../ui/ConfirmDialog';
+import Avatar from '../ui/Avatar';
 
 export const Navbar: React.FC = () => {
   const { user, isAuthenticated, logout } = useAuth();
@@ -237,6 +238,11 @@ export const Navbar: React.FC = () => {
                 <NavCalendarButton />
                 <NotificationBell />
 
+                <Avatar
+                  name={user.name}
+                  seed={user._id || user.email}
+                  size="sm"
+                />
                 <div className="user-identity">
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'flex-end' }}>
                     <span className="user-name">{user.name}</span>

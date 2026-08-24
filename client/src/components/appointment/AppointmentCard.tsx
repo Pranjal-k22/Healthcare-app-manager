@@ -4,6 +4,7 @@ import { Appointment } from '../../types/appointment';
 import StatusBadge from '../ui/StatusBadge';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
+import Avatar from '../ui/Avatar';
 import { formatDateIndian, formatTimeIndian } from '../../utils/dateUtils';
 import {
   Calendar,
@@ -14,7 +15,6 @@ import {
   Pill,
   RefreshCw,
   Stethoscope,
-  User,
   XCircle,
 } from 'lucide-react';
 
@@ -43,13 +43,11 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({
       {/* Card Header */}
       <div className="appointment-card-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <div className="appointment-avatar">
-            {viewRole === 'PATIENT' ? (
-              <Stethoscope size={20} color="var(--primary)" />
-            ) : (
-              <User size={20} color="var(--primary-dark)" />
-            )}
-          </div>
+          <Avatar
+            name={viewRole === 'PATIENT' ? `Dr. ${appointment.doctorName}` : appointment.patientName}
+            seed={viewRole === 'PATIENT' ? (typeof appointment.doctorId === 'object' ? (appointment.doctorId as any)?._id : appointment.doctorId) : (typeof appointment.patientId === 'object' ? (appointment.patientId as any)?._id : appointment.patientId)}
+            size="sm"
+          />
           <div>
             <h4 className="appointment-person-name">
               {viewRole === 'PATIENT'

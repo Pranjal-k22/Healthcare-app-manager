@@ -6,6 +6,7 @@ import { LeaveList } from '../../components/doctor/LeaveList';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
 import StatusBadge from '../../components/ui/StatusBadge';
+import Avatar from '../../components/ui/Avatar';
 import {
   AlertCircle,
   ArrowLeft,
@@ -18,7 +19,6 @@ import {
   Mail,
   Phone,
   Sparkles,
-  Stethoscope,
   ShieldCheck,
   CheckCircle2,
 } from 'lucide-react';
@@ -133,22 +133,12 @@ export const DoctorDetails: React.FC = () => {
       <Card style={{ padding: '2rem', marginBottom: '1.75rem', position: 'relative', overflow: 'hidden' }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1.75rem', flexWrap: 'wrap' }}>
           {/* Avatar Icon */}
-          <div
-            style={{
-              width: '80px',
-              height: '80px',
-              borderRadius: 'var(--radius-lg)',
-              background: 'linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%)',
-              color: 'var(--white)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: '0 8px 16px rgba(0, 98, 204, 0.25)',
-              flexShrink: 0,
-            }}
-          >
-            <Stethoscope size={40} />
-          </div>
+          <Avatar
+            name={doctor.name}
+            seed={doctor.id || doctor.email}
+            src={doctor.profileImage}
+            size="xl"
+          />
 
           {/* Profile Main Info */}
           <div style={{ flex: 1, minWidth: '280px' }}>
