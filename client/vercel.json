@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://healthcare-appointment-manager-server.onrender.com/api/:path*"
+      "destination": "https://healthpulse-api-4vhy.onrender.com/api/:path*"
     },
     {
       "source": "/(.*)",
