@@ -35,6 +35,7 @@ app.use(
 // Cross-Origin Resource Sharing
 const configuredClientUrl = (config.CLIENT_URL || '').replace(/\/+$/, '');
 const configuredFrontendUrl = (config.FRONTEND_URL || '').replace(/\/+$/, '');
+const configuredCorsOrigin = (process.env.CORS_ORIGIN || '').replace(/\/+$/, '');
 
 const allowedOrigins = [
   'http://localhost:5173',
@@ -46,8 +47,10 @@ const allowedOrigins = [
   'https://healthcare-app-manager.vercel.app',
   configuredClientUrl,
   configuredFrontendUrl,
+  configuredCorsOrigin,
   process.env.CLIENT_URL,
   process.env.CLIENT_WWW_URL,
+  process.env.CORS_ORIGIN,
 ].filter(Boolean);
 
 app.use(
@@ -61,7 +64,8 @@ app.use(
       if (
         allowedOrigins.includes(origin) ||
         allowedOrigins.includes(normalizedOrigin) ||
-        /^https:\/\/(healthcare-app-manager|healthpluse|health-pulse)(-[a-z0-9-]+)?\.(vercel\.app|app)$/.test(normalizedOrigin)
+        /^https:\/\/(healthcare-app-manager|healthpluse|health-pulse|meddical)(-[a-z0-9-]+)?\.(vercel\.app|app|onrender\.com)$/.test(normalizedOrigin) ||
+        normalizedOrigin.endsWith('.onrender.com')
       ) {
         return callback(null, true);
       }
@@ -93,14 +97,16 @@ const authLimiter = rateLimit({
 });
 app.use('/api/auth', authLimiter);
 
-// API Health Check
-app.get('/api/health', (req, res) => {
+// API Health Check Endpoints (Supports both /health and /api/health for Render)
+const healthHandler = (req, res) => {
   res.status(200).json({
     success: true,
-    message: 'HealthPulse API is healthy (Phase 11 Production Ready)',
+    message: 'HealthPulse API is healthy (Production Ready)',
     timestamp: new Date().toISOString(),
   });
-});
+};
+app.get('/health', healthHandler);
+app.get('/api/health', healthHandler);
 
 // Dev-Only Testing Endpoints (Disabled in Production)
 const devRoutes = require('./routes/devRoutes');
