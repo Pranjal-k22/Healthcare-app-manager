@@ -3957,3 +3957,666 @@ body,
   }
 }
 
+/* ==========================================================================
+   NIGHT VISION — Dark Mode Overrides
+   Applied when [data-theme="dark"] is set on <html> element
+   ========================================================================== */
+
+/* ── App Shell ──────────────────────────────────────────────────────────── */
+[data-theme="dark"] .app-container,
+[data-theme="dark"] .dashboard-layout-container,
+[data-theme="dark"] .dashboard-main-viewport {
+  background-color: var(--bg-app);
+  color: var(--text-primary);
+}
+
+/* ── Sidebar ─────────────────────────────────────────────────────────────── */
+[data-theme="dark"] .sidebar-ui {
+  background-color: var(--sidebar-bg) !important;
+  border-right-color: var(--border-primary) !important;
+}
+[data-theme="dark"] .sidebar-user-header {
+  border-bottom-color: var(--border-primary) !important;
+}
+[data-theme="dark"] .sidebar-user-name {
+  color: var(--text-primary) !important;
+}
+[data-theme="dark"] .sidebar-user-action {
+  color: var(--primary) !important;
+}
+[data-theme="dark"] .sidebar-collapse-btn {
+  background: var(--bg-surface-secondary) !important;
+  border-color: var(--border-primary) !important;
+  color: var(--text-muted) !important;
+}
+[data-theme="dark"] .sidebar-nav-item {
+  color: var(--text-secondary);
+}
+[data-theme="dark"] .sidebar-nav-item:hover {
+  background-color: var(--bg-surface-secondary);
+  color: var(--primary);
+}
+[data-theme="dark"] .sidebar-nav-item.is-active {
+  background-color: rgba(96, 165, 250, 0.1);
+  color: var(--primary);
+  border-left-color: var(--primary);
+}
+[data-theme="dark"] .sidebar-footer {
+  border-top-color: var(--border-primary);
+}
+[data-theme="dark"] .sidebar-logout-btn {
+  color: var(--danger);
+}
+[data-theme="dark"] .sidebar-logout-btn:hover {
+  background-color: var(--danger-bg);
+  border-color: var(--danger-border);
+}
+
+/* ── Mobile Bottom Navigation ────────────────────────────────────────────── */
+[data-theme="dark"] .dashboard-mobile-bottom-nav {
+  background: var(--bg-surface) !important;
+  border-top-color: var(--border-primary) !important;
+  box-shadow: 0 -2px 12px rgba(0,0,0,0.3) !important;
+}
+[data-theme="dark"] .mobile-nav-item {
+  color: var(--text-muted) !important;
+}
+[data-theme="dark"] .mobile-nav-item.is-active {
+  color: var(--primary) !important;
+}
+
+/* ── Navbar / Header ─────────────────────────────────────────────────────── */
+[data-theme="dark"] .navbar {
+  background: var(--gradient-brand) !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* ── Cards ───────────────────────────────────────────────────────────────── */
+[data-theme="dark"] .card-ui,
+[data-theme="dark"] .summary-stat-card-ui,
+[data-theme="dark"] .datatable-container-ui,
+[data-theme="dark"] .datatable-mobile-card,
+[data-theme="dark"] .notif-page-card,
+[data-theme="dark"] .booking-stepper,
+[data-theme="dark"] .next-appointment-hero-card,
+[data-theme="dark"] .auth-split-card {
+  background-color: var(--card-bg) !important;
+  border-color: var(--card-border) !important;
+}
+[data-theme="dark"] .card-header-ui {
+  border-bottom-color: var(--border-primary);
+}
+[data-theme="dark"] .card-footer-ui {
+  border-top-color: var(--border-primary);
+}
+[data-theme="dark"] .card-icon-slot {
+  background-color: rgba(96, 165, 250, 0.1);
+}
+
+/* ── Inputs, Selects, Textareas ──────────────────────────────────────────── */
+[data-theme="dark"] .form-input-ui,
+[data-theme="dark"] .form-select-ui,
+[data-theme="dark"] .form-textarea-ui,
+[data-theme="dark"] .datatable-search-input,
+[data-theme="dark"] .datatable-filter-select,
+[data-theme="dark"] .hp-auth-input {
+  background-color: var(--input-bg) !important;
+  border-color: var(--input-border) !important;
+  color: var(--input-text) !important;
+}
+[data-theme="dark"] .form-input-ui:focus,
+[data-theme="dark"] .form-select-ui:focus,
+[data-theme="dark"] .form-textarea-ui:focus,
+[data-theme="dark"] .datatable-search-input:focus,
+[data-theme="dark"] .hp-auth-input:focus {
+  border-color: var(--input-focus-border) !important;
+  box-shadow: 0 0 0 3px var(--input-focus-ring) !important;
+}
+[data-theme="dark"] input:-webkit-autofill,
+[data-theme="dark"] input:-webkit-autofill:hover,
+[data-theme="dark"] input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px var(--input-bg) inset !important;
+  -webkit-text-fill-color: var(--input-text) !important;
+  caret-color: var(--input-text);
+}
+
+/* ── Buttons ─────────────────────────────────────────────────────────────── */
+[data-theme="dark"] .btn-outline {
+  background-color: transparent;
+  border-color: var(--border-primary);
+  color: var(--text-primary);
+}
+[data-theme="dark"] .btn-outline:hover:not(:disabled) {
+  background-color: rgba(96, 165, 250, 0.08);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+[data-theme="dark"] .btn-secondary {
+  background-color: var(--bg-surface-secondary);
+  color: var(--text-primary);
+  border-color: var(--border-primary);
+}
+[data-theme="dark"] .btn-ghost:hover:not(:disabled) {
+  background-color: var(--bg-surface-secondary);
+  color: var(--text-primary);
+}
+
+/* ── Tables ──────────────────────────────────────────────────────────────── */
+[data-theme="dark"] .datatable-th {
+  background-color: var(--bg-surface-secondary) !important;
+  border-bottom-color: var(--border-primary) !important;
+}
+[data-theme="dark"] .datatable-tr {
+  border-bottom-color: var(--border-primary);
+}
+[data-theme="dark"] .datatable-tr:hover {
+  background-color: rgba(96, 165, 250, 0.04) !important;
+}
+[data-theme="dark"] .datatable-toolbar {
+  border-bottom-color: var(--border-primary);
+}
+[data-theme="dark"] .datatable-pagination {
+  border-top-color: var(--border-primary);
+}
+
+/* ── Dialogs / Modals ────────────────────────────────────────────────────── */
+[data-theme="dark"] .dialog-content-card {
+  background-color: var(--card-bg) !important;
+  border: 1px solid var(--border-primary) !important;
+  box-shadow: var(--shadow-modal) !important;
+}
+[data-theme="dark"] .dialog-backdrop {
+  background-color: rgba(0, 0, 0, 0.75) !important;
+}
+[data-theme="dark"] .dialog-close-btn {
+  background: var(--bg-surface-secondary);
+}
+[data-theme="dark"] .dialog-close-btn:hover {
+  background: var(--surface-alt);
+  color: var(--text-primary);
+}
+[data-theme="dark"] .print-modal-sheet {
+  background-color: var(--card-bg) !important;
+}
+[data-theme="dark"] .print-modal-header {
+  background-color: var(--bg-surface-secondary);
+  border-bottom-color: var(--border-primary);
+}
+
+/* ── Skeleton ────────────────────────────────────────────────────────────── */
+[data-theme="dark"] .skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--skeleton-base) 0%,
+    var(--skeleton-highlight) 50%,
+    var(--skeleton-base) 100%
+  ) !important;
+  background-size: 200% 100% !important;
+}
+
+/* ── Status Badges ───────────────────────────────────────────────────────── */
+[data-theme="dark"] .badge-status-active {
+  background-color: var(--success-bg);
+  color: var(--success-text);
+  border-color: var(--success-border);
+}
+[data-theme="dark"] .badge-status-pending {
+  background-color: var(--warning-bg);
+  color: var(--warning-text);
+  border-color: var(--warning-border);
+}
+[data-theme="dark"] .badge-status-cancelled {
+  background-color: var(--danger-bg);
+  color: var(--danger-text);
+  border-color: var(--danger-border);
+}
+[data-theme="dark"] .badge-status-completed {
+  background-color: rgba(96, 165, 250, 0.1);
+  color: #93C5FD;
+  border-color: rgba(96, 165, 250, 0.2);
+}
+[data-theme="dark"] .badge-status-confirmed {
+  background-color: var(--success-bg);
+  color: var(--success-text);
+  border-color: var(--success-border);
+}
+[data-theme="dark"] .badge-status-inprogress {
+  background-color: rgba(45, 212, 191, 0.08);
+  color: #5EEAD4;
+  border-color: rgba(45, 212, 191, 0.2);
+}
+[data-theme="dark"] .badge-patient {
+  background-color: rgba(96, 165, 250, 0.1);
+  color: #93C5FD;
+  border-color: rgba(96, 165, 250, 0.2);
+}
+[data-theme="dark"] .badge-doctor {
+  background-color: rgba(74, 222, 128, 0.08);
+  color: #86EFAC;
+  border-color: rgba(74, 222, 128, 0.2);
+}
+[data-theme="dark"] .badge-admin {
+  background-color: rgba(167, 139, 250, 0.08);
+  color: #C4B5FD;
+  border-color: rgba(167, 139, 250, 0.2);
+}
+
+/* ── Alerts ──────────────────────────────────────────────────────────────── */
+[data-theme="dark"] .alert-success {
+  background-color: var(--success-bg);
+  border-color: var(--success-border);
+  color: var(--success-text);
+}
+[data-theme="dark"] .alert-danger {
+  background-color: var(--danger-bg);
+  border-color: var(--danger-border);
+  color: var(--danger-text);
+}
+[data-theme="dark"] .alert-warning {
+  background-color: var(--warning-bg);
+  border-color: var(--warning-border);
+  color: var(--warning-text);
+}
+[data-theme="dark"] .alert-info {
+  background-color: var(--info-bg);
+  border-color: var(--info-border);
+  color: var(--info-text);
+}
+
+/* ── Notification Dropdown ───────────────────────────────────────────────── */
+[data-theme="dark"] .notif-dropdown-menu {
+  background: var(--card-bg) !important;
+  border: 1px solid var(--border-primary);
+  box-shadow: var(--shadow-modal);
+  color: var(--text-primary) !important;
+}
+[data-theme="dark"] .notif-dropdown-header,
+[data-theme="dark"] .notif-dropdown-body,
+[data-theme="dark"] .notif-loading-state,
+[data-theme="dark"] .notif-empty-state {
+  background: var(--card-bg) !important;
+  border-bottom-color: var(--border-primary) !important;
+}
+[data-theme="dark"] .notif-dropdown-title {
+  color: var(--text-primary) !important;
+}
+[data-theme="dark"] .notif-card-item {
+  background: var(--card-bg) !important;
+  border-bottom-color: var(--border-primary) !important;
+}
+[data-theme="dark"] .notif-card-item:hover {
+  background: var(--bg-surface-secondary) !important;
+}
+[data-theme="dark"] .notif-card-item.is-unread {
+  background: rgba(96, 165, 250, 0.06) !important;
+}
+[data-theme="dark"] .notif-item-title {
+  color: var(--text-primary) !important;
+}
+[data-theme="dark"] .notif-item-time {
+  color: var(--text-muted) !important;
+}
+[data-theme="dark"] .notif-item-message {
+  color: var(--text-secondary) !important;
+}
+[data-theme="dark"] .notif-dropdown-footer {
+  background: var(--bg-surface-secondary) !important;
+  border-top-color: var(--border-primary) !important;
+}
+[data-theme="dark"] .notif-icon-purple {
+  background: rgba(167, 139, 250, 0.1);
+  color: #C4B5FD;
+  border-color: rgba(167, 139, 250, 0.2);
+}
+[data-theme="dark"] .notif-page-card.is-unread {
+  background: rgba(96, 165, 250, 0.06) !important;
+}
+
+/* ── Toast ───────────────────────────────────────────────────────────────── */
+[data-theme="dark"] .toast-card {
+  background-color: var(--card-bg) !important;
+  border-top-color: var(--border-primary) !important;
+  border-right-color: var(--border-primary) !important;
+  border-bottom-color: var(--border-primary) !important;
+  box-shadow: var(--shadow-modal) !important;
+}
+
+/* ── Auth Pages ──────────────────────────────────────────────────────────── */
+[data-theme="dark"] .hp-auth-page {
+  background-color: var(--bg-app) !important;
+}
+[data-theme="dark"] .hp-auth-left-panel {
+  background: linear-gradient(145deg, #091426 0%, #0B1929 50%, #0A1726 100%) !important;
+  border-right-color: var(--border-primary) !important;
+}
+[data-theme="dark"] .hp-auth-hero-title {
+  color: #E2E8F0 !important;
+}
+[data-theme="dark"] .hp-auth-hero-subtitle,
+[data-theme="dark"] .hp-auth-left-footer {
+  color: #94A3B8 !important;
+}
+[data-theme="dark"] .hp-auth-logo-text {
+  color: #E2E8F0 !important;
+}
+[data-theme="dark"] .hp-auth-logo-tagline {
+  color: var(--primary) !important;
+}
+[data-theme="dark"] .hp-auth-right-panel {
+  background-color: var(--bg-surface) !important;
+}
+[data-theme="dark"] .hp-auth-title {
+  color: var(--text-primary) !important;
+}
+[data-theme="dark"] .hp-auth-subtitle {
+  color: var(--text-muted) !important;
+}
+[data-theme="dark"] .hp-auth-label {
+  color: var(--text-secondary) !important;
+}
+[data-theme="dark"] .hp-role-segmented-control {
+  background-color: var(--bg-surface-secondary) !important;
+  border-color: var(--border-primary) !important;
+}
+[data-theme="dark"] .hp-role-segment-btn {
+  color: var(--text-muted) !important;
+}
+[data-theme="dark"] .hp-role-segment-btn.is-active {
+  background-color: rgba(96, 165, 250, 0.12) !important;
+  border-color: var(--primary) !important;
+  color: var(--primary) !important;
+}
+[data-theme="dark"] .hp-role-segment-btn:hover:not(.is-active) {
+  color: var(--text-primary) !important;
+  background-color: rgba(96, 165, 250, 0.06) !important;
+}
+[data-theme="dark"] .hp-demo-quickfill-block {
+  border-top-color: var(--border-primary) !important;
+}
+[data-theme="dark"] .hp-demo-btn {
+  background-color: var(--bg-surface-secondary) !important;
+  border-color: var(--border-primary) !important;
+  color: var(--text-secondary) !important;
+}
+[data-theme="dark"] .hp-demo-btn:hover {
+  background-color: rgba(96, 165, 250, 0.08) !important;
+  border-color: rgba(96, 165, 250, 0.25) !important;
+  color: var(--primary) !important;
+}
+[data-theme="dark"] .hp-auth-cta-btn {
+  background-color: #3B82F6 !important;
+}
+[data-theme="dark"] .hp-auth-cta-btn:hover:not(:disabled) {
+  background-color: #60A5FA !important;
+  box-shadow: 0 4px 14px rgba(96, 165, 250, 0.4) !important;
+}
+
+/* ── Segmented Tab Group ─────────────────────────────────────────────────── */
+[data-theme="dark"] .segmented-tab-group {
+  background-color: var(--bg-surface-secondary);
+}
+[data-theme="dark"] .segmented-tab-btn {
+  color: var(--text-muted);
+}
+[data-theme="dark"] .segmented-tab-btn:hover:not(.is-active) {
+  color: var(--text-primary);
+  background-color: rgba(255, 255, 255, 0.04);
+}
+[data-theme="dark"] .segmented-tab-btn.is-active {
+  background-color: var(--card-bg);
+  color: var(--primary);
+}
+
+/* ── Role Tabs ───────────────────────────────────────────────────────────── */
+[data-theme="dark"] .role-tabs-container {
+  background-color: var(--bg-surface-secondary);
+  border-color: var(--border-primary);
+}
+[data-theme="dark"] .role-tab-btn {
+  color: var(--text-muted);
+}
+[data-theme="dark"] .role-tab-btn.is-active {
+  background-color: var(--card-bg);
+  color: var(--primary);
+}
+
+/* ── Slots ───────────────────────────────────────────────────────────────── */
+[data-theme="dark"] .slot-btn,
+[data-theme="dark"] .slot-chip-btn {
+  background-color: var(--input-bg) !important;
+  border-color: var(--border-primary) !important;
+  color: var(--text-primary) !important;
+}
+[data-theme="dark"] .slot-btn:hover:not(:disabled),
+[data-theme="dark"] .slot-chip-btn:hover:not(:disabled) {
+  border-color: var(--primary) !important;
+  background-color: rgba(96, 165, 250, 0.08) !important;
+  color: var(--primary) !important;
+}
+[data-theme="dark"] .slot-btn:disabled,
+[data-theme="dark"] .slot-chip-unavailable {
+  background-color: var(--bg-surface-secondary) !important;
+  color: var(--text-muted) !important;
+}
+
+/* ── Empty State ─────────────────────────────────────────────────────────── */
+[data-theme="dark"] .empty-state-ui {
+  background: var(--bg-surface-secondary);
+  border-color: var(--border-primary);
+}
+[data-theme="dark"] .empty-state-icon-circle,
+[data-theme="dark"] .empty-state-icon {
+  background: rgba(96, 165, 250, 0.1);
+  color: var(--primary);
+}
+
+/* ==========================================================================
+   Theme Toggle & Appearance Control UI
+   ========================================================================== */
+
+.theme-quick-toggle {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  outline: none;
+  flex-shrink: 0;
+}
+.theme-quick-toggle:hover {
+  background: rgba(255, 255, 255, 0.22);
+  border-color: rgba(255, 255, 255, 0.4);
+  transform: translateY(-1px);
+}
+
+.appearance-dropdown-root {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+.appearance-dropdown-panel {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: 200px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-modal);
+  z-index: 10000;
+  overflow: hidden;
+  animation: notifDropdownFade 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.appearance-dropdown-header {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  padding: 10px 14px 6px;
+}
+.appearance-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  width: 100%;
+  padding: 9px 14px;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.12s ease;
+  text-align: left;
+}
+.appearance-dropdown-item:hover {
+  background: var(--bg-surface-secondary);
+  color: var(--primary);
+}
+.appearance-dropdown-item.is-active {
+  color: var(--primary);
+  font-weight: 600;
+}
+.appearance-dropdown-icon {
+  display: flex;
+  align-items: center;
+  color: inherit;
+}
+.appearance-dropdown-check {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--primary);
+}
+
+.appearance-control {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.appearance-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.appearance-segments {
+  display: inline-flex;
+  align-items: center;
+  background-color: var(--bg-surface-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-md);
+  padding: 4px;
+  gap: 3px;
+}
+.appearance-segment {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+.appearance-segment:hover:not(.is-active) {
+  color: var(--text-primary);
+  background-color: rgba(0,0,0,0.04);
+}
+.appearance-segment.is-active {
+  background-color: var(--bg-surface);
+  color: var(--primary);
+  border-color: var(--border-primary);
+  font-weight: 600;
+  box-shadow: var(--shadow-sm);
+}
+.appearance-hint {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* ==========================================================================
+   Sidebar CSS Classes (used in refactored Sidebar.tsx)
+   ========================================================================== */
+
+.sidebar-user-header {
+  padding: 1.25rem 1rem;
+  border-bottom: 1px solid var(--border-soft);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.sidebar-user-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-decoration: none;
+  color: inherit;
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+}
+.sidebar-user-info {
+  flex: 1;
+  min-width: 0;
+}
+.sidebar-user-name {
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sidebar-user-action {
+  font-size: 0.75rem;
+  color: var(--primary);
+  font-weight: 600;
+}
+.sidebar-collapse-btn {
+  background: var(--bg-surface-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: 6px;
+  padding: 4px;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all var(--transition-fast);
+}
+.sidebar-collapse-btn:hover {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 10px;
+  flex: 1;
+  overflow-y: auto;
+}
+.sidebar-nav-badge {
+  margin-left: auto;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--primary);
+  color: #ffffff;
+}
