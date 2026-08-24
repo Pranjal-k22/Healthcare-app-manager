@@ -14,6 +14,7 @@ import { MedicineItem } from '../../types/clinical';
 import { AppointmentStatusBadge } from '../../components/appointment/AppointmentStatusBadge';
 import { PrescriptionEditor } from '../../components/clinical/PrescriptionEditor';
 import { DualPreVisitSummaryView, DualPostVisitSummaryView } from '../../components/clinical/DualAiSummaryView';
+import Button from '../../components/ui/Button';
 import { formatDateIndian, formatTimeIndian } from '../../utils/dateUtils';
 import {
   Activity,
@@ -308,11 +309,11 @@ export const DoctorConsultation: React.FC = () => {
               <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'linear-gradient(135deg, #0062cc, #00c6ff)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ffffff' }}>
                 <Stethoscope size={20} />
               </div>
-              <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em', margin: 0 }}>
+              <h1 className="page-title" style={{ fontSize: '1.75rem', fontWeight: 800, margin: 0 }}>
                 Consultation Room
               </h1>
             </div>
-            <p style={{ color: '#64748b', fontSize: '0.9rem', marginTop: '0.35rem', marginBottom: 0 }}>
+            <p className="helper-text" style={{ fontSize: '0.9rem', marginTop: '0.35rem', marginBottom: 0 }}>
               Clinical examination, AI pre-visit synthesis, and prescription management.
             </p>
           </div>
@@ -323,30 +324,21 @@ export const DoctorConsultation: React.FC = () => {
       </div>
 
       {successMsg && (
-        <div style={{ marginBottom: '1.25rem', padding: '0.85rem 1.25rem', borderRadius: '10px', background: '#ecfdf5', border: '1px solid #a7f3d0', color: '#047857', display: 'flex', alignItems: 'center', gap: '0.65rem', fontSize: '0.9rem', fontWeight: 500 }}>
-          <CheckCircle2 size={18} color="#059669" />
+        <div style={{ marginBottom: '1.25rem', padding: '0.85rem 1.25rem', borderRadius: '10px', background: 'var(--success-bg)', border: '1px solid var(--success-border)', color: 'var(--success-text)', display: 'flex', alignItems: 'center', gap: '0.65rem', fontSize: '0.9rem', fontWeight: 500 }}>
+          <CheckCircle2 size={18} color="var(--success)" />
           <span>{successMsg}</span>
         </div>
       )}
 
       {error && (
-        <div style={{ marginBottom: '1.25rem', padding: '0.85rem 1.25rem', borderRadius: '10px', background: '#fef2f2', border: '1px solid #fecaca', color: '#b91c1c', display: 'flex', alignItems: 'center', gap: '0.65rem', fontSize: '0.9rem', fontWeight: 500 }}>
-          <AlertCircle size={18} color="#dc2626" />
+        <div style={{ marginBottom: '1.25rem', padding: '0.85rem 1.25rem', borderRadius: '10px', background: 'var(--danger-bg)', border: '1px solid var(--danger-border)', color: 'var(--danger-text)', display: 'flex', alignItems: 'center', gap: '0.65rem', fontSize: '0.9rem', fontWeight: 500 }}>
+          <AlertCircle size={18} color="var(--danger)" />
           <span>{error}</span>
         </div>
       )}
 
       {/* Patient Profile & Schedule Card */}
-      <div
-        style={{
-          marginBottom: '1.5rem',
-          padding: '1.5rem',
-          background: '#ffffff',
-          borderRadius: '14px',
-          border: '1px solid #e2e8f0',
-          boxShadow: '0 4px 16px rgba(15, 23, 42, 0.04)',
-        }}
-      >
+      <div className="consultation-patient-card">
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
           {/* Patient Details */}
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.9rem' }}>
@@ -355,25 +347,25 @@ export const DoctorConsultation: React.FC = () => {
                 width: '46px',
                 height: '46px',
                 borderRadius: '12px',
-                background: 'linear-gradient(135deg, rgba(0, 98, 204, 0.12), rgba(0, 198, 255, 0.12))',
+                background: 'rgba(96, 165, 250, 0.12)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: '#0062cc',
+                color: 'var(--primary)',
                 flexShrink: 0,
               }}
             >
               <User size={24} />
             </div>
             <div>
-              <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                Patient Profile
+              <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                PATIENT PROFILE
               </span>
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', marginTop: '0.1rem', marginBottom: '0.25rem' }}>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)', marginTop: '0.1rem', marginBottom: '0.25rem' }}>
                 {appointment.patientName}
               </h3>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', color: '#64748b', fontSize: '0.85rem' }}>
-                <Mail size={13} color="#94a3b8" />
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                <Mail size={13} color="var(--text-muted)" />
                 <span>{appointment.patientEmail}</span>
               </div>
             </div>
@@ -386,25 +378,25 @@ export const DoctorConsultation: React.FC = () => {
                 width: '46px',
                 height: '46px',
                 borderRadius: '12px',
-                background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(5, 150, 105, 0.12))',
+                background: 'rgba(74, 222, 128, 0.12)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: '#059669',
+                color: 'var(--success)',
                 flexShrink: 0,
               }}
             >
               <Calendar size={24} />
             </div>
             <div>
-              <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                Scheduled Slot
+              <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                SCHEDULED SLOT
               </span>
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', marginTop: '0.1rem', marginBottom: '0.25rem' }}>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)', marginTop: '0.1rem', marginBottom: '0.25rem' }}>
                 {formatDateIndian(appointment.date)}
               </h3>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', color: '#64748b', fontSize: '0.85rem' }}>
-                <Clock size={13} color="#94a3b8" />
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                <Clock size={13} color="var(--text-muted)" />
                 <span style={{ fontWeight: 600 }}>
                   {formatTimeIndian(appointment.startTime, false)} – {formatTimeIndian(appointment.endTime, false)} IST
                 </span>
@@ -418,29 +410,21 @@ export const DoctorConsultation: React.FC = () => {
           style={{
             marginTop: '1.25rem',
             paddingTop: '1.25rem',
-            borderTop: '1px solid #f1f5f9',
+            borderTop: '1px solid var(--border-soft)',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginBottom: '0.45rem' }}>
-            <Activity size={14} color="#0062cc" />
-            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <Activity size={14} color="var(--primary)" />
+            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               Patient Reported Symptoms (Intake)
             </span>
           </div>
-          <div
-            style={{
-              padding: '0.85rem 1.1rem',
-              borderRadius: '10px',
-              background: '#f8fafc',
-              border: '1px solid #e2e8f0',
-              borderLeft: '4px solid #0062cc',
-            }}
-          >
-            <p style={{ margin: 0, fontSize: '0.95rem', fontWeight: 600, color: '#1e293b', lineHeight: 1.5 }}>
+          <div className="consultation-symptoms-box">
+            <p style={{ margin: 0, fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.5 }}>
               {appointment.symptoms || appointment.reason || 'No specific symptoms entered.'}
             </p>
             {appointment.patientNotes && (
-              <p style={{ margin: '0.45rem 0 0', fontSize: '0.85rem', color: '#64748b' }}>
+              <p style={{ margin: '0.45rem 0 0', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
                 <strong>Additional Notes:</strong> {appointment.patientNotes}
               </p>
             )}
@@ -525,37 +509,28 @@ export const DoctorConsultation: React.FC = () => {
       ) : null}
 
       {/* Clinical Notes & Diagnostic Section */}
-      <div
-        style={{
-          marginBottom: '1.75rem',
-          padding: '1.5rem',
-          background: '#ffffff',
-          borderRadius: '14px',
-          border: '1px solid #e2e8f0',
-          boxShadow: '0 4px 16px rgba(15, 23, 42, 0.04)',
-        }}
-      >
+      <div className="consultation-clinical-card">
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '1.25rem' }}>
-          <div style={{ width: '34px', height: '34px', borderRadius: '8px', background: 'rgba(0, 98, 204, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0062cc' }}>
+          <div style={{ width: '34px', height: '34px', borderRadius: '8px', background: 'rgba(96, 165, 250, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)' }}>
             <FileText size={18} />
           </div>
           <div>
-            <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+            <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
               Clinical Examination & Findings
             </h3>
-            <span style={{ fontSize: '0.78rem', color: '#64748b' }}>
+            <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
               Document physician notes, diagnostic impressions, and care plan
             </span>
           </div>
         </div>
 
         <div className="form-group" style={{ marginBottom: '1.25rem' }}>
-          <label className="form-label" htmlFor="clinicalNotes" style={{ display: 'block', fontWeight: 700, color: '#334155', fontSize: '0.88rem', marginBottom: '0.35rem' }}>
-            Clinical Observations & Examination Findings <span style={{ color: '#ef4444' }}>*</span>
+          <label className="form-label" htmlFor="clinicalNotes" style={{ display: 'block', fontWeight: 700, color: 'var(--text-secondary)', fontSize: '0.88rem', marginBottom: '0.35rem' }}>
+            Clinical Observations & Examination Findings <span style={{ color: 'var(--danger)' }}>*</span>
           </label>
           <textarea
             id="clinicalNotes"
-            className="form-input"
+            className="form-input-ui form-textarea-ui"
             rows={4}
             placeholder="Record doctor physical examination observations, vital indicators, clinical history, and diagnostic findings..."
             value={clinicalNotes}
@@ -563,130 +538,90 @@ export const DoctorConsultation: React.FC = () => {
             disabled={isCompleted || isCancelled || isSubmitting}
             required
             maxLength={5000}
-            style={{ width: '100%', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.95rem', color: '#0f172a', fontFamily: 'inherit' }}
           />
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'flex-start',
-              gap: '0.5rem',
-              marginTop: '0.4rem',
-              padding: '8px 12px',
-              backgroundColor: '#f8fafc',
-              border: '1px solid #e2e8f0',
-              borderRadius: '6px',
-              fontSize: '12px',
-              color: '#64748b',
-              lineHeight: 1.4,
-            }}
-          >
-            <Sparkles size={14} color="#0062cc" style={{ flexShrink: 0, marginTop: '2px' }} />
+          <div className="consultation-ai-hint-box">
+            <Sparkles size={14} color="var(--primary)" style={{ flexShrink: 0, marginTop: '2px' }} />
             <span>
-              <strong style={{ color: '#334155' }}>AI Discharge Synthesis:</strong> In this demonstration environment, finalized clinical notes and medication instructions are synthesized via cloud AI (Google Gemini) to generate patient-friendly discharge summaries.
+              <strong style={{ color: 'var(--text-primary)' }}>AI Discharge Synthesis:</strong> In this demonstration environment, finalized clinical notes and medication instructions are synthesized via cloud AI (Google Gemini) to generate patient-friendly discharge summaries.
             </span>
           </div>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem', marginBottom: '1.25rem' }}>
           <div className="form-group">
-            <label className="form-label" htmlFor="diagnosisNotes" style={{ display: 'block', fontWeight: 700, color: '#334155', fontSize: '0.88rem', marginBottom: '0.35rem' }}>
+            <label className="form-label" htmlFor="diagnosisNotes" style={{ display: 'block', fontWeight: 700, color: 'var(--text-secondary)', fontSize: '0.88rem', marginBottom: '0.35rem' }}>
               Primary Diagnosis / Clinical Impression
             </label>
             <input
               id="diagnosisNotes"
               type="text"
-              className="form-input"
+              className="form-input-ui"
               placeholder="e.g. Acute Viral Bronchitis, Essential Hypertension"
               value={diagnosisNotes}
               onChange={(e) => setDiagnosisNotes(e.target.value)}
               disabled={isCompleted || isCancelled || isSubmitting}
               maxLength={2000}
-              style={{ width: '100%', padding: '0.65rem 1rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.95rem', color: '#0f172a' }}
             />
           </div>
 
           <div className="form-group">
-            <label className="form-label" htmlFor="followUpDate" style={{ display: 'block', fontWeight: 700, color: '#334155', fontSize: '0.88rem', marginBottom: '0.35rem' }}>
+            <label className="form-label" htmlFor="followUpDate" style={{ display: 'block', fontWeight: 700, color: 'var(--text-secondary)', fontSize: '0.88rem', marginBottom: '0.35rem' }}>
               Recommended Follow-up Date
             </label>
             <input
               id="followUpDate"
               type="date"
-              className="form-input"
+              className="form-input-ui"
               value={followUpDate}
               onChange={(e) => setFollowUpDate(e.target.value)}
               disabled={isCompleted || isCancelled || isSubmitting}
               min={new Date().toISOString().split('T')[0]}
-              style={{ width: '100%', padding: '0.65rem 1rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.95rem', color: '#0f172a' }}
             />
           </div>
         </div>
 
         <div className="form-group">
-          <label className="form-label" htmlFor="patientInstructions" style={{ display: 'block', fontWeight: 700, color: '#334155', fontSize: '0.88rem', marginBottom: '0.35rem' }}>
+          <label className="form-label" htmlFor="patientInstructions" style={{ display: 'block', fontWeight: 700, color: 'var(--text-secondary)', fontSize: '0.88rem', marginBottom: '0.35rem' }}>
             Patient-Facing Instructions & Lifestyle Advice
           </label>
           <textarea
             id="patientInstructions"
-            className="form-input"
+            className="form-input-ui form-textarea-ui"
             rows={3}
             placeholder="Clear, patient-friendly guidance (e.g. Rest for 3 days, drink plenty of fluids, monitor blood pressure daily)..."
             value={patientInstructions}
             onChange={(e) => setPatientInstructions(e.target.value)}
             disabled={isCompleted || isCancelled || isSubmitting}
             maxLength={3000}
-            style={{ width: '100%', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.95rem', color: '#0f172a', fontFamily: 'inherit' }}
           />
         </div>
 
         {!isCompleted && !isCancelled && (
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem' }}>
-            <button
-              type="button"
+            <Button
+              variant="outline"
+              size="sm"
               onClick={handleSaveNotes}
               disabled={isSubmitting || !clinicalNotes.trim()}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.45rem',
-                padding: '0.55rem 1.15rem',
-                borderRadius: '8px',
-                border: '1px solid #cbd5e1',
-                background: '#ffffff',
-                color: '#334155',
-                fontSize: '0.88rem',
-                fontWeight: 600,
-                cursor: !clinicalNotes.trim() ? 'not-allowed' : 'pointer',
-                opacity: !clinicalNotes.trim() ? 0.6 : 1,
-              }}
+              leftIcon={<Save size={15} />}
             >
-              <Save size={15} />
-              <span>Save Clinical Notes Draft</span>
-            </button>
+              Save Clinical Notes Draft
+            </Button>
           </div>
         )}
       </div>
 
       {/* Structured Prescription Section */}
-      <div
-        style={{
-          marginBottom: '2rem',
-          padding: '1.5rem',
-          background: '#ffffff',
-          borderRadius: '14px',
-          border: '1px solid #e2e8f0',
-          boxShadow: '0 4px 16px rgba(15, 23, 42, 0.04)',
-        }}
-      >
+      <div className="consultation-clinical-card" style={{ marginBottom: '2rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '1.25rem' }}>
-          <div style={{ width: '34px', height: '34px', borderRadius: '8px', background: 'rgba(16, 185, 129, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#059669' }}>
+          <div style={{ width: '34px', height: '34px', borderRadius: '8px', background: 'rgba(45, 212, 191, 0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2DD4BF' }}>
             <FileSpreadsheet size={18} />
           </div>
           <div>
-            <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+            <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
               Structured Medical Prescription
             </h3>
-            <span style={{ fontSize: '0.78rem', color: '#64748b' }}>
+            <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
               Add medication names, exact dosages, frequencies, and durations
             </span>
           </div>
@@ -702,42 +637,21 @@ export const DoctorConsultation: React.FC = () => {
 
         {!isCompleted && !isCancelled && (
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem' }}>
-            <button
-              type="button"
+            <Button
+              variant="outline"
+              size="sm"
               onClick={handleSavePrescription}
               disabled={isSubmitting}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.45rem',
-                padding: '0.55rem 1.15rem',
-                borderRadius: '8px',
-                border: '1px solid #cbd5e1',
-                background: '#ffffff',
-                color: '#334155',
-                fontSize: '0.88rem',
-                fontWeight: 600,
-                cursor: 'pointer',
-              }}
+              leftIcon={<Save size={15} />}
             >
-              <Save size={15} />
-              <span>Save Prescription Draft</span>
-            </button>
+              Save Prescription Draft
+            </Button>
           </div>
         )}
       </div>
 
-      {/* Post-Visit AI Clinical Synthesis & Care Guidance Card (Gemini) */}
-      <div
-        style={{
-          marginBottom: '2rem',
-          padding: '1.5rem',
-          background: 'linear-gradient(135deg, rgba(240, 253, 250, 0.7) 0%, #ffffff 100%)',
-          borderRadius: '14px',
-          border: '1.5px solid #99f6e4',
-          boxShadow: '0 4px 18px rgba(13, 148, 136, 0.07)',
-        }}
-      >
+      {/* Post-Visit AI Clinical Synthesis & Care Guidance Card */}
+      <div className="consultation-postvisit-ai-card">
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
             <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'linear-gradient(135deg, #0d9488, #14b8a6)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ffffff' }}>
@@ -745,43 +659,29 @@ export const DoctorConsultation: React.FC = () => {
             </div>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
                   Post-Visit AI Care Plan & Patient Guidance
                 </h3>
-                <span style={{ fontSize: '0.7rem', padding: '0.15rem 0.5rem', borderRadius: '999px', background: '#ccfbf1', color: '#0f766e', fontWeight: 700 }}>
-                  Local AI (Ollama)
+                <span style={{ fontSize: '0.7rem', padding: '0.15rem 0.5rem', borderRadius: '999px', background: 'rgba(45, 212, 191, 0.15)', color: '#2DD4BF', fontWeight: 700 }}>
+                  Clinical AI Engine
                 </span>
               </div>
-              <span style={{ fontSize: '0.78rem', color: '#64748b' }}>
+              <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
                 Synthesizes clinical examination findings & prescription into plain-English patient instructions.
               </span>
             </div>
           </div>
 
           {!isCompleted && !isCancelled && (
-            <button
-              type="button"
+            <Button
+              variant="primary"
+              size="sm"
               onClick={handleGeneratePostVisitAi}
               disabled={isGeneratingPostAi || !clinicalNotes.trim()}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                padding: '0.65rem 1.25rem',
-                borderRadius: '10px',
-                border: 'none',
-                fontWeight: 700,
-                fontSize: '0.88rem',
-                background: clinicalNotes.trim() ? '#0f766e' : '#94a3b8',
-                color: '#ffffff',
-                cursor: clinicalNotes.trim() && !isGeneratingPostAi ? 'pointer' : 'not-allowed',
-                boxShadow: clinicalNotes.trim() ? '0 4px 12px rgba(15, 118, 110, 0.25)' : 'none',
-                transition: 'all 0.2s',
-              }}
+              leftIcon={<Sparkles size={16} />}
             >
-              <Sparkles size={16} />
-              <span>{isGeneratingPostAi ? 'Synthesizing Care Plan...' : '✨ Generate Post-Visit AI Summary'}</span>
-            </button>
+              {isGeneratingPostAi ? 'Synthesizing Care Plan...' : '✨ Generate Post-Visit AI Summary'}
+            </Button>
           )}
         </div>
 
@@ -793,20 +693,10 @@ export const DoctorConsultation: React.FC = () => {
             isRefreshing={isGeneratingPostAi}
           />
         ) : (
-          <div
-            style={{
-              padding: '1.25rem',
-              background: 'rgba(255, 255, 255, 0.7)',
-              borderRadius: '10px',
-              border: '1px dashed #cbd5e1',
-              textAlign: 'center',
-              color: '#64748b',
-              fontSize: '0.88rem',
-            }}
-          >
-            <Sparkles size={20} color="#0d9488" style={{ margin: '0 auto 0.4rem auto', display: 'block' }} />
+          <div className="consultation-ai-placeholder">
+            <Sparkles size={20} color="#2DD4BF" style={{ margin: '0 auto 0.4rem auto', display: 'block' }} />
             <span>
-              Click <strong>"Generate Post-Visit AI Summary"</strong> above to send the clinical observations and prescription to Google Gemini and preview the AI care guidance before finalizing.
+              Click <strong>"Generate Post-Visit AI Summary"</strong> above to send clinical observations and prescription to preview the AI care guidance before finalizing.
             </span>
           </div>
         )}
@@ -814,120 +704,51 @@ export const DoctorConsultation: React.FC = () => {
 
       {/* Final Action Bar */}
       {!isCompleted && !isCancelled ? (
-        <div
-          style={{
-            padding: '1.5rem 1.75rem',
-            borderRadius: '14px',
-            background: 'linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%)',
-            border: '1.5px solid #86efac',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: '1rem',
-            boxShadow: '0 6px 20px rgba(16, 185, 129, 0.08)',
-          }}
-        >
+        <div className="consultation-finalize-bar">
           <div>
-            <h4 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#065f46', margin: 0 }}>
+            <h4 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--success-text, #A7F3D0)', margin: 0 }}>
               Ready to Finalize Consultation?
             </h4>
-            <p style={{ fontSize: '0.85rem', color: '#047857', marginTop: '0.2rem', marginBottom: 0 }}>
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.2rem', marginBottom: 0 }}>
               Finalizing saves clinical notes, issues e-prescription, and triggers patient post-visit AI guidance.
             </p>
           </div>
 
           <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-            <Link
-              to="/doctor/appointments"
-              style={{
-                padding: '0.65rem 1.25rem',
-                borderRadius: '8px',
-                border: '1px solid #cbd5e1',
-                background: '#ffffff',
-                color: '#475569',
-                fontSize: '0.9rem',
-                fontWeight: 600,
-                textDecoration: 'none',
-              }}
-            >
-              Close
+            <Link to="/doctor/appointments">
+              <Button variant="outline" size="md">
+                Close
+              </Button>
             </Link>
-            <button
-              type="button"
+            <Button
+              variant="success"
+              size="md"
               onClick={handleCompleteConsultation}
               disabled={isSubmitting || !clinicalNotes.trim()}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                padding: '0.65rem 1.5rem',
-                borderRadius: '8px',
-                border: 'none',
-                background: !clinicalNotes.trim()
-                  ? '#94a3b8'
-                  : 'linear-gradient(135deg, #059669, #047857)',
-                color: '#ffffff',
-                fontSize: '0.92rem',
-                fontWeight: 700,
-                cursor: !clinicalNotes.trim() ? 'not-allowed' : 'pointer',
-                boxShadow: !clinicalNotes.trim() ? 'none' : '0 4px 14px rgba(5, 150, 105, 0.3)',
-                transition: 'all 0.15s ease',
-              }}
+              isLoading={isSubmitting}
+              leftIcon={!isSubmitting ? <ShieldCheck size={18} /> : undefined}
             >
-              {isSubmitting ? (
-                <>
-                  <div className="spinner" style={{ width: '16px', height: '16px', borderWidth: '2px' }} />
-                  <span>Finalizing Visit...</span>
-                </>
-              ) : (
-                <>
-                  <ShieldCheck size={18} />
-                  <span>Complete Consultation</span>
-                </>
-              )}
-            </button>
+              Complete Consultation
+            </Button>
           </div>
         </div>
       ) : (
-        <div
-          style={{
-            padding: '1.25rem 1.5rem',
-            borderRadius: '14px',
-            background: '#ecfdf5',
-            border: '1px solid #a7f3d0',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: '1rem',
-          }}
-        >
+        <div className="consultation-completed-bar">
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <CheckCircle2 size={24} color="#059669" />
+            <CheckCircle2 size={24} color="var(--success)" />
             <div>
-              <strong style={{ fontSize: '1rem', color: '#065f46' }}>
+              <strong style={{ fontSize: '1rem', color: 'var(--text-primary)' }}>
                 This consultation has been finalized and completed.
               </strong>
-              <p style={{ fontSize: '0.85rem', color: '#047857', marginTop: '0.15rem', marginBottom: 0 }}>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.15rem', marginBottom: 0 }}>
                 Clinical notes and prescriptions are locked and available to the patient.
               </p>
             </div>
           </div>
-          <Link
-            to="/doctor/appointments"
-            style={{
-              padding: '0.5rem 1rem',
-              borderRadius: '8px',
-              border: '1px solid #a7f3d0',
-              background: '#ffffff',
-              color: '#059669',
-              fontSize: '0.85rem',
-              fontWeight: 700,
-              textDecoration: 'none',
-            }}
-          >
-            Return to Queue
+          <Link to="/doctor/appointments">
+            <Button variant="outline" size="sm">
+              Return to Queue
+            </Button>
           </Link>
         </div>
       )}

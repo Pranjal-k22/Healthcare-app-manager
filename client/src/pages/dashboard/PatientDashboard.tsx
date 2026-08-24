@@ -102,10 +102,10 @@ export const PatientDashboard: React.FC = () => {
         {/* 1. DASHBOARD WELCOME HEADER */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
-            <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0F172A', margin: 0, letterSpacing: '-0.02em' }}>
+            <h1 className="welcome-title" style={{ fontSize: '1.85rem', fontWeight: 800, margin: 0, letterSpacing: '-0.02em' }}>
               {getGreeting()}, {user?.name?.split(' ')[0] || 'Patient'}
             </h1>
-            <p style={{ fontSize: '0.95rem', color: '#64748B', margin: '0.25rem 0 0 0' }}>
+            <p className="welcome-subtitle" style={{ fontSize: '0.95rem', margin: '0.25rem 0 0 0' }}>
               Your healthcare at a glance.
             </p>
           </div>
@@ -122,23 +122,10 @@ export const PatientDashboard: React.FC = () => {
           {/* Left: Primary Next Appointment Card */}
           <div style={{ flex: '1 1 60%' }}>
             {nextAppointment ? (
-              <div
-                style={{
-                  background: 'linear-gradient(135deg, #FFFFFF 0%, #F3F8FF 100%)',
-                  border: '1px solid #DBEAFE',
-                  borderRadius: '14px',
-                  padding: '1.5rem',
-                  height: '100%',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between',
-                  boxShadow: '0 2px 8px rgba(37, 99, 235, 0.05)',
-                  position: 'relative',
-                }}
-              >
+              <div className="next-appointment-hero-card">
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
-                    <span style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#2563EB' }}>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--primary)' }}>
                       Next Appointment
                     </span>
                     <StatusBadge status={nextAppointment.status} size="sm" />
@@ -151,22 +138,22 @@ export const PatientDashboard: React.FC = () => {
                       size="xl"
                     />
                     <div>
-                      <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#0F172A', margin: 0 }}>
+                      <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
                         {nextAppointment.doctorName ? `Dr. ${nextAppointment.doctorName}` : 'Specialist Doctor'}
                       </h3>
-                      <span style={{ fontSize: '0.88rem', color: '#0D9488', fontWeight: 600 }}>
+                      <span style={{ fontSize: '0.88rem', color: 'var(--info-text, #0D9488)', fontWeight: 600 }}>
                         Cardiology / General Care
                       </span>
                     </div>
                   </div>
 
-                  <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', background: '#FFFFFF', padding: '0.85rem 1rem', borderRadius: '10px', border: '1px solid #E2E8F0', marginBottom: '1.25rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.88rem', color: '#334155', fontWeight: 600 }}>
-                      <Calendar size={16} color="#2563EB" />
+                  <div className="next-appt-timing-box" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', padding: '0.85rem 1rem', borderRadius: '10px', marginBottom: '1.25rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.88rem', color: 'var(--text-primary)', fontWeight: 600 }}>
+                      <Calendar size={16} color="var(--primary)" />
                       <span>{formatDateIndian(nextAppointment.date)}</span>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.88rem', color: '#334155', fontWeight: 600 }}>
-                      <Clock size={16} color="#2563EB" />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.88rem', color: 'var(--text-primary)', fontWeight: 600 }}>
+                      <Clock size={16} color="var(--primary)" />
                       <span>{formatTimeIndian(nextAppointment.startTime, false)} - {formatTimeIndian(nextAppointment.endTime, false)} IST</span>
                     </div>
                   </div>
@@ -204,100 +191,46 @@ export const PatientDashboard: React.FC = () => {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
                 <Link
                   to="/patient/doctors"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '12px 14px',
-                    borderRadius: '10px',
-                    border: '1px solid #E2E8F0',
-                    background: '#F8FAFC',
-                    textDecoration: 'none',
-                    transition: 'all 150ms ease',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = '#EFF6FF';
-                    e.currentTarget.style.borderColor = '#BFDBFE';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = '#F8FAFC';
-                    e.currentTarget.style.borderColor = '#E2E8F0';
-                  }}
+                  className="quick-action-link-item"
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <div style={{ width: '34px', height: '34px', borderRadius: '8px', background: '#EFF6FF', color: '#2563EB', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <div className="quick-action-icon-wrap" style={{ color: 'var(--primary)' }}>
                       <Search size={18} />
                     </div>
                     <div>
-                      <div style={{ fontSize: '0.92rem', fontWeight: 700, color: '#0F172A' }}>Find a Doctor</div>
-                      <div style={{ fontSize: '0.78rem', color: '#64748B' }}>Search verified medical specialists</div>
+                      <div className="quick-action-title">Find a Doctor</div>
+                      <div className="quick-action-desc">Search verified medical specialists</div>
                     </div>
                   </div>
-                  <ChevronRight size={18} color="#94A3B8" />
+                  <ChevronRight size={18} className="quick-action-arrow" />
                 </Link>
 
                 <Link
                   to="/patient/appointments"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '12px 14px',
-                    borderRadius: '10px',
-                    border: '1px solid #E2E8F0',
-                    background: '#F8FAFC',
-                    textDecoration: 'none',
-                    transition: 'all 150ms ease',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = '#EFF6FF';
-                    e.currentTarget.style.borderColor = '#BFDBFE';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = '#F8FAFC';
-                    e.currentTarget.style.borderColor = '#E2E8F0';
-                  }}
+                  className="quick-action-link-item"
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <div style={{ width: '34px', height: '34px', borderRadius: '8px', background: '#EFF6FF', color: '#2563EB', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <div className="quick-action-icon-wrap" style={{ color: 'var(--primary)' }}>
                       <CalendarDays size={18} />
                     </div>
                     <div>
-                      <div style={{ fontSize: '0.92rem', fontWeight: 700, color: '#0F172A' }}>My Appointments</div>
-                      <div style={{ fontSize: '0.78rem', color: '#64748B' }}>Review upcoming and past visits</div>
+                      <div className="quick-action-title">My Appointments</div>
+                      <div className="quick-action-desc">Review upcoming and past visits</div>
                     </div>
                   </div>
-                  <ChevronRight size={18} color="#94A3B8" />
+                  <ChevronRight size={18} className="quick-action-arrow" />
                 </Link>
 
                 <Link
                   to="/patient/prescriptions"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '12px 14px',
-                    borderRadius: '10px',
-                    border: '1px solid #E2E8F0',
-                    background: '#F8FAFC',
-                    textDecoration: 'none',
-                    transition: 'all 150ms ease',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = '#EFF6FF';
-                    e.currentTarget.style.borderColor = '#BFDBFE';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = '#F8FAFC';
-                    e.currentTarget.style.borderColor = '#E2E8F0';
-                  }}
+                  className="quick-action-link-item"
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <div style={{ width: '34px', height: '34px', borderRadius: '8px', background: '#F0FDFA', color: '#0D9488', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <div className="quick-action-icon-wrap" style={{ color: '#0D9488' }}>
                       <Pill size={18} />
                     </div>
                     <div>
-                      <div style={{ fontSize: '0.92rem', fontWeight: 700, color: '#0F172A' }}>Prescriptions</div>
+                      <div className="quick-action-title">Prescriptions</div>
                       <div style={{ fontSize: '0.78rem', color: '#64748B' }}>Access active digital medications</div>
                     </div>
                   </div>

@@ -158,42 +158,17 @@ export const DoctorDashboard: React.FC = () => {
     <DashboardLayout>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
         {/* Welcome Header */}
-        <div
-          style={{
-            padding: '1.75rem',
-            background: 'linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%)',
-            borderRadius: '16px',
-            border: '1px solid #e2e8f0',
-            boxShadow: '0 4px 20px rgba(15, 23, 42, 0.04)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: '1.25rem',
-          }}
-        >
+        <div className="doctor-clinical-hero-card">
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-              <h1 style={{ fontSize: '1.85rem', fontWeight: 800, color: '#0f172a', margin: 0, letterSpacing: '-0.02em' }}>
+              <h1 className="welcome-title" style={{ fontSize: '1.85rem', fontWeight: 800, margin: 0, letterSpacing: '-0.02em' }}>
                 Welcome, Dr. {user?.name?.replace(/^Dr\.\s*/i, '')}
               </h1>
-              <span
-                style={{
-                  fontSize: '0.75rem',
-                  fontWeight: 800,
-                  padding: '0.25rem 0.75rem',
-                  borderRadius: '999px',
-                  background: 'linear-gradient(135deg, #059669, #047857)',
-                  color: '#ffffff',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.35rem',
-                }}
-              >
+              <span className="physician-portal-badge">
                 <Stethoscope size={13} /> Physician Portal
               </span>
             </div>
-            <p style={{ color: '#64748b', fontSize: '0.92rem', marginTop: '0.4rem', marginBottom: 0 }}>
+            <p className="welcome-subtitle" style={{ fontSize: '0.92rem', marginTop: '0.4rem', marginBottom: 0 }}>
               Live consultation queue, AI intake symptom synthesis, and electronic prescription desk.
             </p>
           </div>

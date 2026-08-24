@@ -172,7 +172,7 @@ export const EditDoctor: React.FC = () => {
         </Link>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-          <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0f172a', margin: 0, letterSpacing: '-0.02em' }}>
+          <h1 className="page-title" style={{ fontSize: '1.75rem', fontWeight: 800, margin: 0 }}>
             Edit Practitioner Profile
           </h1>
           <span
@@ -181,9 +181,9 @@ export const EditDoctor: React.FC = () => {
               fontWeight: 700,
               padding: '0.2rem 0.65rem',
               borderRadius: '999px',
-              background: '#eff6ff',
-              color: '#0062cc',
-              border: '1px solid #bfdbfe',
+              background: 'rgba(96, 165, 250, 0.12)',
+              color: 'var(--primary)',
+              border: '1px solid rgba(96, 165, 250, 0.25)',
               display: 'inline-flex',
               alignItems: 'center',
               gap: '0.3rem',
@@ -192,131 +192,117 @@ export const EditDoctor: React.FC = () => {
             <ShieldCheck size={12} /> Admin Directory
           </span>
         </div>
-        <p style={{ color: '#64748b', fontSize: '0.9rem', marginTop: '0.35rem', marginBottom: 0 }}>
+        <p className="helper-text" style={{ fontSize: '0.9rem', marginTop: '0.35rem', marginBottom: 0 }}>
           Modify doctor professional qualifications, consultation pricing, slot durations, and working hours.
         </p>
       </div>
 
       {error && (
-        <div style={{ marginBottom: '1.5rem', padding: '0.85rem 1.25rem', borderRadius: '10px', background: '#fef2f2', border: '1px solid #fecaca', color: '#b91c1c', display: 'flex', alignItems: 'center', gap: '0.65rem', fontSize: '0.9rem', fontWeight: 500 }}>
-          <AlertCircle size={18} color="#dc2626" />
+        <div style={{ marginBottom: '1.5rem', padding: '0.85rem 1.25rem', borderRadius: '10px', background: 'var(--danger-bg)', border: '1px solid var(--danger-border)', color: 'var(--danger-text)', display: 'flex', alignItems: 'center', gap: '0.65rem', fontSize: '0.9rem', fontWeight: 500 }}>
+          <AlertCircle size={18} color="var(--danger)" />
           <span>{error}</span>
         </div>
       )}
 
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
         {/* Section 1: Account & Credentials */}
-        <div
-          style={{
-            padding: '1.5rem',
-            background: '#ffffff',
-            borderRadius: '14px',
-            border: '1px solid #e2e8f0',
-            boxShadow: '0 4px 16px rgba(15, 23, 42, 0.04)',
-          }}
-        >
+        <div className="card-ui" style={{ padding: '1.5rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem', marginBottom: '1.25rem' }}>
-            <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0062cc' }}>
+            <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(96, 165, 250, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)' }}>
               <User size={18} />
             </div>
-            <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+            <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
               1. Account Identity
             </h3>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1.25rem' }}>
             <div>
-              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#334155', marginBottom: '0.35rem' }}>
+              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
                 Full Name *
               </label>
               <input
                 type="text"
+                className="form-input-ui"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
-                style={{ width: '100%', padding: '0.65rem 0.9rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.95rem' }}
               />
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#334155', marginBottom: '0.35rem' }}>
+              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
                 Email Address (Read-Only)
               </label>
               <input
                 type="email"
+                className="form-input-ui"
                 value={email}
                 disabled
-                style={{ width: '100%', padding: '0.65rem 0.9rem', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#f8fafc', color: '#64748b', fontSize: '0.95rem' }}
+                style={{ background: 'var(--surface-secondary)', color: 'var(--text-muted)' }}
               />
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#334155', marginBottom: '0.35rem' }}>
+              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
                 Medical Specialization *
               </label>
               <input
                 type="text"
+                className="form-input-ui"
                 value={specialization}
                 onChange={(e) => setSpecialization(e.target.value)}
                 required
-                style={{ width: '100%', padding: '0.65rem 0.9rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.95rem' }}
               />
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#334155', marginBottom: '0.35rem' }}>
+              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
                 Qualifications (comma-separated)
               </label>
               <input
                 type="text"
+                className="form-input-ui"
                 value={qualificationsStr}
                 onChange={(e) => setQualificationsStr(e.target.value)}
-                style={{ width: '100%', padding: '0.65rem 0.9rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.95rem' }}
               />
             </div>
           </div>
         </div>
 
         {/* Section 2: Clinical Details & Fees */}
-        <div
-          style={{
-            padding: '1.5rem',
-            background: '#ffffff',
-            borderRadius: '14px',
-            border: '1px solid #e2e8f0',
-            boxShadow: '0 4px 16px rgba(15, 23, 42, 0.04)',
-          }}
-        >
+        <div className="card-ui" style={{ padding: '1.5rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem', marginBottom: '1.25rem' }}>
-            <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#ecfdf5', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#059669' }}>
+            <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(74, 222, 128, 0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--success)' }}>
               <Stethoscope size={18} />
             </div>
-            <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+            <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
               2. Consultation Pricing & Duration Settings
             </h3>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem', marginBottom: '1.25rem' }}>
             <div>
-              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#334155', marginBottom: '0.35rem' }}>
+              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
                 Experience (Years)
               </label>
               <input
                 type="number"
                 min={0}
+                className="form-input-ui"
                 value={experienceYears}
                 onChange={(e) => setExperienceYears(Number(e.target.value))}
-                style={{ width: '100%', padding: '0.65rem 0.9rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.95rem' }}
               />
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#334155', marginBottom: '0.35rem' }}>
+              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
                 Consultation Fee ($)
               </label>
               <input
                 type="number"
                 min={0}
+                className="form-input-ui"
                 value={consultationFee}
                 onChange={(e) => setConsultationFee(Number(e.target.value))}
                 style={{ width: '100%', padding: '0.65rem 0.9rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.95rem' }}
