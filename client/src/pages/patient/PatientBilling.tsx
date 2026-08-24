@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../hooks/useAuth';
+import { getInvoices, payInvoice as payInvoiceApi, Invoice } from '../../services/billingApi';
 import DashboardLayout from '../../components/ui/DashboardLayout';
 import Button from '../../components/ui/Button';
 import SummaryStatCard from '../../components/ui/SummaryStatCard';
 import StatusBadge from '../../components/ui/StatusBadge';
 import DataTable, { Column } from '../../components/ui/DataTable';
+import EmptyState from '../../components/ui/EmptyState';
 import { useToast } from '../../components/ui/Toast';
 import {
   CreditCard,
@@ -28,78 +30,62 @@ interface InvoiceItem {
   paidAt?: string;
 }
 
-const INITIAL_INVOICES: InvoiceItem[] = [
-  {
-    id: 'inv-1',
-    invoiceNumber: 'INV-2026-0091',
-    date: '2026-08-14',
-    dueDate: '2026-08-28',
-    doctorName: 'Dr. Sarah Jenkins',
-    serviceDescription: 'Cardiology Specialist Consultation & ECG Review',
-    amount: 180.0,
-    status: 'PENDING',
-  },
-  {
-    id: 'inv-2',
-    invoiceNumber: 'INV-2026-0084',
-    date: '2026-07-22',
-    dueDate: '2026-08-05',
-    doctorName: 'Dr. Marcus Vance',
-    serviceDescription: 'Neurology Consultation & Migraine Assessment',
-    amount: 150.0,
-    status: 'PAID',
-    paymentMethod: 'Visa •••• 4242',
-    paidAt: '2026-07-22',
-  },
-  {
-    id: 'inv-3',
-    invoiceNumber: 'INV-2026-0062',
-    date: '2026-06-10',
-    dueDate: '2026-06-24',
-    doctorName: 'Dr. Sarah Jenkins',
-    serviceDescription: 'Follow-up Consultation & Routine Bloodwork Order',
-    amount: 110.0,
-    status: 'PAID',
-    paymentMethod: 'Mastercard •••• 8819',
-    paidAt: '2026-06-10',
-  },
-  {
-    id: 'inv-4',
-    invoiceNumber: 'INV-2026-0033',
-    date: '2026-05-02',
-    dueDate: '2026-05-16',
-    doctorName: 'Dr. Marcus Vance',
-    serviceDescription: 'Initial Comprehensive Health Screening',
-    amount: 100.0,
-    status: 'PAID',
-    paymentMethod: 'Visa •••• 4242',
-    paidAt: '2026-05-02',
-  },
-];
-
 export const PatientBilling: React.FC = () => {
   const { user } = useAuth();
-  const { success } = useToast();
-  const [invoices, setInvoices] = useState<InvoiceItem[]>(INITIAL_INVOICES);
+  const { success, error: toastError } = useToast();
+  const [invoices, setInvoices] = useState<InvoiceItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'PAID' | 'PENDING' | 'OVERDUE'>('ALL');
   const [selectedInvoice, setSelectedInvoice] = useState<InvoiceItem | null>(null);
   const [isPaying, setIsPaying] = useState(false);
+
+  useEffect(() => {
+    const fetchInvoices = async () => {
+      try {
+        setIsLoading(true);
+        const response = await getInvoices();
+        if (response && response.invoices) {
+          const mapped: InvoiceItem[] = response.invoices.map((inv: Invoice) => ({
+            id: inv._id,
+            invoiceNumber: inv.invoiceNumber || `INV-${inv._id.slice(-6).toUpperCase()}`,
+            date: inv.issueDate ? inv.issueDate.split('T')[0] : new Date().toISOString().split('T')[0],
+            dueDate: inv.dueDate ? inv.dueDate.split('T')[0] : '',
+            doctorName: typeof inv.doctorId === 'object' ? inv.doctorId?.name : 'Healthcare Service Provider',
+            serviceDescription: inv.lineItems && inv.lineItems.length > 0 ? inv.lineItems.map(l => l.description).join(', ') : 'Medical Consultation',
+            amount: inv.total || 0,
+            status: inv.status === 'paid' ? 'PAID' : inv.status === 'overdue' ? 'OVERDUE' : 'PENDING',
+            paymentMethod: inv.paymentMethod || undefined,
+            paidAt: inv.paidAt ? inv.paidAt.split('T')[0] : undefined,
+          }));
+          setInvoices(mapped);
+        }
+      } catch (err: any) {
+        console.warn('Failed to load billing records', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchInvoices();
+  }, []);
 
   // Compute Metrics
   const totalBilled = invoices.reduce((sum, item) => sum + item.amount, 0);
   const outstandingBalance = invoices
     .filter((item) => item.status === 'PENDING' || item.status === 'OVERDUE')
     .reduce((sum, item) => sum + item.amount, 0);
-  const lastPayment = invoices.find((item) => item.status === 'PAID')?.paidAt || 'Aug 14, 2026';
+  const lastPaymentItem = invoices.find((item) => item.status === 'PAID');
+  const lastPayment = lastPaymentItem ? (lastPaymentItem.paidAt || lastPaymentItem.date) : 'N/A';
 
   const filteredInvoices = invoices.filter((inv) => {
     if (statusFilter === 'ALL') return true;
     return inv.status === statusFilter;
   });
 
-  const handlePayNow = (inv: InvoiceItem) => {
+  const handlePayNow = async (inv: InvoiceItem) => {
     setIsPaying(true);
-    setTimeout(() => {
+    try {
+      await payInvoiceApi(inv.id, 'Card Online');
       setInvoices((prev) =>
         prev.map((item) =>
           item.id === inv.id
@@ -107,14 +93,17 @@ export const PatientBilling: React.FC = () => {
             : item
         )
       );
-      setIsPaying(false);
       success(`Invoice ${inv.invoiceNumber} paid successfully ($${inv.amount.toFixed(2)} USD).`, 'Payment Settled');
       if (selectedInvoice?.id === inv.id) {
         setSelectedInvoice((current) =>
           current ? { ...current, status: 'PAID', paymentMethod: 'Card Online (Processed)', paidAt: new Date().toISOString().split('T')[0] } : null
         );
       }
-    }, 800);
+    } catch (err: any) {
+      toastError(err.message || 'Payment processing failed.', 'Payment Error');
+    } finally {
+      setIsPaying(false);
+    }
   };
 
   const triggerBrowserPrint = () => {
@@ -291,13 +280,25 @@ export const PatientBilling: React.FC = () => {
         </div>
 
         {/* Invoices DataTable */}
-        <DataTable
-          title="Hospital Service Invoices"
-          columns={columns}
-          data={filteredInvoices}
+        {isLoading ? (
+          <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem 0' }}>
+            <div className="btn-spinner" style={{ width: '32px', height: '32px', borderColor: 'var(--primary)', borderTopColor: 'transparent' }} />
+          </div>
+        ) : (
+          <DataTable
+            title="Hospital Service Invoices"
+            columns={columns}
+            data={filteredInvoices}
           keyExtractor={(item) => item.id}
           searchPlaceholder="Search invoice #, doctor, or service..."
           exportFileName="hospital-billing-invoices"
+          emptyState={
+            <EmptyState
+              icon={<CreditCard size={36} color="var(--primary)" />}
+              title="No billing records yet"
+              description="You don't have any invoices at the moment. Invoices will appear here after eligible consultations."
+            />
+          }
           mobileCardRender={(item) => (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -343,6 +344,7 @@ export const PatientBilling: React.FC = () => {
             </div>
           )}
         />
+        )}
       </div>
 
       {/* Invoice Detail / Print Preview Modal */}

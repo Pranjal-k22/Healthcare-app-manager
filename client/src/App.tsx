@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './hooks/useAuth';
 import { Navbar } from './components/common/Navbar';
@@ -9,29 +9,37 @@ import { ForgotPassword } from './pages/auth/ForgotPassword';
 import { DoctorVerifyOtp } from './pages/auth/DoctorVerifyOtp';
 import { ResetPassword } from './pages/auth/ResetPassword';
 import { SetPassword } from './pages/auth/SetPassword';
-import { PatientDashboard } from './pages/dashboard/PatientDashboard';
-import { DoctorDashboard } from './pages/dashboard/DoctorDashboard';
-import { AdminDashboard } from './pages/dashboard/AdminDashboard';
-import { DoctorSearch } from './pages/patient/DoctorSearch';
-import { DoctorDetails } from './pages/patient/DoctorDetails';
-import { BookAppointment } from './pages/patient/BookAppointment';
-import { MyAppointments } from './pages/patient/MyAppointments';
-import { AppointmentDetails } from './pages/patient/AppointmentDetails';
-import { PatientPrescriptions } from './pages/patient/PatientPrescriptions';
-import { PatientBilling } from './pages/patient/PatientBilling';
-import { PatientProfile } from './pages/patient/PatientProfile';
-import { DoctorProfile } from './pages/doctor/DoctorProfile';
-import { DoctorAppointments } from './pages/doctor/DoctorAppointments';
-import { DoctorConsultation } from './pages/doctor/DoctorConsultation';
-import { ManageDoctors } from './pages/admin/ManageDoctors';
-import { CreateDoctor } from './pages/admin/CreateDoctor';
-import { EditDoctor } from './pages/admin/EditDoctor';
-import { ManageDoctorLeave } from './pages/admin/ManageDoctorLeave';
-import { ManageAppointments } from './pages/admin/ManageAppointments';
-import { AllDoctorLeaves } from './pages/admin/AllDoctorLeaves';
-import { DoctorResetRequests } from './pages/admin/DoctorResetRequests';
-import { NotificationsPage } from './pages/notifications/NotificationsPage';
 import { ROLE_DASHBOARD_ROUTES } from './utils/constants';
+
+// Route-Level Code Splitting for Portal Pages
+const PatientDashboard = lazy(() => import('./pages/dashboard/PatientDashboard').then(m => ({ default: m.PatientDashboard })));
+const DoctorDashboard = lazy(() => import('./pages/dashboard/DoctorDashboard').then(m => ({ default: m.DoctorDashboard })));
+const AdminDashboard = lazy(() => import('./pages/dashboard/AdminDashboard').then(m => ({ default: m.AdminDashboard })));
+const DoctorSearch = lazy(() => import('./pages/patient/DoctorSearch').then(m => ({ default: m.DoctorSearch })));
+const DoctorDetails = lazy(() => import('./pages/patient/DoctorDetails').then(m => ({ default: m.DoctorDetails })));
+const BookAppointment = lazy(() => import('./pages/patient/BookAppointment').then(m => ({ default: m.BookAppointment })));
+const MyAppointments = lazy(() => import('./pages/patient/MyAppointments').then(m => ({ default: m.MyAppointments })));
+const AppointmentDetails = lazy(() => import('./pages/patient/AppointmentDetails').then(m => ({ default: m.AppointmentDetails })));
+const PatientPrescriptions = lazy(() => import('./pages/patient/PatientPrescriptions').then(m => ({ default: m.PatientPrescriptions })));
+const PatientBilling = lazy(() => import('./pages/patient/PatientBilling').then(m => ({ default: m.PatientBilling })));
+const PatientProfile = lazy(() => import('./pages/patient/PatientProfile').then(m => ({ default: m.PatientProfile })));
+const DoctorProfile = lazy(() => import('./pages/doctor/DoctorProfile').then(m => ({ default: m.DoctorProfile })));
+const DoctorAppointments = lazy(() => import('./pages/doctor/DoctorAppointments').then(m => ({ default: m.DoctorAppointments })));
+const DoctorConsultation = lazy(() => import('./pages/doctor/DoctorConsultation').then(m => ({ default: m.DoctorConsultation })));
+const ManageDoctors = lazy(() => import('./pages/admin/ManageDoctors').then(m => ({ default: m.ManageDoctors })));
+const CreateDoctor = lazy(() => import('./pages/admin/CreateDoctor').then(m => ({ default: m.CreateDoctor })));
+const EditDoctor = lazy(() => import('./pages/admin/EditDoctor').then(m => ({ default: m.EditDoctor })));
+const ManageDoctorLeave = lazy(() => import('./pages/admin/ManageDoctorLeave').then(m => ({ default: m.ManageDoctorLeave })));
+const ManageAppointments = lazy(() => import('./pages/admin/ManageAppointments').then(m => ({ default: m.ManageAppointments })));
+const AllDoctorLeaves = lazy(() => import('./pages/admin/AllDoctorLeaves').then(m => ({ default: m.AllDoctorLeaves })));
+const DoctorResetRequests = lazy(() => import('./pages/admin/DoctorResetRequests').then(m => ({ default: m.DoctorResetRequests })));
+const NotificationsPage = lazy(() => import('./pages/notifications/NotificationsPage').then(m => ({ default: m.NotificationsPage })));
+
+const PageLoader: React.FC = () => (
+  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
+    <div className="spinner" style={{ width: '36px', height: '36px' }}></div>
+  </div>
+);
 
 const RootRedirect: React.FC = () => {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -56,7 +64,8 @@ export const App: React.FC = () => {
     <div className="app-container">
       <Navbar />
       <main className="main-content">
-        <Routes>
+        <Suspense fallback={<PageLoader />}>
+          <Routes>
           {/* Default Root */}
           <Route path="/" element={<RootRedirect />} />
 
@@ -255,6 +264,7 @@ export const App: React.FC = () => {
           {/* Fallback */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        </Suspense>
       </main>
     </div>
   );

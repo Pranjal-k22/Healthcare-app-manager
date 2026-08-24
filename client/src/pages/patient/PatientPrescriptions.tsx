@@ -15,7 +15,7 @@ import {
   X,
 } from 'lucide-react';
 
-interface MockPrescriptionItem {
+interface PrescriptionItem {
   _id: string;
   doctorName: string;
   specialization: string;
@@ -25,99 +25,35 @@ interface MockPrescriptionItem {
   instructions: string;
 }
 
-const DEFAULT_MOCK_PRESCRIPTIONS: MockPrescriptionItem[] = [
-  {
-    _id: 'RX-2026-8941',
-    doctorName: 'Dr. Sarah Jenkins',
-    specialization: 'Cardiology',
-    date: '2026-08-14',
-    status: 'ACTIVE',
-    medicines: [
-      {
-        name: 'Atorvastatin',
-        dosage: '20mg',
-        frequency: 'Once Daily (Bedtime)',
-        duration: '90 Days',
-        instructions: 'Take after dinner with a full glass of water',
-      },
-      {
-        name: 'Lisinopril',
-        dosage: '10mg',
-        frequency: 'Once Daily (Morning)',
-        duration: '90 Days',
-        instructions: 'Monitor blood pressure weekly',
-      },
-    ],
-    instructions: 'Maintain low-sodium diet, 30 min daily walking, and follow up in 3 months.',
-  },
-  {
-    _id: 'RX-2026-7720',
-    doctorName: 'Dr. Marcus Vance',
-    specialization: 'Neurology',
-    date: '2026-07-22',
-    status: 'COMPLETED',
-    medicines: [
-      {
-        name: 'Sumatriptan',
-        dosage: '50mg',
-        frequency: 'As needed for migraine onset',
-        duration: '10 Tablets',
-        instructions: 'Take at earliest onset of migraine aura. Max 2 tablets in 24 hours.',
-      },
-      {
-        name: 'Magnesium Glycinate',
-        dosage: '400mg',
-        frequency: 'Nightly',
-        duration: '30 Days',
-        instructions: 'Take with food to prevent migraine triggers',
-      },
-    ],
-    instructions: 'Keep a migraine trigger diary. Avoid aged cheeses and irregular sleep.',
-  },
-  {
-    _id: 'RX-2026-5512',
-    doctorName: 'Dr. Sarah Jenkins',
-    specialization: 'Cardiology',
-    date: '2026-05-10',
-    status: 'EXPIRED',
-    medicines: [
-      {
-        name: 'Amoxicillin-Clavulanate',
-        dosage: '875mg / 125mg',
-        frequency: 'Twice Daily',
-        duration: '10 Days',
-        instructions: 'Complete entire course even if symptoms subside',
-      },
-    ],
-    instructions: 'Stay well-hydrated. Return if high fever persists beyond day 4.',
-  },
-];
-
 export const PatientPrescriptions: React.FC = () => {
   const { user } = useAuth();
-  const [prescriptions, setPrescriptions] = useState<MockPrescriptionItem[]>(DEFAULT_MOCK_PRESCRIPTIONS);
+  const [prescriptions, setPrescriptions] = useState<PrescriptionItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'ACTIVE' | 'COMPLETED' | 'EXPIRED'>('ALL');
-  const [selectedPrescription, setSelectedPrescription] = useState<MockPrescriptionItem | null>(null);
+  const [selectedPrescription, setSelectedPrescription] = useState<PrescriptionItem | null>(null);
 
   useEffect(() => {
     const loadPrescriptions = async () => {
       try {
+        setIsLoading(true);
         const apiData = await getMyPrescriptions();
-        if (apiData && apiData.length > 0) {
-          const mapped: MockPrescriptionItem[] = apiData.map((p: any, idx) => ({
+        if (apiData) {
+          const mapped: PrescriptionItem[] = apiData.map((p: any, idx) => ({
             _id: p._id || `RX-${2026}-${1000 + idx}`,
             doctorName: typeof p.doctorId === 'object' ? p.doctorId?.name : 'Dr. Attending Physician',
-            specialization: 'Specialist Consultation',
+            specialization: typeof p.doctorId === 'object' && p.doctorId?.specialization ? p.doctorId.specialization : 'Specialist Consultation',
             date: p.createdAt ? p.createdAt.split('T')[0] : '2026-08-15',
-            status: idx === 0 ? 'ACTIVE' : idx === 1 ? 'COMPLETED' : 'EXPIRED',
+            status: p.status ? p.status.toUpperCase() : (idx === 0 ? 'ACTIVE' : 'COMPLETED'),
             medicines: p.medicines || [],
             instructions: p.additionalInstructions || 'Take medications as directed by your physician.',
           }));
           setPrescriptions(mapped);
         }
       } catch (err) {
-        // Fallback to rich mock prescriptions for full UI demonstration
+        console.warn('Failed to load patient prescriptions', err);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -135,7 +71,7 @@ export const PatientPrescriptions: React.FC = () => {
     return true;
   });
 
-  const handlePrint = (rx: MockPrescriptionItem) => {
+  const handlePrint = (rx: PrescriptionItem) => {
     setSelectedPrescription(rx);
   };
 
@@ -214,7 +150,11 @@ export const PatientPrescriptions: React.FC = () => {
         </Card>
 
         {/* Prescription List Cards */}
-        {filteredPrescriptions.length === 0 ? (
+        {isLoading ? (
+          <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem 0' }}>
+            <div className="btn-spinner" style={{ width: '32px', height: '32px', borderColor: 'var(--primary)', borderTopColor: 'transparent' }} />
+          </div>
+        ) : filteredPrescriptions.length === 0 ? (
           <Card className="empty-state-card-ui">
             <div className="empty-state-icon-circle">
               <Pill size={28} />
