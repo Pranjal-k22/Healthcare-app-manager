@@ -250,20 +250,22 @@ export const Navbar: React.FC = () => {
                   </div>
                   <span className="user-email">{user.email}</span>
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleLogout}
-                  leftIcon={<LogOut size={14} />}
-                  style={{
-                    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-                    color: '#ffffff',
-                    borderColor: 'rgba(255, 255, 255, 0.3)',
-                  }}
-                  title="Sign out of your account"
-                >
-                  Logout
-                </Button>
+                <div className="nav-logout-btn">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleLogout}
+                    leftIcon={<LogOut size={14} />}
+                    style={{
+                      backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                      color: '#ffffff',
+                      borderColor: 'rgba(255, 255, 255, 0.3)',
+                    }}
+                    title="Sign out of your account"
+                  >
+                    Logout
+                  </Button>
+                </div>
               </>
             ) : (
               <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>

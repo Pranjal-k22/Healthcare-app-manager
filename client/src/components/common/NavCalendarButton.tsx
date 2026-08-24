@@ -111,7 +111,7 @@ export const NavCalendarButton: React.FC = () => {
           title={`Google Calendar Connected: ${status.googleAccountEmail || user.email}`}
         >
           <CalendarCheck size={14} color="#10B981" />
-          <span>Calendar Connected</span>
+          <span className="nav-calendar-text">Calendar Connected</span>
           <span
             style={{
               width: '7px',
@@ -148,8 +148,8 @@ export const NavCalendarButton: React.FC = () => {
           ) : (
             <Calendar size={14} color="#FBBF24" />
           )}
-          <span>{isConnecting ? 'Connecting...' : 'Connect Calendar'}</span>
-          <ExternalLink size={12} color="#FBBF24" />
+          <span className="nav-calendar-text">{isConnecting ? 'Connecting...' : 'Connect Calendar'}</span>
+          <ExternalLink size={12} color="#FBBF24" className="nav-calendar-text" />
         </button>
       )}
 

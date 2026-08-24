@@ -81,17 +81,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   return (
     <>
       <aside
-        style={{
-          width: isCollapsed ? '72px' : '260px',
-          background: '#ffffff',
-          borderRight: '1px solid #e2e8f0',
-          display: 'flex',
-          flexDirection: 'column',
-          height: '100%',
-          minHeight: '100vh',
-          transition: 'width 0.2s ease',
-          flexShrink: 0,
-        }}
+        className={`sidebar-ui ${isCollapsed ? 'is-collapsed' : ''}`}
       >
         {/* Sidebar Header / User Card */}
         <div
