@@ -4,20 +4,16 @@ import { useAuth } from '../../hooks/useAuth';
 import { ROLE_DASHBOARD_ROUTES } from '../../utils/constants';
 import {
   HeartPulse,
+  User as UserIcon,
   Stethoscope,
   ShieldCheck,
-  User as UserIcon,
-  ArrowRight,
-  Shield,
-  Clock,
-  CalendarCheck,
-  Lock,
   Mail,
+  Lock,
   Eye,
   EyeOff,
+  Shield,
+  Loader2,
 } from 'lucide-react';
-import Button from '../../components/ui/Button';
-import Input from '../../components/ui/Input';
 import InlineAlert from '../../components/ui/InlineAlert';
 import { useToast } from '../../components/ui/Toast';
 
@@ -47,10 +43,11 @@ export const Login: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
     setError(null);
 
     if (!email || !password) {
-      setError('Please fill in both email/username and password.');
+      setError('Please check your credentials and try again.');
       return;
     }
 
@@ -61,7 +58,7 @@ export const Login: React.FC = () => {
       const targetRoute = ROLE_DASHBOARD_ROUTES[loggedUser.role] || '/patient/dashboard';
       navigate(targetRoute, { replace: true });
     } catch (err: any) {
-      let errMsg = 'Login failed. Please check your credentials.';
+      let errMsg = 'Please check your credentials and try again.';
 
       if (err.response?.data?.code === 'ROLE_MISMATCH') {
         errMsg = err.response.data.message;
@@ -98,259 +95,248 @@ export const Login: React.FC = () => {
   };
 
   return (
-    <div className="auth-page-wrapper">
-      <div className="auth-split-card">
-        {/* Left Column: Brand Gradient Hero Banner */}
-        <div className="auth-hero-banner">
+    <div className="hp-auth-page">
+      <div className="hp-auth-split-wrapper">
+        {/* LEFT BRAND PANEL (54% Width) */}
+        <aside className="hp-auth-left-panel">
           <div>
-            <div className="auth-brand-badge">
-              <HeartPulse size={16} />
-              <span>HealthPulse Clinical Portal</span>
+            {/* HealthPulse Brand Logo */}
+            <div className="hp-auth-left-brand">
+              <div className="hp-auth-logo-icon">
+                <HeartPulse size={24} color="#ffffff" />
+              </div>
+              <div>
+                <h2 className="hp-auth-logo-text">HealthPulse</h2>
+                <span className="hp-auth-logo-tagline">Healthcare, connected.</span>
+              </div>
             </div>
 
-            <div className="auth-hero-content">
-              <h1 className="auth-hero-title">
-                {selectedRole === 'PATIENT' && 'Book Your Appointments With Ease.'}
-                {selectedRole === 'DOCTOR' && 'Clinical Consultation & Patient Workflow.'}
-                {selectedRole === 'ADMIN' && 'Healthcare System Administration & Control.'}
-              </h1>
-              <p className="auth-hero-desc">
-                {selectedRole === 'PATIENT' &&
-                  'Connect with board-certified physicians, view real-time slot availability, and manage your health records effortlessly.'}
-                {selectedRole === 'DOCTOR' &&
-                  'Manage daily appointment schedules, conduct structured consultations, issue e-prescriptions, and review patient histories.'}
-                {selectedRole === 'ADMIN' &&
-                  'Centralized management of doctor credentials, leave calendars, operational schedules, and appointment telemetry.'}
+            {/* Primary Hero Section */}
+            <div className="hp-auth-left-hero">
+              <h1 className="hp-auth-hero-title">Healthcare made simpler.</h1>
+              <p className="hp-auth-hero-subtitle">
+                Book appointments, manage consultations and access your healthcare information from one secure place.
               </p>
 
-              <div style={{ margin: '1.5rem 0', textAlign: 'center' }}>
+              <div className="hp-auth-hero-image-wrap">
                 <img
-                  src={
-                    selectedRole === 'PATIENT'
-                      ? '/undraw_doctors_djoj.svg'
-                      : selectedRole === 'DOCTOR'
-                      ? '/undraw_doctors-orders_a8sv.svg'
-                      : '/undraw_private-data_934y.svg'
-                  }
-                  alt="HealthPulse Portal"
-                  style={{ width: '220px', height: '140px', objectFit: 'contain' }}
+                  src="/undraw_doctor_aum1.svg"
+                  alt="Healthcare consultation illustration"
+                  className="hp-auth-hero-image"
                 />
               </div>
+            </div>
+          </div>
 
-              <div className="auth-trust-points">
-                <div className="auth-trust-item">
-                  <div className="auth-trust-icon">
-                    <CalendarCheck size={16} />
-                  </div>
-                  <span>Instant slot confirmation with zero double-booking</span>
-                </div>
-                <div className="auth-trust-item">
-                  <div className="auth-trust-icon">
-                    <ShieldCheck size={16} />
-                  </div>
-                  <span>HIPAA-compliant JWT authenticated session</span>
-                </div>
-                <div className="auth-trust-item">
-                  <div className="auth-trust-icon">
-                    <Clock size={16} />
-                  </div>
-                  <span>24/7 Access to specialized clinical care & reminders</span>
-                </div>
+          {/* Security Microcopy */}
+          <div className="hp-auth-left-footer">
+            <Shield size={16} color="#2563EB" />
+            <span>Your session is protected using secure authenticated access.</span>
+          </div>
+        </aside>
+
+        {/* RIGHT SIGN-IN PANEL (46% Width) */}
+        <main className="hp-auth-right-panel">
+          <div className="hp-auth-form-container">
+            {/* Mobile Header Brand */}
+            <div className="hp-auth-mobile-brand">
+              <div className="hp-auth-logo-icon">
+                <HeartPulse size={22} color="#ffffff" />
+              </div>
+              <div>
+                <h2 className="hp-auth-logo-text">HealthPulse</h2>
+                <span className="hp-auth-logo-tagline">Healthcare, connected.</span>
               </div>
             </div>
-          </div>
 
-          <div className="auth-hero-footer">
-            <span>© 2026 HealthPulse Medical Network • ISO 27001 Certified</span>
-          </div>
-        </div>
+            {/* Form Title Block */}
+            <header className="hp-auth-header">
+              <h1 className="hp-auth-title">Welcome back</h1>
+              <p className="hp-auth-subtitle">Sign in to continue to HealthPulse.</p>
+            </header>
 
-        {/* Right Column: White Card with Role Selector & Form */}
-        <div className="auth-form-panel">
-          <div className="auth-header-block">
-            <h2>Welcome Back</h2>
-            <p>Select your portal role and enter your credentials to sign in.</p>
-          </div>
+            {/* Segmented Control Role Selector */}
+            <div className="hp-role-segmented-control" role="tablist" aria-label="Portal role selector">
+              <button
+                type="button"
+                className={`hp-role-segment-btn ${selectedRole === 'PATIENT' ? 'is-active' : ''}`}
+                onClick={() => {
+                  setSelectedRole('PATIENT');
+                  setError(null);
+                }}
+                role="tab"
+                aria-selected={selectedRole === 'PATIENT'}
+              >
+                <UserIcon size={15} />
+                <span>Patient</span>
+              </button>
 
-          {/* Role Selector Tabs */}
-          <div className="role-tabs-container" role="tablist">
-            <button
-              type="button"
-              className={`role-tab-btn ${selectedRole === 'PATIENT' ? 'is-active' : ''}`}
-              onClick={() => {
-                setSelectedRole('PATIENT');
-                setError(null);
-              }}
-              role="tab"
-              aria-selected={selectedRole === 'PATIENT'}
-            >
-              <UserIcon size={16} />
-              <span>Patient</span>
-            </button>
-            <button
-              type="button"
-              className={`role-tab-btn ${selectedRole === 'DOCTOR' ? 'is-active' : ''}`}
-              onClick={() => {
-                setSelectedRole('DOCTOR');
-                setError(null);
-              }}
-              role="tab"
-              aria-selected={selectedRole === 'DOCTOR'}
-            >
-              <Stethoscope size={16} />
-              <span>Doctor</span>
-            </button>
-            <button
-              type="button"
-              className={`role-tab-btn ${selectedRole === 'ADMIN' ? 'is-active' : ''}`}
-              onClick={() => {
-                setSelectedRole('ADMIN');
-                setError(null);
-              }}
-              role="tab"
-              aria-selected={selectedRole === 'ADMIN'}
-            >
-              <ShieldCheck size={16} />
-              <span>Administrator</span>
-            </button>
-          </div>
+              <button
+                type="button"
+                className={`hp-role-segment-btn ${selectedRole === 'DOCTOR' ? 'is-active' : ''}`}
+                onClick={() => {
+                  setSelectedRole('DOCTOR');
+                  setError(null);
+                }}
+                role="tab"
+                aria-selected={selectedRole === 'DOCTOR'}
+              >
+                <Stethoscope size={15} />
+                <span>Doctor</span>
+              </button>
 
-          {/* Error Message */}
-          {error && (
-            <InlineAlert
-              type="danger"
-              message={error}
-              onClose={() => setError(null)}
-            />
-          )}
-
-          {/* Admin Security Notice */}
-          {selectedRole === 'ADMIN' && (
-            <div
-              style={{
-                backgroundColor: 'rgba(57, 49, 175, 0.05)',
-                border: '1px solid rgba(57, 49, 175, 0.15)',
-                borderRadius: 'var(--radius-md)',
-                padding: '10px 14px',
-                fontSize: '13px',
-                color: 'var(--primary-dark)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                marginBottom: '1.25rem',
-              }}
-            >
-              <Shield size={16} />
-              <span>Administrative access requires verified system credentials.</span>
+              <button
+                type="button"
+                className={`hp-role-segment-btn ${selectedRole === 'ADMIN' ? 'is-active' : ''}`}
+                onClick={() => {
+                  setSelectedRole('ADMIN');
+                  setError(null);
+                }}
+                role="tab"
+                aria-selected={selectedRole === 'ADMIN'}
+              >
+                <ShieldCheck size={15} />
+                <span>Admin</span>
+              </button>
             </div>
-          )}
 
-          {/* Sign In Form */}
-          <form onSubmit={handleSubmit}>
-            <Input
-              id="auth-email"
-              type="text"
-              label={selectedRole === 'ADMIN' ? 'Admin Username or Email' : 'Email Address'}
-              placeholder={
-                selectedRole === 'ADMIN'
-                  ? 'admin@healthcare.com'
-                  : selectedRole === 'DOCTOR'
-                  ? 'doctor@healthcare.com'
-                  : 'patient@healthcare.com'
-              }
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              autoComplete="username"
-              leftIcon={<Mail size={16} />}
-              required
-            />
+            {/* Inline Error Alert */}
+            {error && (
+              <InlineAlert
+                type="danger"
+                title="Unable to sign in"
+                message={error}
+                onClose={() => setError(null)}
+                className="mb-4"
+              />
+            )}
 
-            <Input
-              id="auth-password"
-              type={showPassword ? 'text' : 'password'}
-              label="Password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete="current-password"
-              leftIcon={<Lock size={16} />}
-              rightIcon={
+            {/* Form */}
+            <form onSubmit={handleSubmit} className="hp-auth-form" noValidate>
+              {/* Email Input */}
+              <div className="hp-auth-input-group">
+                <label htmlFor="auth-email" className="hp-auth-label">
+                  {selectedRole === 'ADMIN' ? 'Admin Username or Email' : 'Email address'}
+                </label>
+                <div className="hp-auth-input-wrapper">
+                  <span className="hp-auth-input-icon-left">
+                    <Mail size={18} />
+                  </span>
+                  <input
+                    id="auth-email"
+                    type="text"
+                    className="hp-auth-input"
+                    placeholder={
+                      selectedRole === 'ADMIN'
+                        ? 'admin@healthcare.com'
+                        : selectedRole === 'DOCTOR'
+                        ? 'doctor@healthcare.com'
+                        : 'pranjal@example.com'
+                    }
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    autoComplete="username"
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Password Input */}
+              <div className="hp-auth-input-group">
+                <label htmlFor="auth-password" className="hp-auth-label">
+                  Password
+                </label>
+                <div className="hp-auth-input-wrapper">
+                  <span className="hp-auth-input-icon-left">
+                    <Lock size={18} />
+                  </span>
+                  <input
+                    id="auth-password"
+                    type={showPassword ? 'text' : 'password'}
+                    className="hp-auth-input has-right-icon"
+                    placeholder="••••••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    autoComplete="current-password"
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="hp-auth-password-toggle"
+                    onClick={() => setShowPassword(!showPassword)}
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Forgot Password */}
+              <div className="hp-forgot-password-row">
+                <Link
+                  to={`/forgot-password?role=${selectedRole}`}
+                  className="hp-forgot-password-link"
+                >
+                  Forgot password?
+                </Link>
+              </div>
+
+              {/* Primary CTA */}
+              <button
+                type="submit"
+                className="hp-auth-cta-btn"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 size={18} className="btn-spinner" />
+                    <span>Signing in...</span>
+                  </>
+                ) : (
+                  <span>Sign In</span>
+                )}
+              </button>
+            </form>
+
+            {/* Quick Demo Credentials */}
+            <div className="hp-demo-quickfill-block">
+              <span className="hp-demo-quickfill-label">Demo Quick Fill:</span>
+              <div className="hp-demo-btn-grid">
                 <button
                   type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}
+                  className="hp-demo-btn"
+                  onClick={() => fillQuickCredentials('PATIENT')}
                 >
-                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  Patient
                 </button>
-              }
-              required
-            />
-
-            <div style={{ marginTop: '0.5rem', marginBottom: '1.5rem', display: 'flex', justifyContent: 'flex-end' }}>
-              <Link
-                to={`/forgot-password?role=${selectedRole}`}
-                style={{ fontSize: '13px', color: 'var(--primary)', fontWeight: 500 }}
-              >
-                Forgot Password?
-              </Link>
+                <button
+                  type="button"
+                  className="hp-demo-btn"
+                  onClick={() => fillQuickCredentials('DOCTOR')}
+                >
+                  Doctor
+                </button>
+                <button
+                  type="button"
+                  className="hp-demo-btn"
+                  onClick={() => fillQuickCredentials('ADMIN')}
+                >
+                  Admin
+                </button>
+              </div>
             </div>
 
-            <Button
-              type="submit"
-              variant="primary"
-              size="md"
-              fullWidth
-              isLoading={isSubmitting}
-              rightIcon={<ArrowRight size={16} />}
-            >
-              {isSubmitting ? 'Signing in...' : `Sign In as ${selectedRole}`}
-            </Button>
-          </form>
-
-          {/* Quick Demo Fill Buttons */}
-          <div style={{ marginTop: '1.5rem', paddingTop: '1.25rem', borderTop: '1px solid var(--border-light)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-              <span className="helper-text" style={{ textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600 }}>
-                Demo Quick Fill:
-              </span>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => fillQuickCredentials('PATIENT')}
-              >
-                Patient
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => fillQuickCredentials('DOCTOR')}
-              >
-                Doctor
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => fillQuickCredentials('ADMIN')}
-              >
-                Admin
-              </Button>
-            </div>
+            {/* Patient Registration Footer Link */}
+            {selectedRole === 'PATIENT' && (
+              <div className="hp-auth-register-footer">
+                <span>New to HealthPulse?</span>
+                <Link to="/register" className="hp-auth-register-link">
+                  Create an account
+                </Link>
+              </div>
+            )}
           </div>
-
-          <div style={{ marginTop: '1.25rem', textAlign: 'center', fontSize: '14px' }}>
-            <p style={{ margin: 0, color: 'var(--text-secondary)' }}>
-              Don't have an account?{' '}
-              <Link to="/register" style={{ fontWeight: 600, color: 'var(--primary)' }}>
-                Create Patient Account
-              </Link>
-            </p>
-          </div>
-        </div>
+        </main>
       </div>
     </div>
   );
