@@ -14,4 +14,5 @@ export const ROLE_DASHBOARD_ROUTES: Record<UserRole, string> = {
   ADMIN: '/admin/dashboard',
 };
 
-export const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://healthpulse-api-4vhy.onrender.com';
+const rawApiUrl = import.meta.env.VITE_API_URL || 'https://healthpulse-api-4vhy.onrender.com/api';
+export const API_BASE_URL = rawApiUrl.endsWith('/api') ? rawApiUrl : `${rawApiUrl.replace(/\/+$/, '')}/api`;
