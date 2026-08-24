@@ -1,9 +1,5 @@
 @import './styles/theme.css';
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
 /* ==========================================================================
    Clinical Blue Gradient Core Application Styles
    ========================================================================== */
@@ -39,10 +35,10 @@
   position: sticky;
   top: 0;
   z-index: 100;
-  background: var(--med-navy);
+  background: var(--gradient-brand);
   color: var(--white);
   height: 68px;
-  box-shadow: 0 2px 10px rgba(31, 43, 108, 0.2);
+  box-shadow: 0 2px 10px rgba(57, 49, 175, 0.15);
   display: flex;
   align-items: center;
 }
