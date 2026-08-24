@@ -14,7 +14,6 @@ import {
   Users,
   Menu,
   X,
-  HeartPulse,
   KeyRound,
 } from 'lucide-react';
 import { ROLE_DASHBOARD_ROUTES } from '../../utils/constants';
@@ -69,11 +68,16 @@ export const Navbar: React.FC = () => {
       <header className="navbar">
         <div className="container nav-inner">
           <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
-            <Link to={homeRoute} className="nav-brand">
-              <div className="brand-icon">
-                <HeartPulse size={22} />
+            <Link to="/" className="nav-brand flex items-center gap-3">
+              <div className="w-9 h-9 rounded-lg bg-[#159EEC] flex items-center justify-center text-white font-black text-lg shadow-sm">
+                M
               </div>
-              <span className="brand-title">HealthPulse Hospital</span>
+              <div>
+                <span className="text-xl font-extrabold tracking-tight text-white">MEDDICAL</span>
+                <span className="block text-[9px] tracking-widest text-[#BFD2F8] uppercase font-bold">
+                  Hospital & Care Center
+                </span>
+              </div>
             </Link>
 
             {/* Contextual navigation based on role or public */}
