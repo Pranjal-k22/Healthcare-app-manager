@@ -96,28 +96,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
         className={`sidebar-ui ${isCollapsed ? 'is-collapsed' : ''}`}
       >
         {/* Sidebar Header / User Card */}
-        <div
-          style={{
-            padding: '1.25rem 1rem',
-            borderBottom: '1px solid #f1f5f9',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.75rem',
-          }}
-        >
+        <div className="sidebar-user-header">
           <Link
             to={getProfileRoute()}
             title="View & Edit Account Profile"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.75rem',
-              textDecoration: 'none',
-              color: 'inherit',
-              flex: 1,
-              minWidth: 0,
-              cursor: 'pointer',
-            }}
+            className="sidebar-user-link"
           >
             <Avatar
               name={user?.name || 'User'}
@@ -126,11 +109,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
             />
 
             {!isCollapsed && (
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: '0.92rem', fontWeight: 800, color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              <div className="sidebar-user-info">
+                <div className="sidebar-user-name">
                   {user?.name || 'User'}
                 </div>
-                <div style={{ fontSize: '0.75rem', color: '#0062cc', fontWeight: 600 }}>
+                <div className="sidebar-user-action">
                   View Profile →
                 </div>
               </div>
@@ -141,17 +124,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <button
               onClick={onToggleCollapse}
               aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-              style={{
-                background: '#f8fafc',
-                border: '1px solid #e2e8f0',
-                borderRadius: '6px',
-                padding: '4px',
-                color: '#64748b',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
+              className="sidebar-collapse-btn"
             >
               {isCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
             </button>
@@ -159,53 +132,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         {/* Navigation Link List */}
-        <nav
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '4px',
-            padding: '12px 10px',
-            flex: 1,
-            overflowY: 'auto',
-          }}
-        >
+        <nav className="sidebar-nav">
           {navItems.map((item) => (
             <NavLink
               key={item.label + item.to}
               to={item.to}
               end={item.exact}
-              style={({ isActive }) => ({
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.75rem',
-                padding: '10px 14px',
-                borderRadius: '8px',
-                textDecoration: 'none',
-                fontSize: '0.88rem',
-                fontWeight: isActive ? 700 : 500,
-                color: isActive ? '#0062cc' : '#475569',
-                background: isActive ? '#eff6ff' : 'transparent',
-                borderLeft: isActive ? '3.5px solid #0062cc' : '3.5px solid transparent',
-                transition: 'all 0.15s ease',
-              })}
+              className={({ isActive }) =>
+                `sidebar-nav-item ${isActive ? 'is-active' : ''}`
+              }
               title={isCollapsed ? item.label : undefined}
             >
-              <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <span className="sidebar-nav-icon">
                 {item.icon}
               </span>
-              {!isCollapsed && <span style={{ whiteSpace: 'nowrap' }}>{item.label}</span>}
+              {!isCollapsed && <span className="sidebar-nav-label">{item.label}</span>}
               {!isCollapsed && item.badge && (
-                <span
-                  style={{
-                    marginLeft: 'auto',
-                    fontSize: '0.72rem',
-                    fontWeight: 700,
-                    padding: '2px 7px',
-                    borderRadius: '999px',
-                    background: '#0062cc',
-                    color: '#ffffff',
-                  }}
-                >
+                <span className="sidebar-nav-badge">
                   {item.badge}
                 </span>
               )}
@@ -214,33 +157,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </nav>
 
         {/* Sidebar Footer with Logout */}
-        <div style={{ padding: '14px 16px', borderTop: '1px solid #f1f5f9' }}>
+        <div className="sidebar-footer">
           <button
             onClick={() => setShowLogoutConfirm(true)}
             title={isCollapsed ? 'Sign out' : undefined}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.75rem',
-              width: '100%',
-              padding: '10px 14px',
-              borderRadius: '8px',
-              border: '1px solid transparent',
-              background: 'transparent',
-              color: '#dc2626',
-              fontSize: '0.88rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-              transition: 'all 0.15s ease',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = '#fef2f2';
-              e.currentTarget.style.borderColor = '#fecaca';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'transparent';
-              e.currentTarget.style.borderColor = 'transparent';
-            }}
+            className="sidebar-logout-btn"
           >
             <LogOut size={18} />
             {!isCollapsed && <span>Logout</span>}

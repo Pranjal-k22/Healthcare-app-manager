@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { NotificationBell } from './NotificationBell';
 import { NavCalendarButton } from './NavCalendarButton';
+import { AppearanceDropdown } from './ThemeToggle';
 import {
   Calendar,
   CalendarCheck,
@@ -237,6 +238,7 @@ export const Navbar: React.FC = () => {
               <>
                 <NavCalendarButton />
                 <NotificationBell />
+                <AppearanceDropdown />
 
                 <Link
                   to={
