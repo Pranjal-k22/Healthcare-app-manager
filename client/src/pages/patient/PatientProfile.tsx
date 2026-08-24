@@ -9,6 +9,7 @@ import InlineAlert from '../../components/ui/InlineAlert';
 import { useToast } from '../../components/ui/Toast';
 import { CalendarSettingsCard } from '../../components/calendar/CalendarSettingsCard';
 import Avatar from '../../components/ui/Avatar';
+import { AppearanceControl } from '../../components/common/ThemeToggle';
 import {
   User,
   Mail,
@@ -187,6 +188,11 @@ export const PatientProfile: React.FC = () => {
               <p className="helper-text" style={{ fontSize: '12px', lineHeight: 1.5, margin: 0 }}>
                 Your health records and clinical history are encrypted at rest with 256-bit AES encryption compliant with healthcare privacy regulations.
               </p>
+            </Card>
+
+            {/* Appearance Settings */}
+            <Card style={{ padding: '20px' }}>
+              <AppearanceControl />
             </Card>
           </div>
 

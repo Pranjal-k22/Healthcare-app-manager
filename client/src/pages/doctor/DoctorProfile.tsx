@@ -26,6 +26,7 @@ import {
 import { CalendarSettingsCard } from '../../components/calendar/CalendarSettingsCard';
 import { DoctorLeaveManager } from '../../components/doctor/DoctorLeaveManager';
 import Avatar from '../../components/ui/Avatar';
+import { AppearanceControl } from '../../components/common/ThemeToggle';
 
 const DAYS_ORDER: Array<{ key: keyof Doctor['workingHours']; label: string }> = [
   { key: 'monday', label: 'Monday' },
@@ -772,6 +773,11 @@ export const DoctorProfile: React.FC = () => {
             <span>{passwordUpdating ? 'Updating Password...' : 'Update Password'}</span>
           </button>
         </form>
+      </div>
+
+      {/* Appearance Settings */}
+      <div style={{ marginTop: '2rem', padding: '1.5rem', background: 'var(--card-bg)', borderRadius: '14px', border: '1px solid var(--card-border)' }}>
+        <AppearanceControl />
       </div>
     </div>
   );
