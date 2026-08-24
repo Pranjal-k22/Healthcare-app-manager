@@ -1,13 +1,15 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 export interface AvatarProps {
   name?: string;
-  src?: string;
-  seed?: string;
+  src?: string | null;
+  seed?: string | null;
   size?: 'sm' | 'md' | 'lg' | 'xl';
   className?: string;
   style?: React.CSSProperties;
 }
+
+type AvatarStage = 'photo' | 'dicebear' | 'initials';
 
 export const Avatar: React.FC<AvatarProps> = ({
   name = 'User',
@@ -17,34 +19,73 @@ export const Avatar: React.FC<AvatarProps> = ({
   className = '',
   style,
 }) => {
-  const [imgError, setImgError] = useState(false);
-
-  const getInitials = (str: string) => {
-    if (!str) return 'U';
-    const parts = str.trim().split(' ').filter(Boolean);
-    if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
-    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  const getInitials = (value: string) => {
+    const parts = value.trim().split(/\s+/).filter(Boolean);
+    if (!parts.length) return 'U';
+    if (parts.length === 1) {
+      return parts[0].slice(0, 2).toUpperCase();
+    }
+    return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
   };
 
   const initials = getInitials(name);
 
-  // Deterministic DiceBear Avataaars SVG fallback with HealthPulse palette (blue/teal stops & 50% circle)
-  const effectiveSeed = seed || name;
-  const dicebearUrl = `https://api.dicebear.com/10.x/avataaars/svg?seed=${encodeURIComponent(effectiveSeed)}&backgroundColor=b1e2ff,dbeafe,e0f2fe&borderRadius=50`;
+  // Generate DiceBear URL ONLY when an explicit non-sensitive seed is supplied (prevents PII leakage)
+  const dicebearUrl = useMemo(() => {
+    if (!seed || !seed.trim()) return null;
 
-  const avatarSrc = src || (effectiveSeed ? dicebearUrl : undefined);
+    return (
+      'https://api.dicebear.com/10.x/avataaars/svg' +
+      `?seed=${encodeURIComponent(seed.trim())}` +
+      '&backgroundColor=b1e2ff,dbeafe,e0f2fe' +
+      '&borderRadius=50'
+    );
+  }, [seed]);
+
+  const getInitialStage = (): AvatarStage => {
+    if (src && src.trim()) return 'photo';
+    if (dicebearUrl) return 'dicebear';
+    return 'initials';
+  };
+
+  const [stage, setStage] = useState<AvatarStage>(getInitialStage);
+
+  // Reset stage state whenever src or seed change to avoid stuck error states
+  useEffect(() => {
+    setStage(getInitialStage());
+  }, [src, dicebearUrl]);
+
+  const handleImageError = () => {
+    if (stage === 'photo' && dicebearUrl) {
+      setStage('dicebear');
+    } else {
+      setStage('initials');
+    }
+  };
+
+  const imageSrc =
+    stage === 'photo'
+      ? src || null
+      : stage === 'dicebear'
+        ? dicebearUrl
+        : null;
 
   return (
-    <div className={`avatar-ui avatar-size-${size} ${className}`} style={style}>
-      {avatarSrc && !imgError ? (
+    <div
+      className={`avatar-ui avatar-size-${size} ${className}`}
+      style={style}
+    >
+      {imageSrc ? (
         <img
-          src={avatarSrc}
-          alt={name}
+          src={imageSrc}
+          alt={`${name} profile`}
           className="avatar-img"
-          onError={() => setImgError(true)}
+          onError={handleImageError}
         />
       ) : (
-        <span className="avatar-initials">{initials}</span>
+        <span className="avatar-initials" aria-hidden="true">
+          {initials}
+        </span>
       )}
     </div>
   );
