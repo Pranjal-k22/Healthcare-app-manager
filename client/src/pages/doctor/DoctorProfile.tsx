@@ -455,7 +455,7 @@ export const DoctorProfile: React.FC = () => {
               size="xl"
             />
 
-            <div style={{ flex: 1, minWidth: '260px' }}>
+            <div style={{ flex: 1, minWidth: 'min(100%, 260px)' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
@@ -708,7 +708,7 @@ export const DoctorProfile: React.FC = () => {
             />
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.25rem' }}>
+          <div className="form-grid-2col" style={{ marginBottom: '1.25rem' }}>
             <div>
               <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#334155', marginBottom: '0.35rem' }}>
                 New Password

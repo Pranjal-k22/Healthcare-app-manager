@@ -130,7 +130,7 @@ export const DoctorDetails: React.FC = () => {
           />
 
           {/* Profile Main Info */}
-          <div style={{ flex: 1, minWidth: '280px' }}>
+          <div style={{ flex: 1, minWidth: 'min(100%, 280px)' }}>
             <div
               style={{
                 display: 'flex',
@@ -394,7 +394,7 @@ export const DoctorDetails: React.FC = () => {
           boxShadow: 'var(--shadow-card)',
         }}
       >
-        <div style={{ flex: 1, minWidth: '280px' }}>
+        <div style={{ flex: 1, minWidth: 'min(100%, 280px)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginBottom: '0.35rem' }}>
             <Sparkles size={18} color="var(--primary)" />
             <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>

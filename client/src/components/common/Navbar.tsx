@@ -66,16 +66,39 @@ export const Navbar: React.FC = () => {
 
   const homeRoute = user ? ROLE_DASHBOARD_ROUTES[user.role] : '/';
 
+  // Close drawer on Escape key or route change
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setMobileMenuOpen(false);
+      }
+    };
+    if (mobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+      window.addEventListener('keydown', handleKeyDown);
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [mobileMenuOpen]);
+
+  React.useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [location.pathname]);
+
   return (
     <>
       <header className="navbar">
         <div className="container nav-inner">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', minWidth: 0 }}>
             <Link to={homeRoute} className="nav-brand">
               <div className="brand-icon">
-                <HeartPulse size={22} />
+                <HeartPulse size={20} />
               </div>
-              <span className="brand-title">HealthPulse Hospital</span>
+              <span className="brand-title">HealthPulse</span>
             </Link>
 
             {/* Contextual navigation based on role or public */}
@@ -228,7 +251,9 @@ export const Navbar: React.FC = () => {
           <div className="nav-user-panel">
             {isAuthenticated && user ? (
               <>
-                <NavCalendarButton />
+                <div className="nav-desktop-only">
+                  <NavCalendarButton />
+                </div>
                 <NotificationBell />
                 <AppearanceDropdown />
 
@@ -241,6 +266,7 @@ export const Navbar: React.FC = () => {
                       : '/patient/profile'
                   }
                   title="View & Edit Account Profile"
+                  className="nav-desktop-only"
                   style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -263,7 +289,8 @@ export const Navbar: React.FC = () => {
                     <span className="user-email">{user.email}</span>
                   </div>
                 </Link>
-                <div className="nav-logout-btn">
+
+                <div className="nav-logout-btn nav-desktop-only">
                   <Button
                     variant="outline"
                     size="sm"
@@ -282,19 +309,21 @@ export const Navbar: React.FC = () => {
                 </div>
               </>
             ) : (
-              <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+              <div className="nav-auth-actions">
                 <Link
                   to="/login"
+                  className="nav-signin-link"
                   style={{
                     color: '#ffffff',
                     fontWeight: 600,
                     fontSize: '14px',
-                    padding: '8px 14px',
+                    padding: '8px 12px',
+                    textDecoration: 'none',
                   }}
                 >
                   Sign In
                 </Link>
-                <Link to="/register">
+                <Link to="/register" className="nav-register-btn-wrap">
                   <Button
                     variant="outline"
                     size="sm"
@@ -305,7 +334,7 @@ export const Navbar: React.FC = () => {
                       fontWeight: 600,
                     }}
                   >
-                    Register Patient
+                    Register
                   </Button>
                 </Link>
               </div>
@@ -316,9 +345,10 @@ export const Navbar: React.FC = () => {
               className="nav-mobile-toggle"
               data-testid="user-menu-toggle"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              aria-label="Toggle navigation menu"
+              aria-label={mobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
+              aria-expanded={mobileMenuOpen}
             >
-              {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+              {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
             </button>
           </div>
         </div>
@@ -327,93 +357,262 @@ export const Navbar: React.FC = () => {
       {/* Mobile Drawer Menu */}
       {mobileMenuOpen && (
         <div
-          style={{
-            position: 'fixed',
-            top: '60px',
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(20, 45, 80, 0.7)',
-            backdropFilter: 'blur(4px)',
-            zIndex: 99,
-          }}
+          className="hp-mobile-drawer-overlay"
           onClick={() => setMobileMenuOpen(false)}
         >
           <div
-            style={{
-              backgroundColor: 'var(--white)',
-              padding: '1.5rem',
-              maxWidth: '300px',
-              height: '100%',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '1rem',
-            }}
+            className="hp-mobile-drawer-sheet"
             onClick={(e) => e.stopPropagation()}
           >
-            <div style={{ paddingBottom: '1rem', borderBottom: '1px solid var(--border)' }}>
-              <div style={{ fontWeight: 700, color: 'var(--primary-dark)' }}>HealthPulse Hospital</div>
-              <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Clinical Portal</div>
+            {/* Header / Brand in Drawer */}
+            <div className="hp-drawer-header">
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                  <div className="brand-icon" style={{ width: '32px', height: '32px', background: 'var(--primary)', color: '#fff' }}>
+                    <HeartPulse size={18} />
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-primary)' }}>HealthPulse Hospital</div>
+                    <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Clinical Portal</div>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setMobileMenuOpen(false)}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    color: 'var(--text-secondary)',
+                    padding: '6px',
+                    cursor: 'pointer',
+                    borderRadius: '6px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                  aria-label="Close menu"
+                >
+                  <X size={20} />
+                </button>
+              </div>
             </div>
 
-            <Link
-              to={homeRoute}
-              style={{ padding: '8px 0', color: 'var(--text-primary)', fontWeight: 600 }}
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Home
-            </Link>
-            <Link
-              to="/patient/doctors"
-              style={{ padding: '8px 0', color: 'var(--text-primary)', fontWeight: 500 }}
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Find Doctors
-            </Link>
-            <Link
-              to="/privacy"
-              style={{ padding: '8px 0', color: 'var(--text-primary)', fontWeight: 500 }}
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Privacy Policy
-            </Link>
-            <Link
-              to="/terms"
-              style={{ padding: '8px 0', color: 'var(--text-primary)', fontWeight: 500 }}
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Terms of Service
-            </Link>
-
-            {isAuthenticated ? (
-              <Button
-                variant="danger"
-                size="sm"
-                fullWidth
-                data-testid="logout-button"
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  handleLogout();
-                }}
-                leftIcon={<LogOut size={14} />}
-                style={{ marginTop: 'auto' }}
-              >
-                Logout
-              </Button>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: 'auto' }}>
-                <Link to="/login" onClick={() => setMobileMenuOpen(false)}>
-                  <Button variant="outline" size="sm" fullWidth>
-                    Sign In
-                  </Button>
-                </Link>
-                <Link to="/register" onClick={() => setMobileMenuOpen(false)}>
-                  <Button variant="primary" size="sm" fullWidth>
-                    Register Patient
-                  </Button>
-                </Link>
+            {/* User Account Card if Logged In */}
+            {isAuthenticated && user && (
+              <div className="hp-drawer-user-card">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
+                  <Avatar name={user.name} seed={user._id || user.email} size="md" />
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+                      <span style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-primary)' }}>{user.name}</span>
+                      {getRoleBadge(user.role)}
+                    </div>
+                    <div style={{ fontSize: '12px', color: 'var(--text-muted)', overflowWrap: 'anywhere' }}>
+                      {user.email}
+                    </div>
+                  </div>
+                </div>
+                <div style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid var(--border)' }}>
+                  <NavCalendarButton />
+                </div>
               </div>
             )}
+
+            {/* Nav Links in Drawer */}
+            <div className="hp-drawer-nav-list">
+              <span className="hp-drawer-nav-label">Navigation</span>
+
+              {!isAuthenticated ? (
+                <>
+                  <Link
+                    to="/"
+                    className={`hp-drawer-nav-item ${location.pathname === '/' ? 'is-active' : ''}`}
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <span>Home / Overview</span>
+                  </Link>
+                  <Link
+                    to="/patient/doctors"
+                    className={`hp-drawer-nav-item ${location.pathname.startsWith('/patient/doctors') ? 'is-active' : ''}`}
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <Search size={16} />
+                    <span>Find Doctors & Specialists</span>
+                  </Link>
+                  <Link
+                    to="/privacy"
+                    className={`hp-drawer-nav-item ${location.pathname === '/privacy' ? 'is-active' : ''}`}
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <span>Privacy Policy</span>
+                  </Link>
+                  <Link
+                    to="/terms"
+                    className={`hp-drawer-nav-item ${location.pathname === '/terms' ? 'is-active' : ''}`}
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <span>Terms of Service</span>
+                  </Link>
+                </>
+              ) : (
+                <>
+                  {user?.role === 'PATIENT' && (
+                    <>
+                      <Link
+                        to="/patient/dashboard"
+                        className={`hp-drawer-nav-item ${location.pathname === '/patient/dashboard' ? 'is-active' : ''}`}
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        <span>Dashboard</span>
+                      </Link>
+                      <Link
+                        to="/patient/doctors"
+                        className={`hp-drawer-nav-item ${location.pathname.startsWith('/patient/doctors') ? 'is-active' : ''}`}
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        <Search size={16} />
+                        <span>Find Doctors</span>
+                      </Link>
+                      <Link
+                        to="/patient/appointments"
+                        className={`hp-drawer-nav-item ${location.pathname.startsWith('/patient/appointments') ? 'is-active' : ''}`}
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        <CalendarCheck size={16} />
+                        <span>My Appointments</span>
+                      </Link>
+                      <Link
+                        to="/patient/prescriptions"
+                        className={`hp-drawer-nav-item ${location.pathname.startsWith('/patient/prescriptions') ? 'is-active' : ''}`}
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        <span>Prescriptions</span>
+                      </Link>
+                      <Link
+                        to="/patient/profile"
+                        className={`hp-drawer-nav-item ${location.pathname === '/patient/profile' ? 'is-active' : ''}`}
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        <UserIcon size={16} />
+                        <span>Profile & Settings</span>
+                      </Link>
+                    </>
+                  )}
+
+                  {user?.role === 'DOCTOR' && (
+                    <>
+                      <Link
+                        to="/doctor/dashboard"
+                        className={`hp-drawer-nav-item ${location.pathname === '/doctor/dashboard' ? 'is-active' : ''}`}
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        <span>Doctor Dashboard</span>
+                      </Link>
+                      <Link
+                        to="/doctor/appointments"
+                        className={`hp-drawer-nav-item ${location.pathname.startsWith('/doctor/appointments') ? 'is-active' : ''}`}
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        <Calendar size={16} />
+                        <span>Consultations & Schedule</span>
+                      </Link>
+                      <Link
+                        to="/doctor/profile"
+                        className={`hp-drawer-nav-item ${location.pathname === '/doctor/profile' ? 'is-active' : ''}`}
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        <Stethoscope size={16} />
+                        <span>Doctor Profile & Hours</span>
+                      </Link>
+                    </>
+                  )}
+
+                  {user?.role === 'ADMIN' && (
+                    <>
+                      <Link
+                        to="/admin/dashboard"
+                        className={`hp-drawer-nav-item ${location.pathname === '/admin/dashboard' ? 'is-active' : ''}`}
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        <span>Admin Dashboard</span>
+                      </Link>
+                      <Link
+                        to="/admin/doctors"
+                        className={`hp-drawer-nav-item ${location.pathname.startsWith('/admin/doctors') ? 'is-active' : ''}`}
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        <Users size={16} />
+                        <span>Manage Doctors</span>
+                      </Link>
+                      <Link
+                        to="/admin/appointments"
+                        className={`hp-drawer-nav-item ${location.pathname.startsWith('/admin/appointments') ? 'is-active' : ''}`}
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        <Calendar size={16} />
+                        <span>All Appointments</span>
+                      </Link>
+                      <Link
+                        to="/admin/doctor-reset-requests"
+                        className={`hp-drawer-nav-item ${location.pathname.startsWith('/admin/doctor-reset-requests') ? 'is-active' : ''}`}
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        <KeyRound size={16} />
+                        <span>Doctor Reset Requests</span>
+                      </Link>
+                    </>
+                  )}
+
+                  <div style={{ margin: '0.75rem 0', borderTop: '1px solid var(--border)' }} />
+                  <Link
+                    to="/privacy"
+                    className={`hp-drawer-nav-item ${location.pathname === '/privacy' ? 'is-active' : ''}`}
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <span>Privacy Policy</span>
+                  </Link>
+                  <Link
+                    to="/terms"
+                    className={`hp-drawer-nav-item ${location.pathname === '/terms' ? 'is-active' : ''}`}
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <span>Terms of Service</span>
+                  </Link>
+                </>
+              )}
+            </div>
+
+            {/* Bottom Actions */}
+            <div className="hp-drawer-footer">
+              {isAuthenticated ? (
+                <Button
+                  variant="danger"
+                  size="md"
+                  fullWidth
+                  data-testid="logout-button"
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    handleLogout();
+                  }}
+                  leftIcon={<LogOut size={16} />}
+                >
+                  Sign Out
+                </Button>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', width: '100%' }}>
+                  <Link to="/login" onClick={() => setMobileMenuOpen(false)} style={{ textDecoration: 'none' }}>
+                    <Button variant="outline" size="md" fullWidth>
+                      Sign In
+                    </Button>
+                  </Link>
+                  <Link to="/register" onClick={() => setMobileMenuOpen(false)} style={{ textDecoration: 'none' }}>
+                    <Button variant="primary" size="md" fullWidth>
+                      Register Patient
+                    </Button>
+                  </Link>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}

@@ -155,7 +155,7 @@ export const Register: React.FC = () => {
           )}
 
           <form onSubmit={handleSubmit}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+            <div className="form-grid-2col">
               <Input
                 id="reg-first-name"
                 type="text"
@@ -189,7 +189,7 @@ export const Register: React.FC = () => {
               required
             />
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+            <div className="form-grid-2col">
               <Input
                 id="reg-phone"
                 type="tel"
@@ -213,7 +213,7 @@ export const Register: React.FC = () => {
               />
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+            <div className="form-grid-2col">
               <Input
                 id="reg-password"
                 type="password"

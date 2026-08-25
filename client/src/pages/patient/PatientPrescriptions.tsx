@@ -97,7 +97,7 @@ export const PatientPrescriptions: React.FC = () => {
         {/* Search & Filter Toolbar */}
         <Card noPadding style={{ marginBottom: '1.75rem' }}>
           <div style={{ padding: '18px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
-            <div style={{ flex: 1, minWidth: '240px', maxWidth: '380px' }}>
+            <div style={{ flex: 1, minWidth: 'min(100%, 240px)', maxWidth: '100%' }}>
               <Input
                 id="rx-search-input"
                 type="text"

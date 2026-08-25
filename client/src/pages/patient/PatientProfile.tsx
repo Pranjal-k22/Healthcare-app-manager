@@ -206,7 +206,7 @@ export const PatientProfile: React.FC = () => {
                   <h3 className="card-title" style={{ margin: 0 }}>Personal & Demographics</h3>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+                <div className="form-grid-2col" style={{ marginBottom: '1rem' }}>
                   <Input
                     label="Full Legal Name"
                     id="profile-name"
@@ -228,7 +228,7 @@ export const PatientProfile: React.FC = () => {
                   />
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
+                <div className="form-grid-2col" style={{ marginBottom: '1.5rem' }}>
                   <Input
                     label="Date of Birth"
                     id="profile-dob"

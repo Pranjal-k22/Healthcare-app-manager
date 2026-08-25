@@ -6,21 +6,9 @@ export const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="hp-public-footer" style={{
-      backgroundColor: '#0B192C',
-      color: '#94A3B8',
-      borderTop: '1px solid #1E293B',
-      padding: '3rem 1.5rem 2rem',
-      fontSize: '0.875rem',
-      lineHeight: 1.6,
-    }}>
-      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-          gap: '2.5rem',
-          marginBottom: '2.5rem',
-        }}>
+    <footer className="hp-public-footer">
+      <div className="hp-footer-inner">
+        <div className="hp-footer-grid">
           {/* Col 1: Brand & Purpose */}
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '0.85rem' }}>
@@ -32,45 +20,46 @@ export const Footer: React.FC = () => {
                 alignItems: 'center',
                 justifyContent: 'center',
                 color: '#ffffff',
+                flexShrink: 0,
               }}>
-                <HeartPulse size={20} />
+                <HeartPulse size={18} />
               </div>
-              <span style={{ color: '#ffffff', fontWeight: 700, fontSize: '1.125rem', letterSpacing: '-0.02em' }}>
+              <span style={{ color: '#ffffff', fontWeight: 700, fontSize: '1.05rem', letterSpacing: '-0.02em' }}>
                 HealthPulse Hospital
               </span>
             </div>
-            <p style={{ margin: '0 0 1rem', color: '#94A3B8', fontSize: '0.875rem' }}>
+            <p style={{ margin: '0 0 0.85rem', color: '#94A3B8', fontSize: '0.85rem', lineHeight: 1.55 }}>
               Next-generation healthcare appointment scheduling and clinical consultation platform. Bridging patients and medical providers seamlessly.
             </p>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#38BDF8', fontSize: '0.8rem' }}>
-              <Shield size={14} />
-              <span>AES-256 encrypted & HIPAA-aware architecture</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#38BDF8', fontSize: '0.785rem' }}>
+              <Shield size={13} style={{ flexShrink: 0 }} />
+              <span>AES-256 encrypted &amp; HIPAA-aware architecture</span>
             </div>
           </div>
 
           {/* Col 2: Navigation */}
           <div>
-            <h4 style={{ color: '#F1F5F9', fontSize: '0.925rem', fontWeight: 600, marginBottom: '1rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <h4 style={{ color: '#F1F5F9', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               Navigation
             </h4>
-            <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
               <li>
-                <Link to="/" style={{ color: '#94A3B8', textDecoration: 'none', transition: 'color 0.2s' }} onMouseOver={(e) => (e.currentTarget.style.color = '#38BDF8')} onMouseOut={(e) => (e.currentTarget.style.color = '#94A3B8')}>
+                <Link to="/" style={{ color: '#94A3B8', textDecoration: 'none', fontSize: '0.85rem' }}>
                   Home / Overview
                 </Link>
               </li>
               <li>
-                <Link to="/patient/doctors" style={{ color: '#94A3B8', textDecoration: 'none', transition: 'color 0.2s' }} onMouseOver={(e) => (e.currentTarget.style.color = '#38BDF8')} onMouseOut={(e) => (e.currentTarget.style.color = '#94A3B8')}>
-                  Find Doctors & Specialists
+                <Link to="/patient/doctors" style={{ color: '#94A3B8', textDecoration: 'none', fontSize: '0.85rem' }}>
+                  Find Doctors &amp; Specialists
                 </Link>
               </li>
               <li>
-                <Link to="/login" style={{ color: '#94A3B8', textDecoration: 'none', transition: 'color 0.2s' }} onMouseOver={(e) => (e.currentTarget.style.color = '#38BDF8')} onMouseOut={(e) => (e.currentTarget.style.color = '#94A3B8')}>
+                <Link to="/login" style={{ color: '#94A3B8', textDecoration: 'none', fontSize: '0.85rem' }}>
                   Sign In to Portal
                 </Link>
               </li>
               <li>
-                <Link to="/register" style={{ color: '#94A3B8', textDecoration: 'none', transition: 'color 0.2s' }} onMouseOver={(e) => (e.currentTarget.style.color = '#38BDF8')} onMouseOut={(e) => (e.currentTarget.style.color = '#94A3B8')}>
+                <Link to="/register" style={{ color: '#94A3B8', textDecoration: 'none', fontSize: '0.85rem' }}>
                   Patient Registration
                 </Link>
               </li>
@@ -79,22 +68,22 @@ export const Footer: React.FC = () => {
 
           {/* Col 3: Legal & Trust */}
           <div>
-            <h4 style={{ color: '#F1F5F9', fontSize: '0.925rem', fontWeight: 600, marginBottom: '1rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              Privacy & Legal
+            <h4 style={{ color: '#F1F5F9', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Privacy &amp; Legal
             </h4>
-            <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
               <li>
-                <Link to="/privacy" style={{ color: '#38BDF8', textDecoration: 'none', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                  <span>Privacy Policy</span>
+                <Link to="/privacy" style={{ color: '#38BDF8', textDecoration: 'none', fontWeight: 600, fontSize: '0.85rem' }}>
+                  Privacy Policy
                 </Link>
               </li>
               <li>
-                <Link to="/terms" style={{ color: '#94A3B8', textDecoration: 'none', transition: 'color 0.2s' }} onMouseOver={(e) => (e.currentTarget.style.color = '#38BDF8')} onMouseOut={(e) => (e.currentTarget.style.color = '#94A3B8')}>
+                <Link to="/terms" style={{ color: '#94A3B8', textDecoration: 'none', fontSize: '0.85rem' }}>
                   Terms of Service
                 </Link>
               </li>
               <li>
-                <span style={{ color: '#64748B', fontSize: '0.8rem', display: 'block', marginTop: '0.25rem' }}>
+                <span style={{ color: '#64748B', fontSize: '0.78rem', display: 'block', marginTop: '0.2rem' }}>
                   Google API Services User Data Policy Compliant
                 </span>
               </li>
@@ -103,10 +92,10 @@ export const Footer: React.FC = () => {
 
           {/* Col 4: Contact & Security */}
           <div>
-            <h4 style={{ color: '#F1F5F9', fontSize: '0.925rem', fontWeight: 600, marginBottom: '1rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              Developer & Support
+            <h4 style={{ color: '#F1F5F9', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Support &amp; Contact
             </h4>
-            <p style={{ margin: '0 0 0.75rem', fontSize: '0.85rem' }}>
+            <p style={{ margin: '0 0 0.65rem', fontSize: '0.85rem', color: '#94A3B8' }}>
               Have questions regarding data security, Google Calendar sync, or your account?
             </p>
             <a
@@ -119,30 +108,22 @@ export const Footer: React.FC = () => {
                 textDecoration: 'none',
                 fontSize: '0.85rem',
                 fontWeight: 500,
+                overflowWrap: 'anywhere',
+                wordBreak: 'break-word',
               }}
             >
-              <Mail size={14} />
+              <Mail size={14} style={{ flexShrink: 0 }} />
               <span>1975adarsh@gmail.com</span>
             </a>
           </div>
         </div>
 
         {/* Bottom copyright */}
-        <div style={{
-          paddingTop: '1.5rem',
-          borderTop: '1px solid #1E293B',
-          display: 'flex',
-          flexWrap: 'wrap',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: '1rem',
-          fontSize: '0.8rem',
-          color: '#64748B',
-        }}>
+        <div className="hp-footer-bottom">
           <div>
             &copy; {currentYear} HealthPulse Healthcare Portal. All rights reserved.
           </div>
-          <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: '1.25rem', alignItems: 'center', flexWrap: 'wrap' }}>
             <Link to="/privacy" style={{ color: '#94A3B8', textDecoration: 'none' }}>
               Privacy Policy
             </Link>

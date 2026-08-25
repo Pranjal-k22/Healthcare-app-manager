@@ -254,13 +254,11 @@ export const BookAppointment: React.FC = () => {
                 backgroundColor: 'var(--surface)',
                 border: '1px solid var(--border)',
                 borderRadius: 'var(--radius-md)',
-                padding: '1.5rem',
+                padding: 'clamp(1rem, 3vw, 1.5rem)',
                 textAlign: 'left',
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr',
-                gap: '1.25rem',
                 marginBottom: '2rem',
               }}
+              className="form-grid-2col"
             >
               <div>
                 <div className="helper-text">Practitioner / Specialist</div>
