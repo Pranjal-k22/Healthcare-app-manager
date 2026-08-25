@@ -4344,11 +4344,44 @@ body,
   color: var(--primary) !important;
 }
 [data-theme="dark"] .hp-auth-cta-btn {
-  background-color: #3B82F6 !important;
+  background-color: #2563EB !important;
+  color: #FFFFFF !important;
 }
 [data-theme="dark"] .hp-auth-cta-btn:hover:not(:disabled) {
-  background-color: #60A5FA !important;
-  box-shadow: 0 4px 14px rgba(96, 165, 250, 0.4) !important;
+  background-color: #1D4ED8 !important;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4) !important;
+}
+[data-theme="dark"] .hp-forgot-password-link {
+  color: #60A5FA !important;
+}
+[data-theme="dark"] .hp-forgot-password-link:hover {
+  color: #93C5FD !important;
+}
+[data-theme="dark"] .hp-auth-register-footer,
+[data-theme="dark"] .hp-auth-register-footer > span {
+  color: #94A3B8 !important;
+}
+[data-theme="dark"] .hp-auth-register-link {
+  color: #60A5FA !important;
+}
+[data-theme="dark"] .hp-auth-register-link:hover {
+  color: #93C5FD !important;
+}
+
+/* Accessible focus visible rings */
+.hp-role-segment-btn:focus-visible,
+.hp-auth-cta-btn:focus-visible,
+.hp-forgot-password-link:focus-visible,
+.hp-auth-register-link:focus-visible {
+  outline: 2px solid #2563EB;
+  outline-offset: 2px;
+}
+[data-theme="dark"] .hp-role-segment-btn:focus-visible,
+[data-theme="dark"] .hp-auth-cta-btn:focus-visible,
+[data-theme="dark"] .hp-forgot-password-link:focus-visible,
+[data-theme="dark"] .hp-auth-register-link:focus-visible {
+  outline: 2px solid #60A5FA;
+  outline-offset: 2px;
 }
 
 /* ── Segmented Tab Group ─────────────────────────────────────────────────── */
