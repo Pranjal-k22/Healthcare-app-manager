@@ -59,3 +59,8 @@ playwright/.cache/
 playwright/.auth/
 client/playwright/.auth/
 *.auth/
+
+# Lighthouse CI
+.lighthouseci/
+client/.lighthouseci/
+
