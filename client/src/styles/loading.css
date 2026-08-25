@@ -1,10 +1,10 @@
 /* ==========================================================================
-   HealthPulse — Clean Native UI Loader
-   Seamlessly integrated with HealthPulse theme tokens and typography
+   HealthPulse — Stethoscope Geometric Neon Loader
+   Aesthetic: Geometric neon tracer path with centered stethoscope & crisp typography
    ========================================================================== */
 
-/* Fullscreen Center (Initial load / Auth check) */
-.hp-simple-loader-fullscreen {
+/* Fullscreen Overlay (Centered Vertically & Horizontally) */
+.steth-loader-fullscreen {
   position: fixed;
   inset: 0;
   z-index: 9999;
@@ -14,81 +14,175 @@
   justify-content: center;
   min-height: 100vh;
   width: 100vw;
-  background-color: var(--bg-app, #F8FAFC);
-  gap: 0.875rem;
+  background-color: #1a1e26;
+  padding: 2rem 1.5rem;
+  overflow: hidden;
 }
 
-/* Page / View Center (Inside dashboard / content routes) */
-.hp-simple-loader-page {
+[data-theme="light"] .steth-loader-fullscreen {
+  background-color: #f8fafc;
+}
+
+/* Page / View Container (Centered) */
+.steth-loader-page {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 280px;
+  min-height: 340px;
   width: 100%;
   padding: 3rem 1.5rem;
-  gap: 0.75rem;
+  background: transparent;
 }
 
-/* Inline / Widget Center */
-.hp-simple-loader-inline {
+/* Inline / Compact Container */
+.steth-loader-compact {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 1.5rem 1rem;
-  gap: 0.5rem;
+  padding: 1.5rem;
   width: 100%;
 }
 
-/* Standard UI Theme Circular Spinner */
-.hp-spinner {
-  border-radius: 50%;
-  border: 3px solid var(--border, #E2E8F0);
-  border-top-color: var(--primary, #2563EB);
-  animation: hp-spin 0.75s linear infinite;
-  box-sizing: border-box;
-}
-
-[data-theme="dark"] .hp-spinner {
-  border-color: var(--border, #243750);
-  border-top-color: var(--primary, #60A5FA);
-}
-
-.hp-spinner-sm {
-  width: 20px;
-  height: 20px;
-  border-width: 2.5px;
-}
-
-.hp-spinner-md {
-  width: 36px;
-  height: 36px;
-  border-width: 3px;
-}
-
-.hp-spinner-lg {
-  width: 48px;
-  height: 48px;
-  border-width: 3.5px;
-}
-
-/* Label styled according to UI typography */
-.hp-loader-label {
-  font-family: var(--font-family, inherit);
-  font-size: 0.9375rem;
-  font-weight: 500;
-  color: var(--text-secondary, #475569);
-  letter-spacing: -0.01em;
-  margin: 0;
+/* Main Inner Content */
+.steth-loader-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   text-align: center;
+  max-width: 320px;
+  animation: steth-fade-in 0.35s ease-out forwards;
 }
 
-@keyframes hp-spin {
+@keyframes steth-fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Icon / SVG Frame Container */
+.steth-frame-container {
+  position: relative;
+  width: 88px;
+  height: 88px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.steth-frame-svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/* Geometric Base Paths */
+.steth-geo-bg {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.15);
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+[data-theme="light"] .steth-geo-bg {
+  stroke: rgba(15, 23, 42, 0.12);
+}
+
+.steth-square-bg {
+  fill: rgba(255, 255, 255, 0.04);
+  stroke: rgba(255, 255, 255, 0.22);
+  stroke-width: 3.5;
+  stroke-linejoin: round;
+}
+
+[data-theme="light"] .steth-square-bg {
+  fill: rgba(15, 23, 42, 0.04);
+  stroke: rgba(15, 23, 42, 0.2);
+}
+
+/* Neon Green Animated Traveling Path */
+.steth-geo-neon {
+  fill: none;
+  stroke: #6ee717;
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 8px rgba(110, 231, 23, 0.8)) drop-shadow(0 0 16px rgba(110, 231, 23, 0.4));
+  stroke-dasharray: 60 180;
+  stroke-dashoffset: 0;
+  animation: steth-travel 2.2s linear infinite;
+}
+
+[data-theme="light"] .steth-geo-neon {
+  stroke: #16a34a;
+  filter: drop-shadow(0 0 6px rgba(22, 163, 74, 0.45));
+}
+
+@keyframes steth-travel {
   0% {
-    transform: rotate(0deg);
+    stroke-dashoffset: 240;
   }
   100% {
-    transform: rotate(360deg);
+    stroke-dashoffset: 0;
   }
+}
+
+/* Center Stethoscope Icon */
+.steth-center-icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6ee717;
+  animation: steth-pulse 2s ease-in-out infinite;
+  filter: drop-shadow(0 0 6px rgba(110, 231, 23, 0.6));
+}
+
+[data-theme="light"] .steth-center-icon {
+  color: #16a34a;
+  filter: drop-shadow(0 0 4px rgba(22, 163, 74, 0.3));
+}
+
+@keyframes steth-pulse {
+  0%, 100% {
+    transform: translate(-50%, -50%) scale(0.95);
+    opacity: 0.85;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.08);
+    opacity: 1;
+  }
+}
+
+/* Typography matching reference */
+.steth-loader-title {
+  font-family: var(--font-family, "Inter", sans-serif);
+  font-size: 1.625rem;
+  font-weight: 600;
+  color: #ffffff;
+  letter-spacing: -0.01em;
+  margin: 0;
+  line-height: 1.2;
+}
+
+[data-theme="light"] .steth-loader-title {
+  color: #0f172a;
+}
+
+.steth-loader-subtext {
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: #94a3b8;
+  margin-top: 0.5rem;
+  margin-bottom: 0;
+}
+
+[data-theme="light"] .steth-loader-subtext {
+  color: #64748b;
 }
