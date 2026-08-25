@@ -310,8 +310,8 @@ export const Privacy: React.FC = () => {
             </ul>
             <p style={{ color: 'var(--text-secondary)', lineHeight: 1.7, margin: 0 }}>
               To request account deletion or data purge, contact us at{' '}
-              <a href="mailto:pranjalkaran2004@gmail.com" style={{ color: 'var(--primary)', fontWeight: 600 }}>
-                pranjalkaran2004@gmail.com
+              <a href="mailto:1975adarsh@gmail.com" style={{ color: 'var(--primary)', fontWeight: 600 }}>
+                1975adarsh@gmail.com
               </a>
               . Requests are processed within 48 hours.
             </p>
@@ -362,11 +362,11 @@ export const Privacy: React.FC = () => {
                 HealthPulse Hospital Portal Developer & Administrator:
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-                <div><strong>Lead Developer:</strong> Pranjal Karan</div>
+                <div><strong>Administrator / Lead Developer:</strong> Adarsh</div>
                 <div>
                   <strong>Email:</strong>{' '}
-                  <a href="mailto:pranjalkaran2004@gmail.com" style={{ color: 'var(--primary)', fontWeight: 600 }}>
-                    pranjalkaran2004@gmail.com
+                  <a href="mailto:1975adarsh@gmail.com" style={{ color: 'var(--primary)', fontWeight: 600 }}>
+                    1975adarsh@gmail.com
                   </a>
                 </div>
                 <div><strong>Project Repository:</strong> Healthcare Appointment & Clinical Management System</div>

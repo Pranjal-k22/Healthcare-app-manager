@@ -25,7 +25,7 @@ const config = {
   CLIENT_URL: process.env.CLIENT_URL || process.env.CORS_ORIGIN || 'http://localhost:5173',
   CORS_ORIGIN: process.env.CORS_ORIGIN || process.env.CLIENT_URL || 'http://localhost:5173',
   ADMIN_NAME: process.env.ADMIN_NAME || 'Super Admin',
-  ADMIN_EMAIL: process.env.ADMIN_EMAIL || 'admin@healthcare.com',
+  ADMIN_EMAIL: process.env.ADMIN_EMAIL || '1975adarsh@gmail.com',
   ADMIN_PASSWORD: process.env.ADMIN_PASSWORD || 'AdminPassword123!',
 
   // Email Notification Settings (Resend Node.js SDK over HTTPS)

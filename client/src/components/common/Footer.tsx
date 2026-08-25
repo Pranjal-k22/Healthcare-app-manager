@@ -110,7 +110,7 @@ export const Footer: React.FC = () => {
               Have questions regarding data security, Google Calendar sync, or your account?
             </p>
             <a
-              href="mailto:pranjalkaran2004@gmail.com"
+              href="mailto:1975adarsh@gmail.com"
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -122,7 +122,7 @@ export const Footer: React.FC = () => {
               }}
             >
               <Mail size={14} />
-              <span>pranjalkaran2004@gmail.com</span>
+              <span>1975adarsh@gmail.com</span>
             </a>
           </div>
         </div>

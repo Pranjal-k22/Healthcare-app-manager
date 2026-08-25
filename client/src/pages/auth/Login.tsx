@@ -83,7 +83,7 @@ export const Login: React.FC = () => {
     setSelectedRole(role);
     setError(null);
     if (role === 'ADMIN') {
-      setEmail('admin@healthcare.com');
+      setEmail('1975adarsh@gmail.com');
       setPassword('AdminPassword123!');
     } else if (role === 'DOCTOR') {
       setEmail('doctor@healthcare.com');
@@ -231,10 +231,10 @@ export const Login: React.FC = () => {
                     className="hp-auth-input"
                     placeholder={
                       selectedRole === 'ADMIN'
-                        ? 'admin@healthcare.com'
+                        ? '1975adarsh@gmail.com'
                         : selectedRole === 'DOCTOR'
                         ? 'doctor@healthcare.com'
-                        : 'pranjal@example.com'
+                        : 'patient@healthcare.com'
                     }
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}

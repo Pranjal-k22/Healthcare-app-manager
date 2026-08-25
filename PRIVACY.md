@@ -49,8 +49,8 @@ To request permanent account or data deletion, contact the developer below.
 
 ## 5. Contact & Developer Details
 
-- **Lead Developer:** Pranjal Karan
-- **Email:** [pranjalkaran2004@gmail.com](mailto:pranjalkaran2004@gmail.com)
-- **Application URL:** [https://healthpluse.vercel.app](https://healthpluse.vercel.app)
-- **Privacy Policy URL:** [https://healthpluse.vercel.app/privacy](https://healthpluse.vercel.app/privacy)
-- **Terms of Service URL:** [https://healthpluse.vercel.app/terms](https://healthpluse.vercel.app/terms)
+- **Lead Administrator & Developer:** Adarsh
+- **Email:** [1975adarsh@gmail.com](mailto:1975adarsh@gmail.com)
+- **Application URL:** [https://health-pulse.app](https://health-pulse.app)
+- **Privacy Policy URL:** [https://health-pulse.app/privacy](https://health-pulse.app/privacy)
+- **Terms of Service URL:** [https://health-pulse.app/terms](https://health-pulse.app/terms)

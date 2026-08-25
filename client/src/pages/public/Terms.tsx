@@ -150,11 +150,11 @@ export const Terms: React.FC = () => {
               borderRadius: '10px',
               padding: '1.25rem',
             }}>
-              <div><strong>HealthPulse Administration:</strong> Pranjal Karan</div>
+              <div><strong>HealthPulse Administration:</strong> Adarsh</div>
               <div style={{ marginTop: '0.25rem' }}>
                 <strong>Email:</strong>{' '}
-                <a href="mailto:pranjalkaran2004@gmail.com" style={{ color: 'var(--primary)', fontWeight: 600 }}>
-                  pranjalkaran2004@gmail.com
+                <a href="mailto:1975adarsh@gmail.com" style={{ color: 'var(--primary)', fontWeight: 600 }}>
+                  1975adarsh@gmail.com
                 </a>
               </div>
             </div>
