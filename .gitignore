@@ -64,3 +64,6 @@ client/playwright/.auth/
 .lighthouseci/
 client/.lighthouseci/
 
+# QA Artifacts
+qa-artifacts/
+
