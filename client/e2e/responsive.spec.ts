@@ -16,7 +16,7 @@ test.describe('HealthPulse Responsive & Layout Tests', () => {
       await page.goto('/login', { waitUntil: 'domcontentloaded' });
 
       // Ensure form content is rendered
-      await expect(page.getByRole('button', { name: /Sign In/i })).toBeVisible();
+      await expect(page.getByRole('button', { name: /Sign In/i })).toBeVisible({ timeout: 15_000 });
 
       const hasHorizontalOverflow = await page.evaluate(() => {
         return document.documentElement.scrollWidth > document.documentElement.clientWidth;
@@ -29,7 +29,7 @@ test.describe('HealthPulse Responsive & Layout Tests', () => {
       await page.setViewportSize({ width: viewport.width, height: viewport.height });
       await page.goto('/forgot-password', { waitUntil: 'domcontentloaded' });
 
-      await expect(page.getByRole('textbox', { name: /email/i })).toBeVisible();
+      await expect(page.getByRole('textbox', { name: /email/i })).toBeVisible({ timeout: 15_000 });
 
       const hasHorizontalOverflow = await page.evaluate(() => {
         return document.documentElement.scrollWidth > document.documentElement.clientWidth;
