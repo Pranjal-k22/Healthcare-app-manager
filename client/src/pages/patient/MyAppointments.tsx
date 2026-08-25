@@ -16,6 +16,7 @@ import Card from '../../components/ui/Card';
 import InlineAlert from '../../components/ui/InlineAlert';
 import EmptyState from '../../components/ui/EmptyState';
 import { useToast } from '../../components/ui/Toast';
+import { LoadingScreen } from '../../components/ui/LoadingScreen';
 import {
   Search,
   Plus,
@@ -199,12 +200,7 @@ export const MyAppointments: React.FC = () => {
 
         {/* Content Area: Loader, Empty State, or Grid */}
         {isLoading ? (
-          <div style={{ textAlign: 'center', padding: '4rem 0' }}>
-            <div className="btn-spinner" style={{ width: '32px', height: '32px', margin: '0 auto', borderColor: 'var(--primary)', borderTopColor: 'transparent' }} />
-            <p className="body-text" style={{ color: 'var(--text-secondary)', marginTop: '0.75rem' }}>
-              Loading your appointments...
-            </p>
-          </div>
+          <LoadingScreen message="Loading your appointments..." />
         ) : appointments.length === 0 ? (
           <Card>
             <EmptyState

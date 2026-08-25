@@ -5,6 +5,7 @@ import {
 } from '../../services/doctorApi';
 import { changePasswordApi } from '../../services/authApi';
 import { Doctor } from '../../types/doctor';
+import { LoadingScreen } from '../../components/ui/LoadingScreen';
 import {
   AlertCircle,
   Award,
@@ -169,14 +170,7 @@ export const DoctorProfile: React.FC = () => {
   };
 
   if (isLoading) {
-    return (
-      <div className="container dashboard-container" style={{ textAlign: 'center', padding: '5rem 0' }}>
-        <div className="spinner" style={{ width: '40px', height: '40px', margin: '0 auto', borderWidth: '3px' }} />
-        <p style={{ color: 'var(--text-secondary)', marginTop: '1rem', fontWeight: 500 }}>
-          Loading your clinical profile...
-        </p>
-      </div>
-    );
+    return <LoadingScreen message="Loading your clinical profile..." />;
   }
 
   if (error && !doctor) {

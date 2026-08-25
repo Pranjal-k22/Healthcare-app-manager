@@ -8,6 +8,7 @@ import { AppointmentStatusBadge } from '../../components/appointment/Appointment
 import { PrescriptionCard } from '../../components/clinical/PrescriptionCard';
 import { DualPreVisitSummaryView, DualPostVisitSummaryView } from '../../components/clinical/DualAiSummaryView';
 import { formatDateIndian, formatTimeIndian } from '../../utils/dateUtils';
+import { LoadingScreen } from '../../components/ui/LoadingScreen';
 import {
   Activity,
   AlertCircle,
@@ -64,14 +65,7 @@ export const AppointmentDetails: React.FC = () => {
   }, [id]);
 
   if (isLoading) {
-    return (
-      <div className="container dashboard-container" style={{ textAlign: 'center', padding: '5rem 0' }}>
-        <div className="spinner" style={{ width: '40px', height: '40px', margin: '0 auto', borderWidth: '3px' }} />
-        <p style={{ color: '#64748b', marginTop: '1.25rem', fontWeight: 500 }}>
-          Loading appointment record & clinical summaries...
-        </p>
-      </div>
-    );
+    return <LoadingScreen message="Loading appointment record & clinical summaries..." />;
   }
 
   if (error || !appointment) {

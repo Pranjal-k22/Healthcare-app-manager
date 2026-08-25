@@ -7,6 +7,7 @@ import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
 import StatusBadge from '../../components/ui/StatusBadge';
 import Avatar from '../../components/ui/Avatar';
+import { LoadingScreen } from '../../components/ui/LoadingScreen';
 import {
   AlertCircle,
   ArrowLeft,
@@ -59,23 +60,7 @@ export const DoctorDetails: React.FC = () => {
   }, [id]);
 
   if (isLoading) {
-    return (
-      <div className="container" style={{ textAlign: 'center', padding: '5rem 0' }}>
-        <div
-          className="btn-spinner"
-          style={{
-            width: '36px',
-            height: '36px',
-            margin: '0 auto 1rem auto',
-            borderColor: 'var(--primary)',
-            borderTopColor: 'transparent',
-          }}
-        />
-        <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
-          Loading practitioner profile...
-        </p>
-      </div>
-    );
+    return <LoadingScreen message="Loading practitioner profile..." />;
   }
 
   if (error || !doctor) {

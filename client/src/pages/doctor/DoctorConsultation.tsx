@@ -15,6 +15,7 @@ import { AppointmentStatusBadge } from '../../components/appointment/Appointment
 import { PrescriptionEditor } from '../../components/clinical/PrescriptionEditor';
 import { DualPreVisitSummaryView, DualPostVisitSummaryView } from '../../components/clinical/DualAiSummaryView';
 import Button from '../../components/ui/Button';
+import { LoadingScreen } from '../../components/ui/LoadingScreen';
 import { formatDateIndian, formatTimeIndian } from '../../utils/dateUtils';
 import {
   Activity,
@@ -250,14 +251,7 @@ export const DoctorConsultation: React.FC = () => {
   };
 
   if (isLoading) {
-    return (
-      <div className="container dashboard-container" style={{ textAlign: 'center', padding: '5rem 0' }}>
-        <div className="spinner" style={{ width: '40px', height: '40px', margin: '0 auto', borderWidth: '3px' }} />
-        <p style={{ color: 'var(--text-secondary)', marginTop: '1.25rem', fontWeight: 500 }}>
-          Opening Doctor Consultation Room...
-        </p>
-      </div>
-    );
+    return <LoadingScreen message="Opening Doctor Consultation Room..." />;
   }
 
   if (error && !appointment) {

@@ -1,10 +1,10 @@
 /* ==========================================================================
-   HealthPulse — World-Class Clinical Loading Experience
-   Aesthetic: Ultra-premium medical glassmorphism, ECG pulse glow & telemetry
+   Clean Minimalist Loading Spinner (Amazon / Flipkart Style)
+   Fast, lightweight, zero-clutter, theme-adaptive
    ========================================================================== */
 
-/* Fullscreen Ambient Backdrop */
-.hp-loader-fullscreen {
+/* Fullscreen Overlay (App boot / Auth verification) */
+.simple-loader-fullscreen {
   position: fixed;
   inset: 0;
   z-index: 9999;
@@ -14,426 +14,81 @@
   justify-content: center;
   min-height: 100vh;
   width: 100vw;
-  background: radial-gradient(circle at 50% 30%, rgba(37, 99, 235, 0.08) 0%, rgba(15, 39, 68, 0.03) 45%, var(--bg-app) 80%);
-  overflow: hidden;
-  padding: 1.5rem;
+  background-color: var(--bg-app);
+  gap: 0.875rem;
 }
 
-[data-theme="dark"] .hp-loader-fullscreen {
-  background: radial-gradient(circle at 50% 30%, rgba(96, 165, 250, 0.12) 0%, rgba(7, 17, 31, 0.95) 60%, #050d18 100%);
-}
-
-/* Page / Section Variant (for Suspense fallbacks inside dashboard/content) */
-.hp-loader-page {
+/* Page / View Level (Within Dashboard / Content layout) */
+.simple-loader-page {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 60vh;
+  min-height: 320px;
   width: 100%;
-  padding: 2.5rem 1.5rem;
-  position: relative;
+  padding: 3rem 1.5rem;
+  gap: 0.75rem;
 }
 
-.hp-loader-compact {
+/* Inline / Widget Level */
+.simple-loader-inline {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 2rem 1rem;
-}
-
-/* Ambient Glow Orbs (Subtle organic background illumination) */
-.hp-ambient-glow {
-  position: absolute;
-  width: 320px;
-  height: 320px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(37, 99, 235, 0.18) 0%, rgba(8, 145, 178, 0.08) 50%, transparent 70%);
-  filter: blur(48px);
-  pointer-events: none;
-  animation: hp-orb-float 8s ease-in-out infinite alternate;
-}
-
-.hp-ambient-glow-secondary {
-  position: absolute;
-  width: 240px;
-  height: 240px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(15, 118, 110, 0.15) 0%, rgba(37, 99, 235, 0.05) 50%, transparent 70%);
-  filter: blur(40px);
-  pointer-events: none;
-  animation: hp-orb-float 6s ease-in-out infinite alternate-reverse;
-  transform: translate(80px, -60px);
-}
-
-[data-theme="dark"] .hp-ambient-glow {
-  background: radial-gradient(circle, rgba(96, 165, 250, 0.22) 0%, rgba(45, 212, 191, 0.12) 50%, transparent 70%);
-}
-
-@keyframes hp-orb-float {
-  0% { transform: translate(-30px, -20px) scale(0.95); }
-  100% { transform: translate(30px, 20px) scale(1.08); }
-}
-
-/* Glassmorphic Central Card */
-.hp-loader-card {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  max-width: 440px;
-  width: 100%;
-  padding: 2.75rem 2.25rem 2.25rem;
-  background: rgba(255, 255, 255, 0.82);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(226, 232, 240, 0.9);
-  border-radius: 24px;
-  box-shadow: 
-    0 4px 6px -1px rgba(15, 23, 42, 0.05),
-    0 20px 40px -8px rgba(37, 99, 235, 0.10),
-    inset 0 1px 1px 0 rgba(255, 255, 255, 0.8);
-  text-align: center;
-  transition: all 0.3s ease;
-  animation: hp-card-enter 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-[data-theme="dark"] .hp-loader-card {
-  background: rgba(14, 27, 45, 0.75);
-  border: 1px solid rgba(36, 55, 80, 0.85);
-  box-shadow: 
-    0 10px 30px -5px rgba(0, 0, 0, 0.5),
-    0 20px 45px -10px rgba(96, 165, 250, 0.12),
-    inset 0 1px 1px 0 rgba(255, 255, 255, 0.06);
-}
-
-.hp-loader-card.compact {
-  padding: 1.75rem 1.5rem;
-  max-width: 360px;
-  border-radius: 18px;
-}
-
-@keyframes hp-card-enter {
-  0% {
-    opacity: 0;
-    transform: translateY(14px) scale(0.97);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-/* Pulse Beacon / ECG Emblem Container */
-.hp-beacon-container {
-  position: relative;
-  width: 96px;
-  height: 96px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 1.75rem;
-}
-
-.hp-beacon-ring {
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  border: 2px solid var(--primary);
-  opacity: 0;
-  animation: hp-ring-pulse 2.6s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
-}
-
-.hp-beacon-ring:nth-child(2) {
-  animation-delay: 0.85s;
-}
-
-.hp-beacon-ring:nth-child(3) {
-  animation-delay: 1.7s;
-}
-
-@keyframes hp-ring-pulse {
-  0% {
-    transform: scale(0.7);
-    opacity: 0.8;
-  }
-  50% {
-    opacity: 0.35;
-  }
-  100% {
-    transform: scale(1.65);
-    opacity: 0;
-  }
-}
-
-/* Core Icon Orb */
-.hp-beacon-core {
-  position: relative;
-  z-index: 2;
-  width: 64px;
-  height: 64px;
-  border-radius: 18px;
-  background: var(--gradient-brand);
-  color: #ffffff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 
-    0 10px 25px -4px rgba(37, 99, 235, 0.45),
-    0 0 0 1px rgba(255, 255, 255, 0.2) inset;
-  animation: hp-heartbeat 1.8s ease-in-out infinite;
-}
-
-[data-theme="dark"] .hp-beacon-core {
-  background: linear-gradient(135deg, #1E3A5F 0%, #2563EB 60%, #0F766E 100%);
-  box-shadow: 
-    0 10px 30px -4px rgba(96, 165, 250, 0.5),
-    0 0 15px rgba(45, 212, 191, 0.3),
-    0 0 0 1px rgba(255, 255, 255, 0.25) inset;
-}
-
-@keyframes hp-heartbeat {
-  0%, 100% {
-    transform: scale(1);
-  }
-  14% {
-    transform: scale(1.08);
-  }
-  28% {
-    transform: scale(0.98);
-  }
-  42% {
-    transform: scale(1.04);
-  }
-  70% {
-    transform: scale(1);
-  }
-}
-
-/* Brand Title & Headline */
-.hp-loader-brand {
-  display: flex;
-  align-items: center;
+  padding: 1.5rem 1rem;
   gap: 0.5rem;
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: var(--text-primary);
+  width: 100%;
+}
+
+/* Amazon / Flipkart Dual-Tone Circular Spinner */
+.simple-spinner {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 3px solid var(--border-light, #e2e8f0);
+  border-top-color: var(--primary, #2563eb);
+  animation: simple-spin 0.75s cubic-bezier(0.5, 0.1, 0.4, 0.9) infinite;
+}
+
+[data-theme="dark"] .simple-spinner {
+  border-color: rgba(255, 255, 255, 0.12);
+  border-top-color: var(--primary, #60a5fa);
+}
+
+/* Spinner Sizes */
+.simple-spinner-sm {
+  width: 20px;
+  height: 20px;
+  border-width: 2.5px;
+}
+
+.simple-spinner-md {
+  width: 36px;
+  height: 36px;
+  border-width: 3px;
+}
+
+.simple-spinner-lg {
+  width: 48px;
+  height: 48px;
+  border-width: 3.5px;
+}
+
+/* Minimal typography */
+.simple-loader-text {
+  font-size: 0.9125rem;
+  font-weight: 500;
+  color: var(--text-secondary, #64748b);
   letter-spacing: -0.01em;
-  margin-bottom: 0.35rem;
+  margin: 0;
 }
 
-.hp-loader-brand-badge {
-  font-size: 0.65rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  padding: 2px 7px;
-  background: rgba(37, 99, 235, 0.12);
-  color: var(--primary);
-  border-radius: 999px;
-  border: 1px solid rgba(37, 99, 235, 0.2);
-}
-
-[data-theme="dark"] .hp-loader-brand-badge {
-  background: rgba(96, 165, 250, 0.15);
-  color: #93c5fd;
-  border-color: rgba(96, 165, 250, 0.3);
-}
-
-/* ECG Heartbeat SVG Wave Animation */
-.hp-ecg-container {
-  width: 100%;
-  max-width: 280px;
-  height: 38px;
-  margin: 1.25rem 0 1rem;
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0.9;
-}
-
-.hp-ecg-svg {
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-}
-
-.hp-ecg-path-bg {
-  stroke: var(--border);
-  stroke-width: 2;
-  fill: none;
-  opacity: 0.5;
-}
-
-[data-theme="dark"] .hp-ecg-path-bg {
-  stroke: #243750;
-}
-
-.hp-ecg-path-pulse {
-  stroke: url(#hp-ecg-gradient);
-  stroke-width: 2.5;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  fill: none;
-  stroke-dasharray: 240;
-  stroke-dashoffset: 240;
-  animation: hp-ecg-sweep 2.2s linear infinite;
-  filter: drop-shadow(0 0 5px rgba(37, 99, 235, 0.6));
-}
-
-[data-theme="dark"] .hp-ecg-path-pulse {
-  filter: drop-shadow(0 0 8px rgba(96, 165, 250, 0.8));
-}
-
-@keyframes hp-ecg-sweep {
+@keyframes simple-spin {
   0% {
-    stroke-dashoffset: 240;
-  }
-  65%, 100% {
-    stroke-dashoffset: 0;
-  }
-}
-
-/* Dynamic Rotating Status Message */
-.hp-loader-status {
-  min-height: 24px;
-  font-size: 0.9375rem;
-  font-weight: 500;
-  color: var(--text-secondary);
-  margin-bottom: 1.25rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  transition: opacity 0.3s ease;
-}
-
-.hp-status-ticker-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background-color: var(--success);
-  box-shadow: 0 0 8px var(--success);
-  animation: hp-pulse-dot 1.5s ease-in-out infinite;
-}
-
-@keyframes hp-pulse-dot {
-  0%, 100% { opacity: 0.4; transform: scale(0.9); }
-  50% { opacity: 1; transform: scale(1.25); }
-}
-
-/* Premium Gradient Progress Bar */
-.hp-progress-track {
-  width: 100%;
-  height: 6px;
-  background: var(--surface-subtle);
-  border-radius: 999px;
-  overflow: hidden;
-  position: relative;
-  margin-bottom: 1.5rem;
-}
-
-[data-theme="dark"] .hp-progress-track {
-  background: #172A42;
-}
-
-.hp-progress-bar {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  border-radius: 999px;
-  background: linear-gradient(90deg, #0F766E 0%, #2563EB 50%, #38BDF8 100%);
-  background-size: 200% 100%;
-  animation: hp-progress-flow 2s ease-in-out infinite;
-  box-shadow: 0 0 10px rgba(37, 99, 235, 0.4);
-}
-
-.hp-progress-bar.determinate {
-  transition: width 0.3s ease;
-  animation: hp-progress-flow 2s linear infinite;
-}
-
-.hp-progress-bar.indeterminate {
-  width: 45%;
-  animation: hp-indeterminate-slide 1.8s cubic-bezier(0.65, 0, 0.35, 1) infinite;
-}
-
-@keyframes hp-progress-flow {
-  0% { background-position: 100% 0; }
-  100% { background-position: -100% 0; }
-}
-
-@keyframes hp-indeterminate-slide {
-  0% {
-    left: -45%;
-    width: 30%;
-  }
-  50% {
-    left: 25%;
-    width: 60%;
+    transform: rotate(0deg);
   }
   100% {
-    left: 100%;
-    width: 30%;
+    transform: rotate(360deg);
   }
-}
-
-/* Trust / Security Footer Badge */
-.hp-loader-security {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1.25rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--border-soft);
-  width: 100%;
-}
-
-[data-theme="dark"] .hp-loader-security {
-  border-top-color: rgba(36, 55, 80, 0.6);
-}
-
-.hp-security-pill {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: var(--text-muted);
-}
-
-.hp-security-pill svg {
-  color: var(--medical-teal);
-}
-
-[data-theme="dark"] .hp-security-pill svg {
-  color: #2DD4BF;
-}
-
-/* Long wait fallback / Retry helper */
-.hp-loader-slow-tip {
-  margin-top: 1.25rem;
-  font-size: 0.8125rem;
-  color: var(--text-muted);
-  animation: hp-fade-in 0.4s ease forwards;
-}
-
-.hp-loader-slow-tip a,
-.hp-loader-slow-tip button {
-  color: var(--primary);
-  font-weight: 600;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0;
-  text-decoration: underline;
-}
-
-@keyframes hp-fade-in {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
 }

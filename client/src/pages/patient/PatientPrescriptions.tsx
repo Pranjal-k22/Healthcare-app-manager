@@ -8,6 +8,7 @@ import Button from '../../components/ui/Button';
 import StatusBadge from '../../components/ui/StatusBadge';
 import Input from '../../components/ui/Input';
 import EmptyState from '../../components/ui/EmptyState';
+import { LoadingScreen } from '../../components/ui/LoadingScreen';
 import {
   Pill,
   Search,
@@ -152,9 +153,7 @@ export const PatientPrescriptions: React.FC = () => {
 
         {/* Prescription List Cards */}
         {isLoading ? (
-          <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem 0' }}>
-            <div className="btn-spinner" style={{ width: '32px', height: '32px', borderColor: 'var(--primary)', borderTopColor: 'transparent' }} />
-          </div>
+          <LoadingScreen message="Loading your prescriptions..." />
         ) : filteredPrescriptions.length === 0 ? (
           <Card>
             <EmptyState

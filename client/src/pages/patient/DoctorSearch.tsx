@@ -8,6 +8,7 @@ import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import InlineAlert from '../../components/ui/InlineAlert';
 import EmptyState from '../../components/ui/EmptyState';
+import { LoadingScreen } from '../../components/ui/LoadingScreen';
 import { RotateCcw } from 'lucide-react';
 
 export const DoctorSearch: React.FC = () => {
@@ -83,30 +84,9 @@ export const DoctorSearch: React.FC = () => {
           />
         )}
 
-        {/* Doctor List / Loading Skeletons / Empty State */}
+        {/* Doctor List / Loading / Empty State */}
         {isLoading ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-            {[1, 2, 3].map((i) => (
-              <Card key={i} style={{ padding: '24px' }}>
-                <div style={{ display: 'flex', gap: '1.25rem', alignItems: 'center' }}>
-                  <div
-                    style={{
-                      width: '48px',
-                      height: '48px',
-                      borderRadius: '50%',
-                      backgroundColor: 'var(--surface-alt)',
-                      animation: 'pulse 1.5s infinite ease-in-out',
-                    }}
-                  />
-                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    <div style={{ width: '220px', height: '18px', backgroundColor: 'var(--surface-alt)', borderRadius: '4px' }} />
-                    <div style={{ width: '140px', height: '14px', backgroundColor: 'var(--surface-alt)', borderRadius: '4px' }} />
-                    <div style={{ width: '300px', height: '12px', backgroundColor: 'var(--surface-alt)', borderRadius: '4px' }} />
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
+          <LoadingScreen message="Searching available practitioners..." />
         ) : doctors.length === 0 ? (
           <Card>
             <EmptyState

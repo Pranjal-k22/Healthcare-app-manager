@@ -7,6 +7,7 @@ import {
 import { Appointment, AppointmentStatus } from '../../types/appointment';
 import { AppointmentCard } from '../../components/appointment/AppointmentCard';
 import { CancelAppointmentModal } from '../../components/appointment/CancelAppointmentModal';
+import { LoadingScreen } from '../../components/ui/LoadingScreen';
 import {
   AlertCircle,
   Calendar,
@@ -251,12 +252,7 @@ export const DoctorAppointments: React.FC = () => {
 
       {/* Appointment Cards List */}
       {isLoading ? (
-        <div style={{ textAlign: 'center', padding: '4rem 0' }}>
-          <div className="spinner" style={{ width: '36px', height: '36px', margin: '0 auto', borderWidth: '3px' }} />
-          <p style={{ color: '#64748b', marginTop: '1rem', fontWeight: 500 }}>
-            Loading consultation queue...
-          </p>
-        </div>
+        <LoadingScreen message="Loading consultation queue..." />
       ) : appointments.length === 0 ? (
         <div
           style={{

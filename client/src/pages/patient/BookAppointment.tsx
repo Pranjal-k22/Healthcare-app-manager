@@ -11,6 +11,7 @@ import Input from '../../components/ui/Input';
 import Textarea from '../../components/ui/Textarea';
 import InlineAlert from '../../components/ui/InlineAlert';
 import { useToast } from '../../components/ui/Toast';
+import { LoadingScreen } from '../../components/ui/LoadingScreen';
 import {
   ArrowLeft,
   Calendar,
@@ -210,14 +211,7 @@ export const BookAppointment: React.FC = () => {
   };
 
   if (isLoadingDoctor) {
-    return (
-      <div className="container" style={{ textAlign: 'center', padding: '5rem 0' }}>
-        <div className="btn-spinner" style={{ width: '36px', height: '36px', margin: '0 auto', borderColor: 'var(--primary)', borderTopColor: 'transparent' }} />
-        <p className="body-text" style={{ color: 'var(--text-secondary)', marginTop: '1rem' }}>
-          Loading doctor consultation schedule...
-        </p>
-      </div>
-    );
+    return <LoadingScreen message="Loading doctor consultation schedule..." />;
   }
 
   // Step 4: Booking Confirmation Screen
