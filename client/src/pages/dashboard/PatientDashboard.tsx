@@ -14,7 +14,6 @@ import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import EmptyState from '../../components/ui/EmptyState';
 import Avatar from '../../components/ui/Avatar';
 import { useToast } from '../../components/ui/Toast';
-import { LoadingScreen } from '../../components/ui/LoadingScreen';
 import { MedicationReminderList } from '../../components/patient/MedicationReminderList';
 import { formatDateIndian, formatTimeIndian } from '../../utils/dateUtils';
 import {
@@ -36,7 +35,6 @@ export const PatientDashboard: React.FC = () => {
   const { user } = useAuth();
   const { success, error: toastError } = useToast();
 
-  const [isLoading, setIsLoading] = useState(true);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [prescriptionsCount, setPrescriptionsCount] = useState<number>(0);
   const [outstandingBalance, setOutstandingBalance] = useState<number>(0);
@@ -46,7 +44,6 @@ export const PatientDashboard: React.FC = () => {
 
   const fetchDashboardData = async () => {
     try {
-      setIsLoading(true);
       const appData = await getMyAppointments();
       setAppointments(appData);
 
@@ -66,8 +63,6 @@ export const PatientDashboard: React.FC = () => {
       }
     } catch (err: any) {
       console.warn('Failed to load patient appointments', err);
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -103,11 +98,8 @@ export const PatientDashboard: React.FC = () => {
 
   return (
     <DashboardLayout>
-      {isLoading ? (
-        <LoadingScreen message="Loading your health dashboard..." />
-      ) : (
-        <div className="patient-dashboard-view" style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
-          {/* 1. DASHBOARD WELCOME HEADER */}
+      <div className="patient-dashboard-view" style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
+        {/* 1. DASHBOARD WELCOME HEADER */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
             <h1 className="welcome-title" style={{ fontSize: '1.85rem', fontWeight: 800, margin: 0, letterSpacing: '-0.02em' }}>
@@ -408,7 +400,6 @@ export const PatientDashboard: React.FC = () => {
           )}
         </Card>
       </div>
-      )}
 
       {/* Confirmation Dialog for Cancellation */}
       <ConfirmDialog

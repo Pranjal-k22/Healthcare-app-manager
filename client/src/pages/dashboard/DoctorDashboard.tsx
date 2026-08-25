@@ -10,7 +10,6 @@ import DataTable, { Column } from '../../components/ui/DataTable';
 import Button from '../../components/ui/Button';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { useToast } from '../../components/ui/Toast';
-import { LoadingScreen } from '../../components/ui/LoadingScreen';
 import {
   Calendar,
   Clock,
@@ -28,20 +27,16 @@ export const DoctorDashboard: React.FC = () => {
   const { user } = useAuth();
   const { success, error: toastError } = useToast();
 
-  const [isLoading, setIsLoading] = useState(true);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [cancelModalAppointmentId, setCancelModalAppointmentId] = useState<string | null>(null);
   const [isCancelling, setIsCancelling] = useState(false);
 
   const fetchAppointments = async () => {
     try {
-      setIsLoading(true);
       const data = await getDoctorAppointments();
       setAppointments(data);
     } catch (err: any) {
       console.warn('Failed to load doctor appointments', err);
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -161,11 +156,8 @@ export const DoctorDashboard: React.FC = () => {
 
   return (
     <DashboardLayout>
-      {isLoading ? (
-        <LoadingScreen message="Loading consultation queue..." />
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
-          {/* Welcome Header */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
+        {/* Welcome Header */}
         <div className="doctor-clinical-hero-card">
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
@@ -267,7 +259,6 @@ export const DoctorDashboard: React.FC = () => {
           />
         </div>
       </div>
-      )}
 
       {/* Confirmation Dialog for Cancellation */}
       <ConfirmDialog

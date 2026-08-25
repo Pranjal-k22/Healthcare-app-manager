@@ -13,7 +13,6 @@ import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { useToast } from '../../components/ui/Toast';
-import { LoadingScreen } from '../../components/ui/LoadingScreen';
 import {
   Stethoscope,
   Calendar,
@@ -33,7 +32,6 @@ export const AdminDashboard: React.FC = () => {
   const { user } = useAuth();
   const { success, error: toastError } = useToast();
 
-  const [isLoading, setIsLoading] = useState(true);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
 
@@ -43,7 +41,6 @@ export const AdminDashboard: React.FC = () => {
 
   const loadData = async () => {
     try {
-      setIsLoading(true);
       const [docsData, apptsData] = await Promise.all([
         getDoctors({ includeInactive: true }),
         getAllAppointmentsForAdmin().catch(() => []),
@@ -52,8 +49,6 @@ export const AdminDashboard: React.FC = () => {
       setAppointments(apptsData);
     } catch (err: any) {
       console.warn('Could not load admin stats', err);
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -180,11 +175,8 @@ export const AdminDashboard: React.FC = () => {
 
   return (
     <DashboardLayout>
-      {isLoading ? (
-        <LoadingScreen message="Loading administration dashboard..." />
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
-          {/* Welcome Header */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
+        {/* Welcome Header */}
         <div className="doctor-clinical-hero-card">
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
@@ -335,7 +327,6 @@ export const AdminDashboard: React.FC = () => {
           </div>
         </Card>
       </div>
-      )}
 
       {/* Confirmation Dialog for Doctor Status Toggle */}
       <ConfirmDialog
