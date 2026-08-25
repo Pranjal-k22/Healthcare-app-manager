@@ -64,7 +64,7 @@ export const Navbar: React.FC = () => {
     }
   };
 
-  const homeRoute = user ? ROLE_DASHBOARD_ROUTES[user.role] : '/login';
+  const homeRoute = user ? ROLE_DASHBOARD_ROUTES[user.role] : '/';
 
   return (
     <>
@@ -83,8 +83,8 @@ export const Navbar: React.FC = () => {
               {!isAuthenticated ? (
                 <>
                   <Link
-                    to="/login"
-                    className={`nav-link-item ${location.pathname === '/login' ? 'nav-link-active' : ''}`}
+                    to="/"
+                    className={`nav-link-item ${location.pathname === '/' ? 'nav-link-active' : ''}`}
                   >
                     <span>Home</span>
                   </Link>
@@ -95,26 +95,18 @@ export const Navbar: React.FC = () => {
                     <Search size={15} />
                     <span>Find Doctors</span>
                   </Link>
-                  <a
-                    href="#services"
-                    className="nav-link-item"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      navigate('/login');
-                    }}
+                  <Link
+                    to="/privacy"
+                    className={`nav-link-item ${location.pathname === '/privacy' ? 'nav-link-active' : ''}`}
                   >
-                    <span>Services</span>
-                  </a>
-                  <a
-                    href="#contact"
-                    className="nav-link-item"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      navigate('/login');
-                    }}
+                    <span>Privacy Policy</span>
+                  </Link>
+                  <Link
+                    to="/terms"
+                    className={`nav-link-item ${location.pathname === '/terms' ? 'nav-link-active' : ''}`}
                   >
-                    <span>Contact</span>
-                  </a>
+                    <span>Terms</span>
+                  </Link>
                 </>
               ) : (
                 <>
@@ -369,7 +361,7 @@ export const Navbar: React.FC = () => {
               style={{ padding: '8px 0', color: 'var(--text-primary)', fontWeight: 600 }}
               onClick={() => setMobileMenuOpen(false)}
             >
-              Home / Dashboard
+              Home
             </Link>
             <Link
               to="/patient/doctors"
@@ -377,6 +369,20 @@ export const Navbar: React.FC = () => {
               onClick={() => setMobileMenuOpen(false)}
             >
               Find Doctors
+            </Link>
+            <Link
+              to="/privacy"
+              style={{ padding: '8px 0', color: 'var(--text-primary)', fontWeight: 500 }}
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Privacy Policy
+            </Link>
+            <Link
+              to="/terms"
+              style={{ padding: '8px 0', color: 'var(--text-primary)', fontWeight: 500 }}
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Terms of Service
             </Link>
 
             {isAuthenticated ? (

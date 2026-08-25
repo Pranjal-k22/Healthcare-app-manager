@@ -1,20 +1,56 @@
-# Privacy Policy — HealthPulse
+# Privacy Policy — HealthPulse Hospital
 
-_Last updated: August 2026_
+*Last updated: August 2026*
 
-HealthPulse is an academic/demo healthcare appointment management application built for evaluation purposes. It is **not intended for real patient data or real medical use**.
+> **Online Version:** The official and up-to-date Privacy Policy is hosted directly on the web application at [`/privacy`](https://healthpluse.vercel.app/privacy).
 
-## What data we collect
-When you use this application (including connecting Google Calendar), we may process: name, email address, appointment details, and — if you connect Google Calendar — calendar event data limited to appointment scheduling (via the `calendar.events` scope only).
+HealthPulse operates an intelligent healthcare appointment scheduling, doctor availability management, and clinical consultation software platform.
 
-## How we use it
-Data is used solely to demonstrate the application's booking, notification, and calendar-sync features. We do not sell, share, or use this data for advertising or any purpose beyond the demo itself.
+---
 
-## Google Calendar data
-If you connect your Google Calendar, HealthPulse creates, updates, or deletes calendar events corresponding to your appointments. No other Google account data is accessed. OAuth tokens are encrypted at rest (using AES-256-GCM) and never exposed to the client.
+## 1. Information We Collect
 
-## Data retention & Security
-As a demo project, data may be cleared or reset periodically. Do not enter sensitive personal or real medical information.
+- **Account & Profile Data:** Name, email address, phone number, role (Patient, Doctor, or Admin), and securely hashed passwords.
+- **Healthcare & Clinical Records:** Selected doctors, departments, appointment schedules, symptom notes, prescriptions, and invoice status.
+- **Google OAuth Data:** When you connect Google Calendar, we receive OAuth tokens to synchronize confirmed medical appointments.
 
-## Contact
-For questions regarding this demo project or Privacy Policy, contact: [pranjalkaran2004@gmail.com](mailto:pranjalkaran2004@gmail.com)
+---
+
+## 2. Google Calendar Integration & OAuth Scopes
+
+HealthPulse requests the following Google OAuth scopes:
+- `https://www.googleapis.com/auth/calendar.events` (Manage appointment events on primary calendar)
+- `https://www.googleapis.com/auth/userinfo.email` (Identify connected Google account)
+
+### Google API Services User Data Policy Compliance (Limited Use Disclosure)
+HealthPulse's use and transfer of information received from Google APIs to any other app will adhere to the [Google API Services User Data Policy](https://developers.google.com/terms/api-services-user-data-policy), including the Limited Use requirements:
+- **No Third-Party Sharing:** We do not sell, rent, or transfer Google user data to data brokers, ad networks, or third parties.
+- **No Advertising:** Google user data is never used for serving ads or marketing campaigns.
+- **No Generalized AI Training:** Google Calendar data is never used to train generalized artificial intelligence (AI) or machine learning (ML) models.
+- **Strict Human Access Restrictions:** No employees or administrators access your private calendar entries.
+
+---
+
+## 3. Data Storage & Security (AES-256-GCM)
+
+All Google OAuth access and refresh tokens are encrypted at rest using industry-standard **AES-256-GCM** authenticated encryption before storage. Tokens are never exposed to the frontend client. All network transmissions are strictly enforced over TLS/HTTPS.
+
+---
+
+## 4. User Rights & Permission Revocation
+
+Users may disconnect Google Calendar at any time via:
+1. **In-App:** Profile Settings &rarr; Disconnect Calendar.
+2. **Google Account:** [Google Third-Party App Permissions](https://myaccount.google.com/permissions).
+
+To request permanent account or data deletion, contact the developer below.
+
+---
+
+## 5. Contact & Developer Details
+
+- **Lead Developer:** Pranjal Karan
+- **Email:** [pranjalkaran2004@gmail.com](mailto:pranjalkaran2004@gmail.com)
+- **Application URL:** [https://healthpluse.vercel.app](https://healthpluse.vercel.app)
+- **Privacy Policy URL:** [https://healthpluse.vercel.app/privacy](https://healthpluse.vercel.app/privacy)
+- **Terms of Service URL:** [https://healthpluse.vercel.app/terms](https://healthpluse.vercel.app/terms)

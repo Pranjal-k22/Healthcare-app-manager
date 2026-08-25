@@ -9,7 +9,6 @@ import { ForgotPassword } from './pages/auth/ForgotPassword';
 import { DoctorVerifyOtp } from './pages/auth/DoctorVerifyOtp';
 import { ResetPassword } from './pages/auth/ResetPassword';
 import { SetPassword } from './pages/auth/SetPassword';
-import { ROLE_DASHBOARD_ROUTES } from './utils/constants';
 
 // Route-Level Code Splitting for Portal Pages
 const PatientDashboard = lazy(() => import('./pages/dashboard/PatientDashboard').then(m => ({ default: m.PatientDashboard })));
@@ -34,18 +33,11 @@ const ManageAppointments = lazy(() => import('./pages/admin/ManageAppointments')
 const AllDoctorLeaves = lazy(() => import('./pages/admin/AllDoctorLeaves').then(m => ({ default: m.AllDoctorLeaves })));
 const DoctorResetRequests = lazy(() => import('./pages/admin/DoctorResetRequests').then(m => ({ default: m.DoctorResetRequests })));
 const NotificationsPage = lazy(() => import('./pages/notifications/NotificationsPage').then(m => ({ default: m.NotificationsPage })));
+const Landing = lazy(() => import('./pages/public/Landing').then(m => ({ default: m.Landing })));
+const Privacy = lazy(() => import('./pages/public/Privacy').then(m => ({ default: m.Privacy })));
+const Terms = lazy(() => import('./pages/public/Terms').then(m => ({ default: m.Terms })));
 
 import { FullScreenLoader, RouteProgressFallback } from './components/ui/LoadingScreen';
-
-const RootRedirect: React.FC = () => {
-  const { user, isAuthenticated } = useAuth();
-
-  if (isAuthenticated && user) {
-    return <Navigate to={ROLE_DASHBOARD_ROUTES[user.role] || '/login'} replace />;
-  }
-
-  return <Navigate to="/login" replace />;
-};
 
 export const AppBootstrap: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isLoading } = useAuth();
@@ -65,16 +57,18 @@ export const App: React.FC = () => {
         <main className="main-content">
           <Suspense fallback={<RouteProgressFallback />}>
             <Routes>
-            {/* Default Root */}
-            <Route path="/" element={<RootRedirect />} />
+            {/* Public Landing & Informational Pages */}
+            <Route path="/" element={<Landing />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/terms" element={<Terms />} />
 
-          {/* Public Auth Routes */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/doctor/verify-otp" element={<DoctorVerifyOtp />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
-          <Route path="/set-password" element={<SetPassword />} />
+            {/* Public Auth Routes */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/doctor/verify-otp" element={<DoctorVerifyOtp />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/set-password" element={<SetPassword />} />
 
           {/* Shared Authenticated Routes */}
           <Route

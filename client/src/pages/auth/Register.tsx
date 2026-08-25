@@ -270,6 +270,25 @@ export const Register: React.FC = () => {
           <p className="auth-switch-link">
             Already have an account? <Link to="/login">Sign In</Link>
           </p>
+
+          <div style={{
+            marginTop: '1.25rem',
+            paddingTop: '0.85rem',
+            borderTop: '1px solid var(--border)',
+            display: 'flex',
+            justifyContent: 'center',
+            gap: '1rem',
+            fontSize: '0.8rem',
+            color: 'var(--text-muted)',
+          }}>
+            <Link to="/privacy" style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}>
+              Privacy Policy
+            </Link>
+            <span>&bull;</span>
+            <Link to="/terms" style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}>
+              Terms of Service
+            </Link>
+          </div>
         </div>
       </div>
     </div>
