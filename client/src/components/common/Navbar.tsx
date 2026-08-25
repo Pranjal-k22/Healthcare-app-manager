@@ -308,8 +308,9 @@ export const Navbar: React.FC = () => {
                     size="sm"
                     style={{
                       backgroundColor: '#ffffff',
-                      color: 'var(--primary)',
+                      color: 'var(--medical-blue-dark)',
                       borderColor: '#ffffff',
+                      fontWeight: 600,
                     }}
                   >
                     Register Patient

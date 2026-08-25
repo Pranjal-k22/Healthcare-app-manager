@@ -1,2 +1,9 @@
 User-agent: *
 Allow: /
+
+Disallow: /patient/
+Disallow: /doctor/
+Disallow: /admin/
+Disallow: /reset-password/
+
+Sitemap: https://www.health-pulse.app/sitemap.xml
