@@ -1,0 +1,67 @@
+name: Playwright E2E Tests
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  e2e-chromium:
+    name: Playwright Chromium E2E
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: client/package-lock.json
+
+      - name: Install Client Dependencies
+        run: npm ci
+        working-directory: client
+
+      - name: Install Playwright Chromium Browser & OS Dependencies
+        run: npx playwright install --with-deps chromium
+        working-directory: client
+
+      - name: Verify E2E credentials
+        shell: bash
+        env:
+          TEST_PATIENT_EMAIL: ${{ secrets.TEST_PATIENT_EMAIL }}
+          TEST_PATIENT_PASSWORD: ${{ secrets.TEST_PATIENT_PASSWORD }}
+          TEST_DOCTOR_EMAIL: ${{ secrets.TEST_DOCTOR_EMAIL }}
+          TEST_DOCTOR_PASSWORD: ${{ secrets.TEST_DOCTOR_PASSWORD }}
+          TEST_ADMIN_EMAIL: ${{ secrets.TEST_ADMIN_EMAIL }}
+          TEST_ADMIN_PASSWORD: ${{ secrets.TEST_ADMIN_PASSWORD }}
+        run: |
+          test -n "$TEST_PATIENT_EMAIL" || { echo "Missing TEST_PATIENT_EMAIL"; exit 1; }
+          test -n "$TEST_PATIENT_PASSWORD" || { echo "Missing TEST_PATIENT_PASSWORD"; exit 1; }
+          test -n "$TEST_DOCTOR_EMAIL" || { echo "Missing TEST_DOCTOR_EMAIL"; exit 1; }
+          test -n "$TEST_DOCTOR_PASSWORD" || { echo "Missing TEST_DOCTOR_PASSWORD"; exit 1; }
+          test -n "$TEST_ADMIN_EMAIL" || { echo "Missing TEST_ADMIN_EMAIL"; exit 1; }
+          test -n "$TEST_ADMIN_PASSWORD" || { echo "Missing TEST_ADMIN_PASSWORD"; exit 1; }
+
+      - name: Run Playwright Tests (Chromium)
+        env:
+          TEST_PATIENT_EMAIL: ${{ secrets.TEST_PATIENT_EMAIL }}
+          TEST_PATIENT_PASSWORD: ${{ secrets.TEST_PATIENT_PASSWORD }}
+          TEST_DOCTOR_EMAIL: ${{ secrets.TEST_DOCTOR_EMAIL }}
+          TEST_DOCTOR_PASSWORD: ${{ secrets.TEST_DOCTOR_PASSWORD }}
+          TEST_ADMIN_EMAIL: ${{ secrets.TEST_ADMIN_EMAIL }}
+          TEST_ADMIN_PASSWORD: ${{ secrets.TEST_ADMIN_PASSWORD }}
+        run: npx playwright test --project=chromium --workers=2
+        working-directory: client
+
+      - name: Upload Playwright Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: client/playwright-report/
+          retention-days: 14

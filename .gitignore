@@ -50,3 +50,12 @@ Thumbs.db
 *.njsproj
 *.sln
 *.sw?
+
+# Playwright Test Artifacts & Auth States
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+playwright/.auth/
+client/playwright/.auth/
+*.auth/
