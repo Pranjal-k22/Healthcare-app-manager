@@ -35,21 +35,13 @@ const AllDoctorLeaves = lazy(() => import('./pages/admin/AllDoctorLeaves').then(
 const DoctorResetRequests = lazy(() => import('./pages/admin/DoctorResetRequests').then(m => ({ default: m.DoctorResetRequests })));
 const NotificationsPage = lazy(() => import('./pages/notifications/NotificationsPage').then(m => ({ default: m.NotificationsPage })));
 
-const PageLoader: React.FC = () => (
-  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
-    <div className="spinner" style={{ width: '36px', height: '36px' }}></div>
-  </div>
-);
+import { PageLoader, FullScreenLoader } from './components/ui/LoadingScreen';
 
 const RootRedirect: React.FC = () => {
   const { user, isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) {
-    return (
-      <div className="full-screen-loader">
-        <div className="spinner" style={{ width: '36px', height: '36px' }}></div>
-      </div>
-    );
+    return <FullScreenLoader message="Initializing clinical session..." />;
   }
 
   if (isAuthenticated && user) {

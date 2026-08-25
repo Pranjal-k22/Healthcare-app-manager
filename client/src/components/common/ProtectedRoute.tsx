@@ -4,6 +4,8 @@ import { useAuth } from '../../hooks/useAuth';
 import { UserRole } from '../../types/auth';
 import { ROLE_DASHBOARD_ROUTES } from '../../utils/constants';
 
+import { FullScreenLoader } from '../ui/LoadingScreen';
+
 interface ProtectedRouteProps {
   children: React.ReactElement;
   allowedRoles?: UserRole[];
@@ -17,14 +19,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   const location = useLocation();
 
   if (isLoading) {
-    return (
-      <div className="full-screen-loader">
-        <div className="spinner" style={{ width: '36px', height: '36px' }}></div>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-          Verifying secure session...
-        </p>
-      </div>
-    );
+    return <FullScreenLoader message="Verifying secure session & credentials..." />;
   }
 
   if (!isAuthenticated || !user) {
