@@ -1,10 +1,10 @@
 /* ==========================================================================
    HoneyQuote / Hexagonal Magic Loading Experience
-   Aesthetic: Clean minimalist vector hexagon cluster, sequential checkmarks,
-              bold modern typography & sleek linear progress bar
+   Aesthetic: Centered honeycomb cluster with glowing perimeter circuit tracer,
+              randomized dynamic cell scale, and clean minimalist layout.
    ========================================================================== */
 
-/* Fullscreen Overlay */
+/* Fullscreen Overlay (Centered Vertically & Horizontally) */
 .honey-loader-fullscreen {
   position: fixed;
   inset: 0;
@@ -17,21 +17,22 @@
   width: 100vw;
   background-color: var(--surface, #ffffff);
   padding: 2rem 1.5rem;
+  overflow: hidden;
 }
 
 [data-theme="dark"] .honey-loader-fullscreen {
   background-color: var(--background, #07111f);
 }
 
-/* Page / View Container */
+/* Page / View Container (Centered) */
 .honey-loader-page {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 380px;
+  min-height: 60vh;
   width: 100%;
-  padding: 3.5rem 1.5rem;
+  padding: 3rem 1.5rem;
   background: transparent;
 }
 
@@ -41,7 +42,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 1.5rem;
+  padding: 2rem 1rem;
   width: 100%;
 }
 
@@ -50,9 +51,11 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   text-align: center;
-  max-width: 460px;
+  max-width: 480px;
   width: 100%;
+  margin: auto 0;
   animation: honey-fade-in 0.4s ease-out forwards;
 }
 
@@ -61,21 +64,19 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Honeycomb Hexagon Cluster SVG Container */
+/* Honeycomb Container */
 .honey-cluster-container {
-  width: 260px;
-  height: 190px;
-  margin-bottom: 2.25rem;
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
+  margin-bottom: 2rem;
+  overflow: visible;
 }
 
 .honey-cluster-svg {
-  width: 100%;
-  height: 100%;
   overflow: visible;
+  filter: drop-shadow(0 4px 16px rgba(168, 85, 247, 0.12));
 }
 
 /* Base Hexagon styles */
@@ -96,106 +97,110 @@
   fill: #ffffff;
   stroke: #A855F7;
   stroke-width: 2;
-  filter: drop-shadow(0 4px 12px rgba(168, 85, 247, 0.22));
+  transition: all 0.3s ease;
 }
 
 [data-theme="dark"] .honey-hex-active {
-  fill: #161A36;
+  fill: #151934;
   stroke: #C084FC;
-  filter: drop-shadow(0 4px 14px rgba(192, 132, 252, 0.3));
 }
 
-/* Pulse animation on the 3 active hexagons */
-.honey-hex-active-1 {
-  animation: honey-hex-glow 2.4s ease-in-out infinite;
-  animation-delay: 0s;
+/* Hexagon pulse glow */
+.honey-hex-glow-anim {
+  animation: honey-hex-pulse 2.2s ease-in-out infinite;
 }
 
-.honey-hex-active-2 {
-  animation: honey-hex-glow 2.4s ease-in-out infinite;
-  animation-delay: 0.8s;
-}
-
-.honey-hex-active-3 {
-  animation: honey-hex-glow 2.4s ease-in-out infinite;
-  animation-delay: 1.6s;
-}
-
-@keyframes honey-hex-glow {
+@keyframes honey-hex-pulse {
   0%, 100% {
-    stroke-color: #A855F7;
-    filter: drop-shadow(0 2px 6px rgba(168, 85, 247, 0.15));
-    transform: scale(1);
-    transform-origin: center;
+    filter: drop-shadow(0 2px 6px rgba(168, 85, 247, 0.2));
   }
   50% {
-    stroke: #9333EA;
-    filter: drop-shadow(0 6px 18px rgba(168, 85, 247, 0.38));
-    transform: scale(1.03);
-    transform-origin: center;
+    filter: drop-shadow(0 6px 20px rgba(168, 85, 247, 0.45));
+  }
+}
+
+/* Outer Traveling Line Tracer around Honeycomb Perimeter */
+.honey-perimeter-bg {
+  fill: none;
+  stroke: rgba(226, 232, 240, 0.6);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+[data-theme="dark"] .honey-perimeter-bg {
+  stroke: rgba(34, 55, 82, 0.5);
+}
+
+.honey-perimeter-tracer {
+  fill: none;
+  stroke: url(#honey-tracer-grad);
+  stroke-width: 2.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 85 360;
+  stroke-dashoffset: 0;
+  animation: honey-travel-perimeter 3s linear infinite;
+  filter: drop-shadow(0 0 6px rgba(147, 51, 234, 0.8)) drop-shadow(0 0 12px rgba(192, 132, 252, 0.5));
+}
+
+[data-theme="dark"] .honey-perimeter-tracer {
+  filter: drop-shadow(0 0 8px rgba(192, 132, 252, 0.95)) drop-shadow(0 0 16px rgba(168, 85, 247, 0.7));
+}
+
+@keyframes honey-travel-perimeter {
+  0% {
+    stroke-dashoffset: 445;
+  }
+  100% {
+    stroke-dashoffset: 0;
   }
 }
 
 /* Checkmarks inside active hexagons */
 .honey-check {
   stroke: #9333EA;
-  stroke-width: 2.4;
+  stroke-width: 2.5;
   stroke-linecap: round;
   stroke-linejoin: round;
   fill: none;
-  stroke-dasharray: 24;
-  stroke-dashoffset: 0;
+  animation: honey-check-appear 2s ease-in-out infinite;
 }
 
 [data-theme="dark"] .honey-check {
   stroke: #C084FC;
 }
 
-.honey-check-1 {
-  animation: honey-check-pop 2.4s ease-in-out infinite;
-  animation-delay: 0s;
-}
-
-.honey-check-2 {
-  animation: honey-check-pop 2.4s ease-in-out infinite;
-  animation-delay: 0.8s;
-}
-
-.honey-check-3 {
-  animation: honey-check-pop 2.4s ease-in-out infinite;
-  animation-delay: 1.6s;
-}
-
-@keyframes honey-check-pop {
+@keyframes honey-check-appear {
   0%, 100% {
-    opacity: 0.85;
-    transform: scale(1);
+    opacity: 0.8;
+    transform: scale(0.96);
     transform-origin: center;
   }
   50% {
     opacity: 1;
-    transform: scale(1.18);
+    transform: scale(1.1);
     transform-origin: center;
   }
 }
 
 /* Floating outer miniature hexagons */
-.honey-hex-floating-left {
-  animation: honey-float-left 3.5s ease-in-out infinite alternate;
+.honey-satellite-1 {
+  animation: honey-float-sat1 4s ease-in-out infinite alternate;
 }
 
-.honey-hex-floating-right {
-  animation: honey-float-right 3.2s ease-in-out infinite alternate;
+.honey-satellite-2 {
+  animation: honey-float-sat2 3.6s ease-in-out infinite alternate;
 }
 
-@keyframes honey-float-left {
+@keyframes honey-float-sat1 {
   0% { transform: translate(0, 0); }
-  100% { transform: translate(-3px, -5px); }
+  100% { transform: translate(-4px, -6px); }
 }
 
-@keyframes honey-float-right {
+@keyframes honey-float-sat2 {
   0% { transform: translate(0, 0); }
-  100% { transform: translate(3px, 4px); }
+  100% { transform: translate(4px, 5px); }
 }
 
 /* Headline Text */
@@ -204,7 +209,7 @@
   font-weight: 700;
   color: var(--text-primary, #0f172a);
   letter-spacing: -0.02em;
-  margin: 0 0 1.5rem 0;
+  margin: 0 0 0.65rem 0;
   line-height: 1.25;
 }
 
@@ -212,56 +217,9 @@
   color: #f8fafc;
 }
 
-/* Linear Progress Bar Track */
-.honey-progress-track {
-  width: 280px;
-  max-width: 85vw;
-  height: 3.5px;
-  background-color: #E5E7EB;
-  border-radius: 999px;
-  overflow: hidden;
-  position: relative;
-  margin-bottom: 1rem;
-}
-
-[data-theme="dark"] .honey-progress-track {
-  background-color: #1E2E42;
-}
-
-/* Moving Solid Linear Bar */
-.honey-progress-bar {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  border-radius: 999px;
-  background-color: #0F172A;
-  width: 38%;
-  animation: honey-progress-slide 1.8s cubic-bezier(0.65, 0, 0.35, 1) infinite;
-}
-
-[data-theme="dark"] .honey-progress-bar {
-  background-color: #93C5FD;
-}
-
-@keyframes honey-progress-slide {
-  0% {
-    left: -40%;
-    width: 25%;
-  }
-  50% {
-    left: 30%;
-    width: 45%;
-  }
-  100% {
-    left: 100%;
-    width: 25%;
-  }
-}
-
 /* Subtext / Helper Label */
 .honey-loader-subtext {
-  font-size: 0.875rem;
+  font-size: 0.9rem;
   font-weight: 400;
   color: #6B7280;
   margin: 0;
