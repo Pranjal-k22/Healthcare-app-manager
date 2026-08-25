@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
+import { LoadingScreen } from '../../components/ui/LoadingScreen';
 
 export const NotificationsPage: React.FC = () => {
   const { user } = useAuth();
@@ -217,21 +218,7 @@ export const NotificationsPage: React.FC = () => {
 
       {/* List / Loader / Empty State */}
       {isLoading ? (
-        <div style={{ textAlign: 'center', padding: '4rem 0' }}>
-          <div
-            className="btn-spinner"
-            style={{
-              width: '32px',
-              height: '32px',
-              margin: '0 auto 0.75rem auto',
-              borderColor: 'var(--primary)',
-              borderTopColor: 'transparent',
-            }}
-          />
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-            Loading notification records...
-          </p>
-        </div>
+        <LoadingScreen message="Loading notification records..." />
       ) : notifications.length === 0 ? (
         <Card className="empty-state-card-ui">
           <div className="empty-state-icon-circle">

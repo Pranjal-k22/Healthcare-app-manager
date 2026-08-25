@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { getDoctorById, updateDoctor, deleteDoctor } from '../../services/doctorApi';
 import { WorkingHours } from '../../types/doctor';
 import { WorkingHoursForm } from '../../components/doctor/WorkingHoursForm';
+import { LoadingScreen } from '../../components/ui/LoadingScreen';
 import {
   AlertCircle,
   AlertTriangle,
@@ -140,14 +141,7 @@ export const EditDoctor: React.FC = () => {
   };
 
   if (isLoading) {
-    return (
-      <div className="container dashboard-container" style={{ textAlign: 'center', padding: '5rem 0' }}>
-        <div className="spinner" style={{ width: '40px', height: '40px', margin: '0 auto', borderWidth: '3px' }} />
-        <p style={{ color: '#64748b', marginTop: '1rem', fontWeight: 500 }}>
-          Loading practitioner profile...
-        </p>
-      </div>
-    );
+    return <LoadingScreen message="Loading practitioner profile..." />;
   }
 
   return (

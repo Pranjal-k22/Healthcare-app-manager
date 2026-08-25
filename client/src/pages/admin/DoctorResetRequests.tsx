@@ -17,6 +17,7 @@ import {
 import Button from '../../components/ui/Button';
 import InlineAlert from '../../components/ui/InlineAlert';
 import { useToast } from '../../components/ui/Toast';
+import { LoadingScreen } from '../../components/ui/LoadingScreen';
 
 export const DoctorResetRequests: React.FC = () => {
   const [requests, setRequests] = useState<DoctorResetRequestItem[]>([]);
@@ -140,10 +141,7 @@ export const DoctorResetRequests: React.FC = () => {
       {/* Table Container */}
       <div style={{ backgroundColor: '#ffffff', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-light)', overflow: 'hidden' }}>
         {isLoading ? (
-          <div style={{ padding: '3rem', textAlign: 'center' }}>
-            <div className="spinner" style={{ width: '32px', height: '32px', margin: '0 auto 1rem auto' }}></div>
-            <p style={{ color: 'var(--text-secondary)' }}>Loading doctor reset requests...</p>
-          </div>
+          <LoadingScreen message="Loading doctor reset requests..." />
         ) : requests.length === 0 ? (
           <div style={{ padding: '3rem', textAlign: 'center' }}>
             <ShieldAlert size={48} color="var(--text-muted)" style={{ marginBottom: '1rem' }} />
