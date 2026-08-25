@@ -12,7 +12,7 @@ import {
 } from '../../services/leaveApi';
 import { Doctor, Leave } from '../../types/doctor';
 import { DoctorLeaveItem } from '../../types/leave';
-import { LoadingScreen } from '../../components/ui/LoadingScreen';
+import { SkeletonTable } from '../../components/ui/Skeleton';
 import {
   AlertCircle,
   ArrowLeft,
@@ -168,7 +168,11 @@ export const ManageDoctorLeave: React.FC = () => {
   };
 
   if (isLoading) {
-    return <LoadingScreen message="Loading leave schedule..." />;
+    return (
+      <div className="container dashboard-container" style={{ maxWidth: '920px', padding: '2rem 1.5rem', margin: '0 auto' }}>
+        <SkeletonTable rows={4} columns={3} />
+      </div>
+    );
   }
 
   const pendingFormalLeaves = formalLeaves.filter((l) => l.status === 'PENDING');

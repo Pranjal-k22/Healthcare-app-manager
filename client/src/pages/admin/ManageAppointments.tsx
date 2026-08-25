@@ -8,7 +8,7 @@ import { Appointment, AppointmentStatus } from '../../types/appointment';
 import { Doctor } from '../../types/doctor';
 import { AppointmentCard } from '../../components/appointment/AppointmentCard';
 import { CancelAppointmentModal } from '../../components/appointment/CancelAppointmentModal';
-import { LoadingScreen } from '../../components/ui/LoadingScreen';
+import { SkeletonCard } from '../../components/ui/Skeleton';
 import {
   AlertCircle,
   Calendar,
@@ -378,7 +378,10 @@ export const ManageAppointments: React.FC = () => {
 
       {/* Appointments List */}
       {isLoading ? (
-        <LoadingScreen message="Loading clinic appointments..." />
+        <div className="skeleton-grid">
+          <SkeletonCard />
+          <SkeletonCard />
+        </div>
       ) : appointments.length === 0 ? (
         <div
           style={{

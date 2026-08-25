@@ -7,8 +7,8 @@ import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import StatusBadge from '../../components/ui/StatusBadge';
 import Input from '../../components/ui/Input';
+import { SkeletonCard } from '../../components/ui/Skeleton';
 import EmptyState from '../../components/ui/EmptyState';
-import { LoadingScreen } from '../../components/ui/LoadingScreen';
 import {
   Pill,
   Search,
@@ -153,7 +153,10 @@ export const PatientPrescriptions: React.FC = () => {
 
         {/* Prescription List Cards */}
         {isLoading ? (
-          <LoadingScreen message="Loading your prescriptions..." />
+          <div className="skeleton-grid">
+            <SkeletonCard />
+            <SkeletonCard />
+          </div>
         ) : filteredPrescriptions.length === 0 ? (
           <Card>
             <EmptyState

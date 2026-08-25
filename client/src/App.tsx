@@ -35,14 +35,10 @@ const AllDoctorLeaves = lazy(() => import('./pages/admin/AllDoctorLeaves').then(
 const DoctorResetRequests = lazy(() => import('./pages/admin/DoctorResetRequests').then(m => ({ default: m.DoctorResetRequests })));
 const NotificationsPage = lazy(() => import('./pages/notifications/NotificationsPage').then(m => ({ default: m.NotificationsPage })));
 
-import { PageLoader, FullScreenLoader } from './components/ui/LoadingScreen';
+import { FullScreenLoader, RouteProgressFallback } from './components/ui/LoadingScreen';
 
 const RootRedirect: React.FC = () => {
-  const { user, isAuthenticated, isLoading } = useAuth();
-
-  if (isLoading) {
-    return <FullScreenLoader message="Initializing clinical session..." />;
-  }
+  const { user, isAuthenticated } = useAuth();
 
   if (isAuthenticated && user) {
     return <Navigate to={ROLE_DASHBOARD_ROUTES[user.role] || '/login'} replace />;
@@ -51,15 +47,26 @@ const RootRedirect: React.FC = () => {
   return <Navigate to="/login" replace />;
 };
 
+export const AppBootstrap: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { isLoading } = useAuth();
+
+  if (isLoading) {
+    return <FullScreenLoader message="Preparing HealthPulse" subtext="Securing your clinical workspace" />;
+  }
+
+  return <>{children}</>;
+};
+
 export const App: React.FC = () => {
   return (
-    <div className="app-container">
-      <Navbar />
-      <main className="main-content">
-        <Suspense fallback={<PageLoader />}>
-          <Routes>
-          {/* Default Root */}
-          <Route path="/" element={<RootRedirect />} />
+    <AppBootstrap>
+      <div className="app-container">
+        <Navbar />
+        <main className="main-content">
+          <Suspense fallback={<RouteProgressFallback />}>
+            <Routes>
+            {/* Default Root */}
+            <Route path="/" element={<RootRedirect />} />
 
           {/* Public Auth Routes */}
           <Route path="/login" element={<Login />} />
@@ -259,6 +266,7 @@ export const App: React.FC = () => {
         </Suspense>
       </main>
     </div>
+    </AppBootstrap>
   );
 };
 

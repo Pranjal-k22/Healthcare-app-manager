@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { getDoctorById, updateDoctor, deleteDoctor } from '../../services/doctorApi';
 import { WorkingHours } from '../../types/doctor';
 import { WorkingHoursForm } from '../../components/doctor/WorkingHoursForm';
-import { LoadingScreen } from '../../components/ui/LoadingScreen';
+import { SkeletonProfile } from '../../components/ui/Skeleton';
 import {
   AlertCircle,
   AlertTriangle,
@@ -141,7 +141,11 @@ export const EditDoctor: React.FC = () => {
   };
 
   if (isLoading) {
-    return <LoadingScreen message="Loading practitioner profile..." />;
+    return (
+      <div className="container dashboard-container" style={{ maxWidth: '920px', padding: '2rem 1.5rem', margin: '0 auto' }}>
+        <SkeletonProfile />
+      </div>
+    );
   }
 
   return (

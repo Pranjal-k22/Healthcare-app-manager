@@ -7,7 +7,7 @@ import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
 import StatusBadge from '../../components/ui/StatusBadge';
 import Avatar from '../../components/ui/Avatar';
-import { LoadingScreen } from '../../components/ui/LoadingScreen';
+import { SkeletonProfile } from '../../components/ui/Skeleton';
 import {
   AlertCircle,
   ArrowLeft,
@@ -60,7 +60,11 @@ export const DoctorDetails: React.FC = () => {
   }, [id]);
 
   if (isLoading) {
-    return <LoadingScreen message="Loading practitioner profile..." />;
+    return (
+      <div className="container" style={{ maxWidth: '900px', padding: '2rem 1.5rem' }}>
+        <SkeletonProfile />
+      </div>
+    );
   }
 
   if (error || !doctor) {

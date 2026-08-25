@@ -4,7 +4,7 @@ import { Doctor } from '../../types/doctor';
 import { getDoctors, toggleDoctorActiveStatus, deleteDoctor } from '../../services/doctorApi';
 import { DoctorCard } from '../../components/doctor/DoctorCard';
 import { DoctorSearchBar } from '../../components/doctor/DoctorSearchBar';
-import { LoadingScreen } from '../../components/ui/LoadingScreen';
+import { SkeletonCard } from '../../components/ui/Skeleton';
 import {
   AlertCircle,
   CheckCircle2,
@@ -261,7 +261,10 @@ export const ManageDoctors: React.FC = () => {
 
       {/* Doctors Grid */}
       {isLoading ? (
-        <LoadingScreen message="Loading doctor roster..." />
+        <div className="skeleton-grid">
+          <SkeletonCard />
+          <SkeletonCard />
+        </div>
       ) : doctors.length === 0 ? (
         <div
           style={{

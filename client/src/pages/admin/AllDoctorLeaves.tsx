@@ -7,7 +7,7 @@ import {
 } from '../../services/leaveApi';
 import { getDoctors } from '../../services/doctorApi';
 import { DoctorLeaveItem, LeaveStatus } from '../../types/leave';
-import { LoadingScreen } from '../../components/ui/LoadingScreen';
+import { SkeletonTable } from '../../components/ui/Skeleton';
 import {
   AlertCircle,
   Calendar,
@@ -186,7 +186,11 @@ export const AllDoctorLeaves: React.FC = () => {
   const rejectedCount = leaves.filter((l) => l.status === 'REJECTED').length;
 
   if (isLoading) {
-    return <LoadingScreen message="Loading leave applications..." />;
+    return (
+      <div className="container dashboard-container" style={{ maxWidth: '1180px', padding: '2rem 1.5rem', margin: '0 auto' }}>
+        <SkeletonTable rows={5} columns={4} />
+      </div>
+    );
   }
 
   return (

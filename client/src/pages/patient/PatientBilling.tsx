@@ -8,7 +8,7 @@ import StatusBadge from '../../components/ui/StatusBadge';
 import DataTable, { Column } from '../../components/ui/DataTable';
 import EmptyState from '../../components/ui/EmptyState';
 import { useToast } from '../../components/ui/Toast';
-import { LoadingScreen } from '../../components/ui/LoadingScreen';
+import { SkeletonTable } from '../../components/ui/Skeleton';
 import {
   CreditCard,
   Calendar,
@@ -282,7 +282,7 @@ export const PatientBilling: React.FC = () => {
 
         {/* Invoices DataTable */}
         {isLoading ? (
-          <LoadingScreen message="Loading billing and invoice records..." />
+          <SkeletonTable rows={4} columns={5} />
         ) : (
           <DataTable
             title="Hospital Service Invoices"

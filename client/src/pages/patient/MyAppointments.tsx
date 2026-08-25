@@ -15,8 +15,8 @@ import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
 import InlineAlert from '../../components/ui/InlineAlert';
 import EmptyState from '../../components/ui/EmptyState';
+import { SkeletonCard } from '../../components/ui/Skeleton';
 import { useToast } from '../../components/ui/Toast';
-import { LoadingScreen } from '../../components/ui/LoadingScreen';
 import {
   Search,
   Plus,
@@ -198,9 +198,13 @@ export const MyAppointments: React.FC = () => {
           </div>
         </div>
 
-        {/* Content Area: Loader, Empty State, or Grid */}
+        {/* Content Area: Skeleton Grid, Empty State, or Appointments Grid */}
         {isLoading ? (
-          <LoadingScreen message="Loading your appointments..." />
+          <div className="skeleton-grid">
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+          </div>
         ) : appointments.length === 0 ? (
           <Card>
             <EmptyState

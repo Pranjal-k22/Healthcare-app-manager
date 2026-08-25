@@ -8,7 +8,7 @@ import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import InlineAlert from '../../components/ui/InlineAlert';
 import EmptyState from '../../components/ui/EmptyState';
-import { LoadingScreen } from '../../components/ui/LoadingScreen';
+import { SkeletonCard } from '../../components/ui/Skeleton';
 import { RotateCcw } from 'lucide-react';
 
 export const DoctorSearch: React.FC = () => {
@@ -86,7 +86,11 @@ export const DoctorSearch: React.FC = () => {
 
         {/* Doctor List / Loading / Empty State */}
         {isLoading ? (
-          <LoadingScreen message="Searching available practitioners..." />
+          <div className="skeleton-grid">
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+          </div>
         ) : doctors.length === 0 ? (
           <Card>
             <EmptyState

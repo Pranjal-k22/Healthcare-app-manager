@@ -11,7 +11,7 @@ import Input from '../../components/ui/Input';
 import Textarea from '../../components/ui/Textarea';
 import InlineAlert from '../../components/ui/InlineAlert';
 import { useToast } from '../../components/ui/Toast';
-import { LoadingScreen } from '../../components/ui/LoadingScreen';
+import { SkeletonCard } from '../../components/ui/Skeleton';
 import {
   ArrowLeft,
   Calendar,
@@ -211,7 +211,11 @@ export const BookAppointment: React.FC = () => {
   };
 
   if (isLoadingDoctor) {
-    return <LoadingScreen message="Loading doctor consultation schedule..." />;
+    return (
+      <div className="container" style={{ maxWidth: '840px', padding: '2rem 1.5rem' }}>
+        <SkeletonCard />
+      </div>
+    );
   }
 
   // Step 4: Booking Confirmation Screen

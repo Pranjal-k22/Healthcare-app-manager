@@ -3,109 +3,109 @@ import { Stethoscope } from 'lucide-react';
 import '../../styles/loading.css';
 
 export interface LoadingScreenProps {
-  variant?: 'fullscreen' | 'page' | 'compact';
   message?: string;
   subtext?: string;
-  showDots?: boolean;
+  isExiting?: boolean;
   className?: string;
 }
 
-export const StethoscopeLoaderGraphic: React.FC = () => {
-  return (
-    <div className="steth-frame-container" aria-hidden="true">
-      <svg className="steth-frame-svg" viewBox="0 0 100 100">
-        <defs>
-          <linearGradient id="steth-neon-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#4ADE80" />
-            <stop offset="50%" stopColor="#22C55E" />
-            <stop offset="100%" stopColor="#10B981" />
-          </linearGradient>
-        </defs>
-
-        {/* Lower Left Container Box */}
-        <rect
-          className="steth-square-bg"
-          x="12"
-          y="48"
-          width="28"
-          height="28"
-        />
-
-        {/* Base Geometric Guideline Contour */}
-        <path
-          className="steth-geo-bg"
-          d="M 52 16 L 16 16 L 16 38 Q 16 58 38 62 L 56 62 Q 74 62 74 46 L 74 32"
-        />
-
-        {/* Neon Green Traveling Contour Tracer */}
-        <path
-          className="steth-geo-neon"
-          d="M 52 16 L 16 16 L 16 38 Q 16 58 38 62 L 56 62 Q 74 62 74 46 L 74 32"
-        />
-      </svg>
-
-      {/* Pulsing Stethoscope Icon in the Center */}
-      <div className="steth-center-icon">
-        <Stethoscope size={30} strokeWidth={2.4} />
-      </div>
-    </div>
-  );
-};
-
-export const LoadingScreen: React.FC<LoadingScreenProps> = ({
-  variant = 'page',
-  message = 'Loading HealthPulse',
-  subtext = 'Preparing your clinical workspace & schedule',
-  showDots = true,
+/**
+ * Level 1: Global Branded Loader (Used ONLY for initial application boot & session restoration)
+ */
+export const FullScreenLoader: React.FC<LoadingScreenProps> = ({
+  message = 'Preparing HealthPulse',
+  subtext = 'Securing your clinical workspace',
+  isExiting = false,
   className = '',
 }) => {
-  const containerClass =
-    variant === 'fullscreen'
-      ? `steth-loader-fullscreen ${className}`
-      : variant === 'compact'
-      ? `steth-loader-compact ${className}`
-      : `steth-loader-page ${className}`;
-
-  // Format message text without trailing dots if showDots is enabled
-  const cleanMessage = message.replace(/\.+$/, '');
-
   return (
-    <div className={containerClass} role="status" aria-live="polite" aria-label={message}>
-      <div className="steth-loader-content">
-        {/* Centered Stethoscope Neon Contour Graphic */}
-        <StethoscopeLoaderGraphic />
+    <div
+      className={`hp-loader ${isExiting ? 'hp-loader--exiting' : ''} ${className}`}
+      role="status"
+      aria-live="polite"
+      aria-label={`${message}. ${subtext}`}
+    >
+      <div className="hp-loader__content">
+        {/* Geometric Contour with Traveling Illuminated Segment */}
+        <div className="hp-loader__graphic" aria-hidden="true">
+          <svg className="hp-loader__svg" viewBox="0 0 100 100">
+            <defs>
+              <linearGradient id="hp-tracer-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#86EFAC" />
+                <stop offset="50%" stopColor="#4ADE80" />
+                <stop offset="100%" stopColor="#22C55E" />
+              </linearGradient>
+            </defs>
 
-        {/* Aesthetic Modern Headline */}
-        <h2 className="steth-loader-title">
-          <span>{cleanMessage}</span>
-          {showDots && (
-            <span className="steth-dot-pulse" aria-hidden="true">
-              <span className="steth-dot" />
-              <span className="steth-dot" />
-              <span className="steth-dot" />
-            </span>
-          )}
-        </h2>
+            {/* Subtle Lower-Left Container */}
+            <rect className="hp-loader__square" x="12" y="48" width="28" height="28" />
 
-        {/* Aesthetic Subtext */}
-        {subtext && <p className="steth-loader-subtext">{subtext}</p>}
+            {/* Base Geometric Guideline */}
+            <path
+              className="hp-loader__track"
+              d="M 52 16 L 16 16 L 16 38 Q 16 58 38 62 L 56 62 Q 74 62 74 46 L 74 32"
+            />
+
+            {/* Illuminated Traveling Circuit Segment */}
+            <path
+              className="hp-loader__tracer"
+              d="M 52 16 L 16 16 L 16 38 Q 16 58 38 62 L 56 62 Q 74 62 74 46 L 74 32"
+            />
+          </svg>
+
+          {/* Central Stethoscope with Subtle Breathing Rhythm */}
+          <div className="hp-loader__stethoscope">
+            <Stethoscope size={32} strokeWidth={2} />
+          </div>
+        </div>
+
+        {/* Title with Subtle Sequential Dots */}
+        <h1 className="hp-loader__title">
+          <span>{message}</span>
+          <span className="hp-loader__dots" aria-hidden="true">
+            <span className="hp-loader__dot" />
+            <span className="hp-loader__dot" />
+            <span className="hp-loader__dot" />
+          </span>
+        </h1>
+
+        {/* Supporting Line */}
+        {subtext && <p className="hp-loader__subtitle">{subtext}</p>}
       </div>
     </div>
   );
 };
 
-export const FullScreenLoader: React.FC<Omit<LoadingScreenProps, 'variant'>> = (props) => (
-  <LoadingScreen variant="fullscreen" message="Loading HealthPulse" {...props} />
-);
+/**
+ * Level 2: Lightweight Route Suspense Fallback
+ * Shows a subtle top bar without unmounting or obscuring the portal layout
+ */
+export const RouteProgressFallback: React.FC = () => {
+  return (
+    <div className="hp-route-progress" role="progressbar" aria-label="Loading page...">
+      <div className="hp-route-progress__bar" />
+    </div>
+  );
+};
 
-export const PageLoader: React.FC<Omit<LoadingScreenProps, 'variant'>> = (props) => (
-  <LoadingScreen variant="page" message="Loading HealthPulse" {...props} />
-);
+/**
+ * Level 3: Button Spinner for CTA loading states
+ */
+export const ButtonSpinner: React.FC<{ className?: string }> = ({ className = '' }) => {
+  return <span className={`hp-button-spinner ${className}`} aria-hidden="true" />;
+};
 
-export const InlineLoader: React.FC<Omit<LoadingScreenProps, 'variant'>> = (props) => (
-  <LoadingScreen variant="compact" subtext="" {...props} />
-);
+/**
+ * Level 3: Small Inline Spinner for contextual widget updates
+ */
+export const InlineSpinner: React.FC<{ className?: string }> = ({ className = '' }) => {
+  return <div className={`hp-inline-spinner ${className}`} aria-label="Loading" />;
+};
 
-export const LoadingSpinner = StethoscopeLoaderGraphic;
+// Aliases for compatibility
+export const LoadingScreen = FullScreenLoader;
+export const PageLoader = RouteProgressFallback;
+export const InlineLoader = InlineSpinner;
+export const LoadingSpinner = FullScreenLoader;
 
-export default LoadingScreen;
+export default FullScreenLoader;

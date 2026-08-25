@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
-import { LoadingScreen } from '../../components/ui/LoadingScreen';
+import { SkeletonCard } from '../../components/ui/Skeleton';
 
 export const NotificationsPage: React.FC = () => {
   const { user } = useAuth();
@@ -216,9 +216,12 @@ export const NotificationsPage: React.FC = () => {
         </div>
       )}
 
-      {/* List / Loader / Empty State */}
+      {/* List / Skeleton / Empty State */}
       {isLoading ? (
-        <LoadingScreen message="Loading notification records..." />
+        <div className="skeleton-grid">
+          <SkeletonCard />
+          <SkeletonCard />
+        </div>
       ) : notifications.length === 0 ? (
         <Card className="empty-state-card-ui">
           <div className="empty-state-icon-circle">

@@ -4,8 +4,6 @@ import { useAuth } from '../../hooks/useAuth';
 import { UserRole } from '../../types/auth';
 import { ROLE_DASHBOARD_ROUTES } from '../../utils/constants';
 
-import { FullScreenLoader } from '../ui/LoadingScreen';
-
 interface ProtectedRouteProps {
   children: React.ReactElement;
   allowedRoles?: UserRole[];
@@ -18,8 +16,9 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   const { user, isAuthenticated, isLoading } = useAuth();
   const location = useLocation();
 
+  // If still bootstrapping initial session (handled at root level), prevent premature redirect
   if (isLoading) {
-    return <FullScreenLoader message="Verifying secure session & credentials..." />;
+    return null;
   }
 
   if (!isAuthenticated || !user) {
@@ -34,3 +33,5 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   return children;
 };
+
+export default ProtectedRoute;
