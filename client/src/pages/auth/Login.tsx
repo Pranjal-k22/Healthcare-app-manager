@@ -156,18 +156,17 @@ export const Login: React.FC = () => {
             </header>
 
             {/* Segmented Control Role Selector */}
-            <div className="hp-role-segmented-control" role="tablist" aria-label="Portal role selector">
+            <div className="hp-role-segmented-control" role="tablist" aria-label="Select account type">
               <button
                 type="button"
+                role="tab"
+                aria-selected={selectedRole === 'PATIENT'}
                 data-testid="role-patient"
                 className={`hp-role-segment-btn ${selectedRole === 'PATIENT' ? 'is-active' : ''}`}
                 onClick={() => {
                   setSelectedRole('PATIENT');
                   setError(null);
                 }}
-                role="tab"
-                aria-selected={selectedRole === 'PATIENT'}
-                aria-pressed={selectedRole === 'PATIENT'}
               >
                 <UserIcon size={15} />
                 <span>Patient</span>
@@ -175,15 +174,14 @@ export const Login: React.FC = () => {
 
               <button
                 type="button"
+                role="tab"
+                aria-selected={selectedRole === 'DOCTOR'}
                 data-testid="role-doctor"
                 className={`hp-role-segment-btn ${selectedRole === 'DOCTOR' ? 'is-active' : ''}`}
                 onClick={() => {
                   setSelectedRole('DOCTOR');
                   setError(null);
                 }}
-                role="tab"
-                aria-selected={selectedRole === 'DOCTOR'}
-                aria-pressed={selectedRole === 'DOCTOR'}
               >
                 <Stethoscope size={15} />
                 <span>Doctor</span>
@@ -191,15 +189,14 @@ export const Login: React.FC = () => {
 
               <button
                 type="button"
+                role="tab"
+                aria-selected={selectedRole === 'ADMIN'}
                 data-testid="role-admin"
                 className={`hp-role-segment-btn ${selectedRole === 'ADMIN' ? 'is-active' : ''}`}
                 onClick={() => {
                   setSelectedRole('ADMIN');
                   setError(null);
                 }}
-                role="tab"
-                aria-selected={selectedRole === 'ADMIN'}
-                aria-pressed={selectedRole === 'ADMIN'}
               >
                 <ShieldCheck size={15} />
                 <span>Admin</span>
