@@ -1,11 +1,10 @@
 /* ==========================================================================
-   HoneyQuote / Hexagonal Magic Loading Experience
-   Aesthetic: Centered honeycomb cluster with glowing perimeter circuit tracer,
-              randomized dynamic cell scale, and clean minimalist layout.
+   HealthPulse — Clean Native UI Loader
+   Seamlessly integrated with HealthPulse theme tokens and typography
    ========================================================================== */
 
-/* Fullscreen Overlay (Centered Vertically & Horizontally) */
-.honey-loader-fullscreen {
+/* Fullscreen Center (Initial load / Auth check) */
+.hp-simple-loader-fullscreen {
   position: fixed;
   inset: 0;
   z-index: 9999;
@@ -15,217 +14,81 @@
   justify-content: center;
   min-height: 100vh;
   width: 100vw;
-  background-color: var(--surface, #ffffff);
-  padding: 2rem 1.5rem;
-  overflow: hidden;
+  background-color: var(--bg-app, #F8FAFC);
+  gap: 0.875rem;
 }
 
-[data-theme="dark"] .honey-loader-fullscreen {
-  background-color: var(--background, #07111f);
-}
-
-/* Page / View Container (Centered) */
-.honey-loader-page {
+/* Page / View Center (Inside dashboard / content routes) */
+.hp-simple-loader-page {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 60vh;
+  min-height: 280px;
   width: 100%;
   padding: 3rem 1.5rem;
-  background: transparent;
+  gap: 0.75rem;
 }
 
-/* Compact / Inline Container */
-.honey-loader-compact {
+/* Inline / Widget Center */
+.hp-simple-loader-inline {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 2rem 1rem;
+  padding: 1.5rem 1rem;
+  gap: 0.5rem;
   width: 100%;
 }
 
-/* Main Inner Wrapper */
-.honey-loader-content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+/* Standard UI Theme Circular Spinner */
+.hp-spinner {
+  border-radius: 50%;
+  border: 3px solid var(--border, #E2E8F0);
+  border-top-color: var(--primary, #2563EB);
+  animation: hp-spin 0.75s linear infinite;
+  box-sizing: border-box;
+}
+
+[data-theme="dark"] .hp-spinner {
+  border-color: var(--border, #243750);
+  border-top-color: var(--primary, #60A5FA);
+}
+
+.hp-spinner-sm {
+  width: 20px;
+  height: 20px;
+  border-width: 2.5px;
+}
+
+.hp-spinner-md {
+  width: 36px;
+  height: 36px;
+  border-width: 3px;
+}
+
+.hp-spinner-lg {
+  width: 48px;
+  height: 48px;
+  border-width: 3.5px;
+}
+
+/* Label styled according to UI typography */
+.hp-loader-label {
+  font-family: var(--font-family, inherit);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--text-secondary, #475569);
+  letter-spacing: -0.01em;
+  margin: 0;
   text-align: center;
-  max-width: 480px;
-  width: 100%;
-  margin: auto 0;
-  animation: honey-fade-in 0.4s ease-out forwards;
 }
 
-@keyframes honey-fade-in {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* Honeycomb Container */
-.honey-cluster-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  margin-bottom: 2rem;
-  overflow: visible;
-}
-
-.honey-cluster-svg {
-  overflow: visible;
-  filter: drop-shadow(0 4px 16px rgba(168, 85, 247, 0.12));
-}
-
-/* Base Hexagon styles */
-.honey-hex-base {
-  fill: #ffffff;
-  stroke: #E2E8F0;
-  stroke-width: 1.5;
-  transition: all 0.3s ease;
-}
-
-[data-theme="dark"] .honey-hex-base {
-  fill: #0F1E33;
-  stroke: #223752;
-}
-
-/* Active Highlighted Hexagons */
-.honey-hex-active {
-  fill: #ffffff;
-  stroke: #A855F7;
-  stroke-width: 2;
-  transition: all 0.3s ease;
-}
-
-[data-theme="dark"] .honey-hex-active {
-  fill: #151934;
-  stroke: #C084FC;
-}
-
-/* Hexagon pulse glow */
-.honey-hex-glow-anim {
-  animation: honey-hex-pulse 2.2s ease-in-out infinite;
-}
-
-@keyframes honey-hex-pulse {
-  0%, 100% {
-    filter: drop-shadow(0 2px 6px rgba(168, 85, 247, 0.2));
-  }
-  50% {
-    filter: drop-shadow(0 6px 20px rgba(168, 85, 247, 0.45));
-  }
-}
-
-/* Outer Traveling Line Tracer around Honeycomb Perimeter */
-.honey-perimeter-bg {
-  fill: none;
-  stroke: rgba(226, 232, 240, 0.6);
-  stroke-width: 1.5;
-  stroke-linejoin: round;
-  stroke-linecap: round;
-}
-
-[data-theme="dark"] .honey-perimeter-bg {
-  stroke: rgba(34, 55, 82, 0.5);
-}
-
-.honey-perimeter-tracer {
-  fill: none;
-  stroke: url(#honey-tracer-grad);
-  stroke-width: 2.75;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-dasharray: 85 360;
-  stroke-dashoffset: 0;
-  animation: honey-travel-perimeter 3s linear infinite;
-  filter: drop-shadow(0 0 6px rgba(147, 51, 234, 0.8)) drop-shadow(0 0 12px rgba(192, 132, 252, 0.5));
-}
-
-[data-theme="dark"] .honey-perimeter-tracer {
-  filter: drop-shadow(0 0 8px rgba(192, 132, 252, 0.95)) drop-shadow(0 0 16px rgba(168, 85, 247, 0.7));
-}
-
-@keyframes honey-travel-perimeter {
+@keyframes hp-spin {
   0% {
-    stroke-dashoffset: 445;
+    transform: rotate(0deg);
   }
   100% {
-    stroke-dashoffset: 0;
+    transform: rotate(360deg);
   }
-}
-
-/* Checkmarks inside active hexagons */
-.honey-check {
-  stroke: #9333EA;
-  stroke-width: 2.5;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  fill: none;
-  animation: honey-check-appear 2s ease-in-out infinite;
-}
-
-[data-theme="dark"] .honey-check {
-  stroke: #C084FC;
-}
-
-@keyframes honey-check-appear {
-  0%, 100% {
-    opacity: 0.8;
-    transform: scale(0.96);
-    transform-origin: center;
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.1);
-    transform-origin: center;
-  }
-}
-
-/* Floating outer miniature hexagons */
-.honey-satellite-1 {
-  animation: honey-float-sat1 4s ease-in-out infinite alternate;
-}
-
-.honey-satellite-2 {
-  animation: honey-float-sat2 3.6s ease-in-out infinite alternate;
-}
-
-@keyframes honey-float-sat1 {
-  0% { transform: translate(0, 0); }
-  100% { transform: translate(-4px, -6px); }
-}
-
-@keyframes honey-float-sat2 {
-  0% { transform: translate(0, 0); }
-  100% { transform: translate(4px, 5px); }
-}
-
-/* Headline Text */
-.honey-loader-title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--text-primary, #0f172a);
-  letter-spacing: -0.02em;
-  margin: 0 0 0.65rem 0;
-  line-height: 1.25;
-}
-
-[data-theme="dark"] .honey-loader-title {
-  color: #f8fafc;
-}
-
-/* Subtext / Helper Label */
-.honey-loader-subtext {
-  font-size: 0.9rem;
-  font-weight: 400;
-  color: #6B7280;
-  margin: 0;
-  letter-spacing: -0.01em;
-}
-
-[data-theme="dark"] .honey-loader-subtext {
-  color: #94A3B8;
 }
