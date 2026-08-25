@@ -73,6 +73,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
             size="md"
             onClick={onConfirm}
             isLoading={isLoading}
+            data-testid="confirm-dialog-btn"
           >
             {confirmLabel}
           </Button>

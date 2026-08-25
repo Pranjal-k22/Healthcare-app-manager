@@ -29,16 +29,17 @@ test.describe('HealthPulse Smoke Tests', () => {
   });
 
   test('patient portal is visible', async ({ page }) => {
-    const patientTab = page.getByRole('button', {
-      name: 'Patient',
-      exact: true,
-    }).first();
+    const patientTab = page
+      .getByTestId('role-patient')
+      .or(page.getByRole('tab', { name: 'Patient' }))
+      .or(page.getByRole('button', { name: 'Patient', exact: true }))
+      .first();
 
     await expect(patientTab).toBeVisible();
 
     await expect(
       page.getByRole('textbox', {
-        name: /Email address/i,
+        name: /Email|Username/i,
       })
     ).toBeVisible();
 
@@ -58,21 +59,22 @@ test.describe('HealthPulse Smoke Tests', () => {
   });
 
   test('doctor portal can be selected', async ({ page }) => {
-    const doctorTab = page.getByRole('button', {
-      name: 'Doctor',
-      exact: true,
-    }).first();
+    const doctorTab = page
+      .getByTestId('role-doctor')
+      .or(page.getByRole('tab', { name: 'Doctor' }))
+      .or(page.getByRole('button', { name: 'Doctor', exact: true }))
+      .first();
 
     await expect(doctorTab).toBeVisible();
 
     await doctorTab.click();
 
-    // Confirms interaction happened
-    await expect(doctorTab).toBeFocused();
+    // Verify selection state via aria attributes
+    await expect(doctorTab).toHaveAttribute('aria-selected', 'true');
 
     await expect(
       page.getByRole('textbox', {
-        name: /Email address/i,
+        name: /Email|Username/i,
       })
     ).toBeVisible();
 
@@ -84,16 +86,18 @@ test.describe('HealthPulse Smoke Tests', () => {
   });
 
   test('admin portal can be selected', async ({ page }) => {
-    const adminTab = page.getByRole('button', {
-      name: 'Admin',
-      exact: true,
-    }).first();
+    const adminTab = page
+      .getByTestId('role-admin')
+      .or(page.getByRole('tab', { name: 'Admin' }))
+      .or(page.getByRole('button', { name: 'Admin', exact: true }))
+      .first();
 
     await expect(adminTab).toBeVisible();
 
     await adminTab.click();
 
-    await expect(adminTab).toBeFocused();
+    // Verify selection state via aria attributes
+    await expect(adminTab).toHaveAttribute('aria-selected', 'true');
 
     await expect(
       page.getByRole('textbox', {

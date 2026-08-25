@@ -37,7 +37,7 @@ export const Navbar: React.FC = () => {
   const confirmLogout = () => {
     logout();
     setShowLogoutConfirm(false);
-    navigate('/login');
+    navigate('/login', { replace: true });
   };
 
   const getRoleBadge = (role: string) => {
@@ -277,6 +277,7 @@ export const Navbar: React.FC = () => {
                     size="sm"
                     onClick={handleLogout}
                     leftIcon={<LogOut size={14} />}
+                    data-testid="logout-button"
                     style={{
                       backgroundColor: 'rgba(255, 255, 255, 0.15)',
                       color: '#ffffff',
@@ -320,6 +321,7 @@ export const Navbar: React.FC = () => {
             {/* Mobile Hamburger Button */}
             <button
               className="nav-mobile-toggle"
+              data-testid="user-menu-toggle"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               aria-label="Toggle navigation menu"
             >
@@ -381,6 +383,7 @@ export const Navbar: React.FC = () => {
                 variant="danger"
                 size="sm"
                 fullWidth
+                data-testid="logout-button"
                 onClick={() => {
                   setMobileMenuOpen(false);
                   handleLogout();

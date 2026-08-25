@@ -1,4 +1,5 @@
 import { test, expect, Page } from '@playwright/test';
+import { logout } from './helpers/auth';
 
 const DOCTOR_EMAIL = process.env.TEST_DOCTOR_EMAIL;
 const DOCTOR_PASSWORD = process.env.TEST_DOCTOR_PASSWORD;
@@ -122,27 +123,6 @@ test.describe('HealthPulse Doctor Portal', () => {
   });
 
   test('doctor can logout', async ({ page }) => {
-    const logoutButton = page
-      .getByRole('button', {
-        name: /Logout|Log out|Sign out/i,
-      })
-      .first();
-
-    const logoutLink = page
-      .getByRole('link', {
-        name: /Logout|Log out|Sign out/i,
-      })
-      .first();
-
-    if (await logoutButton.count()) {
-      await logoutButton.click();
-    } else {
-      await logoutLink.click();
-    }
-
-    await expect(page).toHaveURL(
-      /login/i,
-      { timeout: 30_000 }
-    );
+    await logout(page);
   });
 });

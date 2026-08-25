@@ -1,4 +1,5 @@
 import { test, expect, Page } from '@playwright/test';
+import { logout } from './helpers/auth';
 
 const ADMIN_EMAIL = process.env.TEST_ADMIN_EMAIL;
 const ADMIN_PASSWORD = process.env.TEST_ADMIN_PASSWORD;
@@ -71,9 +72,8 @@ test.describe('HealthPulse Admin Portal', () => {
 
   test('admin can open doctor management', async ({ page }) => {
     const doctorsLink = page
-      .getByRole('link', {
-        name: /Doctors|Doctor Management|Manage Doctors/i,
-      })
+      .getByTestId('admin-doctors-link')
+      .or(page.getByRole('link', { name: /Manage Doctors|Doctors/i }))
       .first();
 
     await expect(doctorsLink).toBeVisible();
@@ -81,7 +81,7 @@ test.describe('HealthPulse Admin Portal', () => {
     await doctorsLink.click();
 
     await expect(page).toHaveURL(
-      /admin\/doctor/i,
+      /\/admin\/doctor/i,
       { timeout: 30_000 }
     );
   });
@@ -124,27 +124,6 @@ test.describe('HealthPulse Admin Portal', () => {
   });
 
   test('admin can logout', async ({ page }) => {
-    const logoutButton = page
-      .getByRole('button', {
-        name: /Logout|Log out|Sign out/i,
-      })
-      .first();
-
-    const logoutLink = page
-      .getByRole('link', {
-        name: /Logout|Log out|Sign out/i,
-      })
-      .first();
-
-    if (await logoutButton.count()) {
-      await logoutButton.click();
-    } else {
-      await logoutLink.click();
-    }
-
-    await expect(page).toHaveURL(
-      /login/i,
-      { timeout: 30_000 }
-    );
+    await logout(page);
   });
 });

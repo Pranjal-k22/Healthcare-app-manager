@@ -138,6 +138,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               key={item.label + item.to}
               to={item.to}
               end={item.exact}
+              data-testid={item.to === '/admin/doctors' ? 'admin-doctors-link' : undefined}
               className={({ isActive }) =>
                 `sidebar-nav-item ${isActive ? 'is-active' : ''}`
               }
@@ -162,6 +163,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             onClick={() => setShowLogoutConfirm(true)}
             title={isCollapsed ? 'Sign out' : undefined}
             className="sidebar-logout-btn"
+            data-testid="logout-button"
           >
             <LogOut size={18} />
             {!isCollapsed && <span>Logout</span>}

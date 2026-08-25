@@ -67,6 +67,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
           <NavLink
             key={link.to}
             to={link.to}
+            data-testid={link.to === '/admin/doctors' ? 'admin-doctors-link' : undefined}
             className={({ isActive }) =>
               `mobile-nav-item ${isActive ? 'is-active' : ''}`
             }

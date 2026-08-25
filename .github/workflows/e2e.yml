@@ -55,7 +55,7 @@ jobs:
           TEST_DOCTOR_PASSWORD: ${{ secrets.TEST_DOCTOR_PASSWORD }}
           TEST_ADMIN_EMAIL: ${{ secrets.TEST_ADMIN_EMAIL }}
           TEST_ADMIN_PASSWORD: ${{ secrets.TEST_ADMIN_PASSWORD }}
-        run: npx playwright test --project=chromium --workers=2
+        run: npx playwright test --project=chromium --workers=1
         working-directory: client
 
       - name: Upload Playwright Report

@@ -159,6 +159,7 @@ export const Login: React.FC = () => {
             <div className="hp-role-segmented-control" role="tablist" aria-label="Portal role selector">
               <button
                 type="button"
+                data-testid="role-patient"
                 className={`hp-role-segment-btn ${selectedRole === 'PATIENT' ? 'is-active' : ''}`}
                 onClick={() => {
                   setSelectedRole('PATIENT');
@@ -166,6 +167,7 @@ export const Login: React.FC = () => {
                 }}
                 role="tab"
                 aria-selected={selectedRole === 'PATIENT'}
+                aria-pressed={selectedRole === 'PATIENT'}
               >
                 <UserIcon size={15} />
                 <span>Patient</span>
@@ -173,6 +175,7 @@ export const Login: React.FC = () => {
 
               <button
                 type="button"
+                data-testid="role-doctor"
                 className={`hp-role-segment-btn ${selectedRole === 'DOCTOR' ? 'is-active' : ''}`}
                 onClick={() => {
                   setSelectedRole('DOCTOR');
@@ -180,6 +183,7 @@ export const Login: React.FC = () => {
                 }}
                 role="tab"
                 aria-selected={selectedRole === 'DOCTOR'}
+                aria-pressed={selectedRole === 'DOCTOR'}
               >
                 <Stethoscope size={15} />
                 <span>Doctor</span>
@@ -187,6 +191,7 @@ export const Login: React.FC = () => {
 
               <button
                 type="button"
+                data-testid="role-admin"
                 className={`hp-role-segment-btn ${selectedRole === 'ADMIN' ? 'is-active' : ''}`}
                 onClick={() => {
                   setSelectedRole('ADMIN');
@@ -194,6 +199,7 @@ export const Login: React.FC = () => {
                 }}
                 role="tab"
                 aria-selected={selectedRole === 'ADMIN'}
+                aria-pressed={selectedRole === 'ADMIN'}
               >
                 <ShieldCheck size={15} />
                 <span>Admin</span>
