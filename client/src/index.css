@@ -5469,7 +5469,7 @@ body,
 .hp-landing-hero {
   position: relative;
   background-image: 
-    linear-gradient(135deg, rgba(10, 25, 47, 0.88) 0%, rgba(16, 42, 69, 0.84) 35%, rgba(29, 53, 87, 0.86) 70%, rgba(15, 76, 92, 0.90) 100%),
+    linear-gradient(135deg, rgba(10, 25, 47, 0.52) 0%, rgba(16, 42, 69, 0.40) 40%, rgba(15, 76, 92, 0.48) 100%),
     url('/landing.png');
   background-size: cover;
   background-position: center center;
@@ -5488,7 +5488,7 @@ body,
   right: -10%;
   width: 600px;
   height: 600px;
-  background: radial-gradient(circle, rgba(56, 189, 248, 0.18) 0%, rgba(30, 58, 138, 0) 70%);
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.15) 0%, rgba(30, 58, 138, 0) 70%);
   pointer-events: none;
   border-radius: 50%;
 }
@@ -5504,9 +5504,8 @@ body,
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  background-color: rgba(255, 255, 255, 0.12);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.25);
+  background-color: rgba(15, 23, 42, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 9999px;
   padding: 6px 14px;
   font-size: clamp(0.75rem, 2vw, 0.85rem);
@@ -5514,6 +5513,7 @@ body,
   color: #E0F2FE;
   margin-bottom: 1.5rem;
   max-width: 100%;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .hp-hero-grid {
@@ -5535,20 +5535,23 @@ body,
   margin: 0 0 1.25rem 0;
   color: #ffffff;
   overflow-wrap: break-word;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.6);
 }
 
 .hp-hero-title-gradient {
   background: linear-gradient(to right, #38BDF8, #818CF8, #34D399);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.4));
 }
 
 .hp-hero-subtitle {
   font-size: clamp(0.95rem, 2vw, 1.125rem);
   line-height: 1.6;
-  color: #E2E8F0;
+  color: #F1F5F9;
   margin: 0 0 2rem 0;
   max-width: 560px;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.6);
 }
 
 .hp-hero-cta-wrap {
@@ -5565,7 +5568,8 @@ body,
   gap: 1.25rem;
   margin-top: 2rem;
   font-size: clamp(0.75rem, 1.8vw, 0.85rem);
-  color: #CBD5E1;
+  color: #E2E8F0;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.5);
 }
 
 .hp-hero-trust-item {
@@ -5573,7 +5577,11 @@ body,
   align-items: center;
   gap: 0.45rem;
   font-size: 0.85rem;
-  font-weight: 500;
+  font-weight: 600;
+  background: rgba(15, 23, 42, 0.55);
+  padding: 4px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 /* ── Hero Platform Showcase Preview Card ── */
@@ -5591,11 +5599,9 @@ body,
   max-width: 520px;
   border-radius: 24px;
   padding: 1.75rem;
-  background: rgba(15, 30, 60, 0.45);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.45), 0 0 30px rgba(56, 189, 248, 0.15);
+  background: rgba(15, 23, 42, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 30px rgba(56, 189, 248, 0.15);
   transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
 }
 
