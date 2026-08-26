@@ -13,7 +13,6 @@ import {
   Sparkles,
   FileCheck,
   Search,
-  Activity,
 } from 'lucide-react';
 import { Footer } from '../../components/common/Footer';
 import Button from '../../components/ui/Button';
@@ -130,44 +129,58 @@ export const Landing: React.FC = () => {
               </div>
             </div>
 
-            {/* Hero Right Visual: Landing Illustration Showcase */}
+            {/* Hero Right Visual: Live Platform Mockup Card */}
             <div className="hp-hero-showcase-container">
-              <div className="hp-hero-image-frame">
-                <img
-                  src="/landing.png"
-                  alt="HealthPulse Hospital - Doctors, Patients & Clinical Care"
-                  className="hp-hero-img"
-                  loading="eager"
-                />
-
-                {/* Floating Glass Badges matching the illustration */}
-                <div className="hp-floating-badge hp-floating-badge-top">
-                  <div className="hp-badge-icon hp-badge-icon-sky">
-                    <Activity size={18} color="#0284C7" />
+              <div className="hp-hero-preview-card">
+                {/* Header */}
+                <div className="hp-preview-header">
+                  <div className="hp-preview-brand">
+                    <div className="hp-preview-icon-box">
+                      <HeartPulse size={22} color="#FFFFFF" />
+                    </div>
+                    <div>
+                      <div className="hp-preview-title">HealthPulse Hospital</div>
+                      <div className="hp-preview-subtitle">Clinical Hub • Live Platform</div>
+                    </div>
                   </div>
-                  <div className="hp-badge-text-group">
-                    <div className="hp-badge-title">24/7 Clinical Hub</div>
-                    <div className="hp-badge-subtitle">Physicians &amp; Specialized OPD</div>
+                  <span className="hp-preview-status-badge">
+                    Operational
+                  </span>
+                </div>
+
+                {/* Consultation Card */}
+                <div className="hp-preview-item">
+                  <div className="hp-preview-item-left">
+                    <div className="hp-preview-item-icon hp-icon-blue">
+                      <Stethoscope size={20} color="#0284C7" />
+                    </div>
+                    <div>
+                      <div className="hp-preview-item-title">Cardiology Consultation</div>
+                      <div className="hp-preview-item-desc">Dr. Sharma • Confirmed Slot</div>
+                    </div>
+                  </div>
+                  <div className="hp-preview-item-right">
+                    <span className="hp-preview-time">10:30 AM</span>
+                    <span className="hp-preview-synced">
+                      <Calendar size={13} />
+                      <span>Synced</span>
+                    </span>
                   </div>
                 </div>
 
-                <div className="hp-floating-badge hp-floating-badge-bottom">
-                  <div className="hp-badge-icon hp-badge-icon-emerald">
-                    <Calendar size={18} color="#059669" />
+                {/* Prescription Card */}
+                <div className="hp-preview-item">
+                  <div className="hp-preview-item-left">
+                    <div className="hp-preview-item-icon hp-icon-green">
+                      <FileCheck size={20} color="#059669" />
+                    </div>
+                    <div>
+                      <div className="hp-preview-item-title">Digital Prescription Ready</div>
+                      <div className="hp-preview-item-desc">Verified with dosage notes</div>
+                    </div>
                   </div>
-                  <div className="hp-badge-text-group">
-                    <div className="hp-badge-title">Google Calendar Synced</div>
-                    <div className="hp-badge-subtitle">Real-Time Slot Confirmation</div>
-                  </div>
-                </div>
-
-                <div className="hp-floating-badge hp-floating-badge-side">
-                  <div className="hp-badge-icon hp-badge-icon-coral">
-                    <FileCheck size={18} color="#E11D48" />
-                  </div>
-                  <div className="hp-badge-text-group">
-                    <div className="hp-badge-title">Digital Prescriptions</div>
-                    <div className="hp-badge-subtitle">Verified &amp; Downloadable</div>
+                  <div className="hp-preview-item-right">
+                    <span className="hp-preview-pill-active">Active</span>
                   </div>
                 </div>
               </div>

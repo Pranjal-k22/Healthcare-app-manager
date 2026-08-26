@@ -5467,10 +5467,16 @@ body,
 }
 
 .hp-landing-hero {
-  background: linear-gradient(135deg, #0A192F 0%, #102A45 35%, #1D3557 70%, #0F4C5C 100%);
+  position: relative;
+  background-image: 
+    linear-gradient(135deg, rgba(10, 25, 47, 0.88) 0%, rgba(16, 42, 69, 0.84) 35%, rgba(29, 53, 87, 0.86) 70%, rgba(15, 76, 92, 0.90) 100%),
+    url('/landing.png');
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-attachment: scroll;
   color: #ffffff;
   padding: clamp(3rem, 6vw, 5.5rem) 1.5rem clamp(3.5rem, 7vw, 6rem);
-  position: relative;
   overflow: hidden;
   width: 100%;
 }
@@ -5570,7 +5576,7 @@ body,
   font-weight: 500;
 }
 
-/* ── Hero Image Showcase & Floating Badges ── */
+/* ── Hero Platform Showcase Preview Card ── */
 .hp-hero-showcase-container {
   position: relative;
   width: 100%;
@@ -5579,69 +5585,105 @@ body,
   align-items: center;
 }
 
-.hp-hero-image-frame {
+.hp-hero-preview-card {
   position: relative;
   width: 100%;
-  max-width: 560px;
+  max-width: 520px;
   border-radius: 24px;
-  padding: 8px;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.08) 100%);
-  backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.28);
-  box-shadow: 0 25px 60px -15px rgba(2, 6, 23, 0.6), 0 0 40px rgba(56, 189, 248, 0.2);
-  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s ease;
+  padding: 1.75rem;
+  background: rgba(15, 30, 60, 0.45);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.45), 0 0 30px rgba(56, 189, 248, 0.15);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
 }
 
-.hp-hero-image-frame:hover {
+.hp-hero-preview-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 32px 70px -15px rgba(2, 6, 23, 0.7), 0 0 50px rgba(56, 189, 248, 0.28);
+  box-shadow: 0 32px 60px -12px rgba(0, 0, 0, 0.55), 0 0 40px rgba(56, 189, 248, 0.22);
 }
 
-.hp-hero-img {
-  width: 100%;
-  height: auto;
-  display: block;
-  border-radius: 18px;
-  object-fit: cover;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-}
-
-.hp-floating-badge {
-  position: absolute;
+.hp-preview-header {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  background: rgba(15, 23, 42, 0.88);
-  backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  justify-content: space-between;
+  margin-bottom: 1.35rem;
+}
+
+.hp-preview-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.hp-preview-icon-box {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: #2563EB;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
+  flex-shrink: 0;
+}
+
+.hp-preview-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #FFFFFF;
+  line-height: 1.2;
+}
+
+.hp-preview-subtitle {
+  font-size: 0.8rem;
+  color: #94A3B8;
+  margin-top: 3px;
+  font-weight: 500;
+}
+
+.hp-preview-status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #34D399;
+  background: rgba(52, 211, 153, 0.12);
+  border: 1px solid rgba(52, 211, 153, 0.35);
+}
+
+.hp-preview-item {
+  background: #FFFFFF;
   border-radius: 14px;
-  padding: 10px 14px;
-  box-shadow: 0 12px 30px -5px rgba(0, 0, 0, 0.4);
-  z-index: 2;
-  pointer-events: none;
+  padding: 1rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.85rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease;
 }
 
-.hp-floating-badge-top {
-  top: -14px;
-  right: -12px;
-  animation: hpFloatTop 5s ease-in-out infinite;
+.hp-preview-item:last-child {
+  margin-bottom: 0;
 }
 
-.hp-floating-badge-bottom {
-  bottom: -16px;
-  left: -14px;
-  animation: hpFloatBottom 6s ease-in-out infinite 1s;
+.hp-preview-item:hover {
+  transform: translateX(4px);
 }
 
-.hp-floating-badge-side {
-  bottom: 48px;
-  right: -16px;
-  animation: hpFloatSide 5.5s ease-in-out infinite 0.5s;
+.hp-preview-item-left {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
 }
 
-.hp-badge-icon {
-  width: 36px;
-  height: 36px;
+.hp-preview-item-icon {
+  width: 42px;
+  height: 42px;
   border-radius: 10px;
   display: flex;
   align-items: center;
@@ -5649,54 +5691,59 @@ body,
   flex-shrink: 0;
 }
 
-.hp-badge-icon-sky {
-  background: rgba(14, 165, 233, 0.18);
-  border: 1px solid rgba(56, 189, 248, 0.35);
+.hp-icon-blue {
+  background: #EFF6FF;
+  color: #0284C7;
 }
 
-.hp-badge-icon-emerald {
-  background: rgba(16, 185, 129, 0.18);
-  border: 1px solid rgba(52, 211, 153, 0.35);
+.hp-icon-green {
+  background: #ECFDF5;
+  color: #059669;
 }
 
-.hp-badge-icon-coral {
-  background: rgba(244, 63, 94, 0.18);
-  border: 1px solid rgba(251, 113, 133, 0.35);
+.hp-preview-item-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #0F172A;
+  line-height: 1.2;
 }
 
-.hp-badge-text-group {
+.hp-preview-item-desc {
+  font-size: 0.8rem;
+  color: #64748B;
+  margin-top: 2px;
+}
+
+.hp-preview-item-right {
   display: flex;
   flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
 }
 
-.hp-badge-title {
-  font-size: 0.82rem;
+.hp-preview-time {
+  font-size: 0.88rem;
   font-weight: 700;
-  color: #FFFFFF;
-  line-height: 1.2;
-  white-space: nowrap;
+  color: #0284C7;
 }
 
-.hp-badge-subtitle {
-  font-size: 0.72rem;
-  color: #94A3B8;
-  font-weight: 500;
-  white-space: nowrap;
+.hp-preview-synced {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #059669;
+  display: flex;
+  align-items: center;
+  gap: 3px;
 }
 
-@keyframes hpFloatTop {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-8px); }
-}
-
-@keyframes hpFloatBottom {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(8px); }
-}
-
-@keyframes hpFloatSide {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-6px); }
+.hp-preview-pill-active {
+  background: #ECFDF5;
+  color: #059669;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 9999px;
 }
 
 /* ── Stats Highlight Bar ── */
