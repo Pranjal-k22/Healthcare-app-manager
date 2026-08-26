@@ -67,3 +67,8 @@ client/.lighthouseci/
 # QA Artifacts
 qa-artifacts/
 
+# ============================================================
+# Private HealthPulse Interview / Assessment Preparation
+# ============================================================
+healthpulse-interview-prep/
+

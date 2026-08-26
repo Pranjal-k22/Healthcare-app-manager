@@ -129,95 +129,51 @@ export const Landing: React.FC = () => {
               </div>
             </div>
 
-            {/* Hero Right Visual Card */}
-            <div className="hp-hero-preview-card">
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', borderBottom: '1px solid rgba(255, 255, 255, 0.12)', paddingBottom: '0.85rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0 }}>
-                  <div style={{
-                    width: '36px',
-                    height: '36px',
-                    borderRadius: '10px',
-                    backgroundColor: '#2563EB',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                  }}>
-                    <HeartPulse size={20} color="#ffffff" />
-                  </div>
-                  <div style={{ minWidth: 0 }}>
-                    <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 700, color: '#ffffff' }}>HealthPulse Hospital</h3>
-                    <span style={{ fontSize: '0.75rem', color: '#93C5FD' }}>Clinical Hub &bull; Live Platform</span>
-                  </div>
-                </div>
-                <span style={{
-                  backgroundColor: 'rgba(16, 185, 129, 0.2)',
-                  color: '#34D399',
-                  border: '1px solid rgba(52, 211, 153, 0.3)',
-                  padding: '3px 10px',
-                  borderRadius: '9999px',
-                  fontSize: '0.75rem',
-                  fontWeight: 600,
-                  flexShrink: 0,
-                }}>
-                  Operational
-                </span>
-              </div>
+            {/* Hero Right Visual: Landing Illustration Showcase */}
+            <div className="hp-hero-showcase-container">
+              <div className="hp-hero-image-frame">
+                <img
+                  src="/landing.png"
+                  alt="HealthPulse Hospital - Doctors, Patients & Clinical Care"
+                  className="hp-hero-img"
+                  loading="eager"
+                />
 
-              {/* Sample appointment cards preview */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                <div style={{
-                  backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                  borderRadius: '12px',
-                  padding: '0.85rem 1rem',
-                  color: '#0F172A',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: '0.5rem',
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', minWidth: 0 }}>
-                    <div style={{ width: '36px', height: '36px', borderRadius: '50%', backgroundColor: '#EFF6FF', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <Stethoscope size={18} color="#2563EB" />
-                    </div>
-                    <div style={{ minWidth: 0 }}>
-                      <div style={{ fontWeight: 700, fontSize: '0.875rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Cardiology Consultation</div>
-                      <div style={{ fontSize: '0.75rem', color: '#64748B' }}>Dr. Sharma &bull; Confirmed Slot</div>
-                    </div>
+                {/* Floating Glass Badges matching the illustration */}
+                <div className="hp-floating-badge hp-floating-badge-top">
+                  <div className="hp-badge-icon hp-badge-icon-sky">
+                    <Activity size={18} color="#0284C7" />
                   </div>
-                  <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                    <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#2563EB' }}>10:30 AM</div>
-                    <div style={{ fontSize: '0.7rem', color: '#10B981', display: 'flex', alignItems: 'center', gap: '2px', justifyContent: 'flex-end' }}>
-                      <Calendar size={10} /> Synced
-                    </div>
+                  <div className="hp-badge-text-group">
+                    <div className="hp-badge-title">24/7 Clinical Care</div>
+                    <div className="hp-badge-subtitle">Physicians &amp; Specialized OPD</div>
                   </div>
                 </div>
 
-                <div style={{
-                  backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                  borderRadius: '12px',
-                  padding: '0.85rem 1rem',
-                  color: '#0F172A',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: '0.5rem',
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', minWidth: 0 }}>
-                    <div style={{ width: '36px', height: '36px', borderRadius: '50%', backgroundColor: '#ECFDF5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <FileCheck size={18} color="#059669" />
-                    </div>
-                    <div style={{ minWidth: 0 }}>
-                      <div style={{ fontWeight: 700, fontSize: '0.875rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Digital Prescription Ready</div>
-                      <div style={{ fontSize: '0.75rem', color: '#64748B' }}>Verified with dosage notes</div>
-                    </div>
+                <div className="hp-floating-badge hp-floating-badge-bottom">
+                  <div className="hp-badge-icon hp-badge-icon-emerald">
+                    <Calendar size={18} color="#059669" />
                   </div>
-                  <span style={{ fontSize: '0.75rem', backgroundColor: '#E0F2FE', color: '#0369A1', padding: '2px 7px', borderRadius: '6px', fontWeight: 600, flexShrink: 0 }}>
-                    Active
-                  </span>
+                  <div className="hp-badge-text-group">
+                    <div className="hp-badge-title">Google Calendar Synced</div>
+                    <div className="hp-badge-subtitle">Instant Slot Confirmation</div>
+                  </div>
+                </div>
+
+                <div className="hp-floating-badge hp-floating-badge-side">
+                  <div className="hp-badge-icon hp-badge-icon-coral">
+                    <FileCheck size={18} color="#E11D48" />
+                  </div>
+                  <div className="hp-badge-text-group">
+                    <div className="hp-badge-title">Digital Rx &amp; Records</div>
+                    <div className="hp-badge-subtitle">Verified &amp; Downloadable</div>
+                  </div>
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
           </div>
         </div>
       </section>
