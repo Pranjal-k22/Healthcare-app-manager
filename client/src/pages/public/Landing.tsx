@@ -13,6 +13,7 @@ import {
   Sparkles,
   FileCheck,
   Search,
+  Activity,
 } from 'lucide-react';
 import { Footer } from '../../components/common/Footer';
 import Button from '../../components/ui/Button';
@@ -34,7 +35,7 @@ export const Landing: React.FC = () => {
 
           <div className="hp-hero-grid">
             {/* Hero Left Copy */}
-            <div>
+            <div className="hp-hero-text-col">
               <h1 className="hp-hero-title">
                 Healthcare, connected. <br />
                 <span className="hp-hero-title-gradient">
@@ -43,7 +44,7 @@ export const Landing: React.FC = () => {
               </h1>
 
               <p className="hp-hero-subtitle">
-                HealthPulse unites patients, doctors, and hospital administrators in one streamlined portal. Book doctor appointments in seconds, sync schedules seamlessly with Google Calendar, and manage medical prescriptions with enterprise-grade security.
+                HealthPulse unites patients, doctors, and hospital administrators in one streamlined platform. Book specialist consultations in seconds, sync schedules seamlessly with Google Calendar, and manage clinical prescriptions with enterprise security.
               </p>
 
               <div className="hp-hero-cta-wrap">
@@ -114,15 +115,15 @@ export const Landing: React.FC = () => {
 
               {/* Trust badges */}
               <div className="hp-hero-trust-bar">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <div className="hp-hero-trust-item">
                   <Shield size={16} color="#34D399" />
                   <span>AES-256 Encrypted</span>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <div className="hp-hero-trust-item">
                   <Calendar size={16} color="#38BDF8" />
                   <span>Google Calendar Sync</span>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <div className="hp-hero-trust-item">
                   <Lock size={16} color="#FBBF24" />
                   <span>OAuth 2.0 Compliant</span>
                 </div>
@@ -145,7 +146,7 @@ export const Landing: React.FC = () => {
                     <Activity size={18} color="#0284C7" />
                   </div>
                   <div className="hp-badge-text-group">
-                    <div className="hp-badge-title">24/7 Clinical Care</div>
+                    <div className="hp-badge-title">24/7 Clinical Hub</div>
                     <div className="hp-badge-subtitle">Physicians &amp; Specialized OPD</div>
                   </div>
                 </div>
@@ -156,7 +157,7 @@ export const Landing: React.FC = () => {
                   </div>
                   <div className="hp-badge-text-group">
                     <div className="hp-badge-title">Google Calendar Synced</div>
-                    <div className="hp-badge-subtitle">Instant Slot Confirmation</div>
+                    <div className="hp-badge-subtitle">Real-Time Slot Confirmation</div>
                   </div>
                 </div>
 
@@ -165,7 +166,7 @@ export const Landing: React.FC = () => {
                     <FileCheck size={18} color="#E11D48" />
                   </div>
                   <div className="hp-badge-text-group">
-                    <div className="hp-badge-title">Digital Rx &amp; Records</div>
+                    <div className="hp-badge-title">Digital Prescriptions</div>
                     <div className="hp-badge-subtitle">Verified &amp; Downloadable</div>
                   </div>
                 </div>
@@ -174,6 +175,48 @@ export const Landing: React.FC = () => {
           </div>
         </div>
       </section>
+
+      {/* ── STATS & TRUST HIGHLIGHT BAR ──────────────────────────────────── */}
+      <section className="hp-stats-bar">
+        <div className="hp-stats-inner">
+          <div className="hp-stat-box">
+            <div className="hp-stat-icon-wrap" style={{ backgroundColor: 'rgba(37, 99, 235, 0.1)', color: '#2563EB' }}>
+              <Stethoscope size={22} />
+            </div>
+            <div>
+              <div className="hp-stat-number">50+</div>
+              <div className="hp-stat-label">Specialist Doctors</div>
+            </div>
+          </div>
+
+          <div className="hp-stat-box">
+            <div className="hp-stat-icon-wrap" style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)', color: '#059669' }}>
+              <Calendar size={22} />
+            </div>
+            <div>
+              <div className="hp-stat-number">2-Way</div>
+              <div className="hp-stat-label">Google Sync</div>
+            </div>
+          </div>
+
+          <div className="hp-stat-box">
+            <div className="hp-stat-icon-wrap" style={{ backgroundColor: 'rgba(244, 63, 94, 0.1)', color: '#E11D48' }}>
+              <HeartPulse size={22} />
+            </div>
+            <div>
+              <div className="hp-stat-number">100%</div>
+              <div className="hp-stat-label">Digital Prescriptions</div>
+            </div>
+          </div>
+
+          <div className="hp-stat-box">
+            <div className="hp-stat-icon-wrap" style={{ backgroundColor: 'rgba(245, 158, 11, 0.1)', color: '#D97706' }}>
+              <Shield size={22} />
+            </div>
+            <div>
+              <div className="hp-stat-number">256-Bit</div>
+              <div className="hp-stat-label">AES Data Encryption</div>
+            </div>
           </div>
         </div>
       </section>
@@ -185,17 +228,17 @@ export const Landing: React.FC = () => {
             Comprehensive Clinical Workflow
           </h2>
           <p style={{ fontSize: 'clamp(0.9rem, 2vw, 1.05rem)', color: 'var(--text-secondary)', maxWidth: '640px', margin: '0 auto' }}>
-            Engineered from the ground up for hospitals, private clinics, doctors, and patients.
+            Engineered from the ground up for modern hospitals, private clinics, doctors, and patients.
           </p>
         </div>
 
         <div className="hp-features-grid">
           {/* Card 1 */}
           <div className="hp-feature-card">
-            <div style={{ width: '44px', height: '44px', borderRadius: '12px', backgroundColor: '#EFF6FF', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1rem' }}>
-              <Search size={22} color="#2563EB" />
+            <div style={{ width: '48px', height: '48px', borderRadius: '14px', backgroundColor: '#EFF6FF', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1.25rem' }}>
+              <Search size={24} color="#2563EB" />
             </div>
-            <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 0.5rem 0' }}>
+            <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 0.5rem 0' }}>
               Doctor Discovery &amp; Search
             </h3>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: 1.6, margin: 0 }}>
@@ -205,10 +248,10 @@ export const Landing: React.FC = () => {
 
           {/* Card 2 */}
           <div className="hp-feature-card">
-            <div style={{ width: '44px', height: '44px', borderRadius: '12px', backgroundColor: '#F0FDF4', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1rem' }}>
-              <Calendar size={22} color="#16A34A" />
+            <div style={{ width: '48px', height: '48px', borderRadius: '14px', backgroundColor: '#F0FDF4', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1.25rem' }}>
+              <Calendar size={24} color="#16A34A" />
             </div>
-            <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 0.5rem 0' }}>
+            <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 0.5rem 0' }}>
               Google Calendar 2-Way Sync
             </h3>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: 1.6, margin: 0 }}>
@@ -218,10 +261,10 @@ export const Landing: React.FC = () => {
 
           {/* Card 3 */}
           <div className="hp-feature-card">
-            <div style={{ width: '44px', height: '44px', borderRadius: '12px', backgroundColor: '#FEF3C7', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1rem' }}>
-              <Stethoscope size={22} color="#D97706" />
+            <div style={{ width: '48px', height: '48px', borderRadius: '14px', backgroundColor: '#FFF1F2', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1.25rem' }}>
+              <Stethoscope size={24} color="#E11D48" />
             </div>
-            <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 0.5rem 0' }}>
+            <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 0.5rem 0' }}>
               Clinical Consultations &amp; Rx
             </h3>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: 1.6, margin: 0 }}>
@@ -231,10 +274,10 @@ export const Landing: React.FC = () => {
 
           {/* Card 4 */}
           <div className="hp-feature-card">
-            <div style={{ width: '44px', height: '44px', borderRadius: '12px', backgroundColor: '#F3E8FF', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1rem' }}>
-              <Users size={22} color="#9333EA" />
+            <div style={{ width: '48px', height: '48px', borderRadius: '14px', backgroundColor: '#F3E8FF', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1.25rem' }}>
+              <Users size={24} color="#9333EA" />
             </div>
-            <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 0.5rem 0' }}>
+            <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 0.5rem 0' }}>
               Role-Based Access Control
             </h3>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: 1.6, margin: 0 }}>
