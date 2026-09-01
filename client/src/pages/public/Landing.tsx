@@ -129,7 +129,7 @@ export const Landing: React.FC = () => {
               </div>
             </div>
 
-            {/* Hero Right Visual: Live Platform Mockup Card */}
+            {/* Hero Right Visual: Clinical Hub Preview Card */}
             <div className="hp-hero-showcase-container">
               <div className="hp-hero-preview-card">
                 {/* Header */}
@@ -140,39 +140,53 @@ export const Landing: React.FC = () => {
                     </div>
                     <div>
                       <div className="hp-preview-title">HealthPulse Hospital</div>
-                      <div className="hp-preview-subtitle">Clinical Hub • Live Platform</div>
+                      <div className="hp-preview-subtitle">Clinical Hub &bull; Live Platform</div>
                     </div>
                   </div>
                   <span className="hp-preview-status-badge">
+                    <span className="hp-status-dot" />
                     Operational
                   </span>
                 </div>
 
-                {/* Consultation Card */}
+                {/* Illustration Showcase Window */}
+                <div className="hp-preview-illustration-frame">
+                  <img
+                    src="/landing.png"
+                    alt="HealthPulse Clinical Staff and Patients"
+                    className="hp-preview-illustration-img"
+                  />
+                  <div className="hp-illustration-overlay-tag">
+                    <Sparkles size={13} color="#38BDF8" />
+                    <span>Active OPD &amp; Care Center</span>
+                  </div>
+                </div>
+
+                {/* Live Consultation Card */}
                 <div className="hp-preview-item">
                   <div className="hp-preview-item-left">
                     <div className="hp-preview-item-icon hp-icon-blue">
-                      <Stethoscope size={20} color="#0284C7" />
+                      <Stethoscope size={18} color="#2563EB" />
                     </div>
                     <div>
                       <div className="hp-preview-item-title">Cardiology Consultation</div>
-                      <div className="hp-preview-item-desc">Dr. Sharma • Confirmed Slot</div>
+                      <div className="hp-preview-item-desc">Dr. Sharma &bull; Confirmed Slot</div>
                     </div>
                   </div>
                   <div className="hp-preview-item-right">
                     <span className="hp-preview-time">10:30 AM</span>
                     <span className="hp-preview-synced">
-                      <Calendar size={13} />
+                      <Calendar size={12} />
                       <span>Synced</span>
                     </span>
                   </div>
                 </div>
 
-                {/* Prescription Card */}
+                {/* Live Prescription Card */}
                 <div className="hp-preview-item">
                   <div className="hp-preview-item-left">
                     <div className="hp-preview-item-icon hp-icon-green">
-                      <FileCheck size={20} color="#059669" />
+                      <FileCheck size={18} color="#059669" />
                     </div>
                     <div>
                       <div className="hp-preview-item-title">Digital Prescription Ready</div>
