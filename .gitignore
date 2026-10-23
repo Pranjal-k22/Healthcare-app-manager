@@ -11,12 +11,15 @@ node_modules/
 .env.production.local
 server/.env
 client/.env
+# Documentation
+docs/
 deployment.md
 DEPLOYMENT.md
 audit.md
 AUDIT.md
 docs/emailarch.md
 emailarch.md
+
 
 # Uploads & Media Assets
 uploads/
